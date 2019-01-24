@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: ware
+server:
+  port: 8003
+
+eureka:
+  instance:
+    prefer-ip-address: true #注册服务时使用ip地址
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
