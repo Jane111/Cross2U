@@ -10,3 +10,16 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+jfinal:
+  debug: true
+  jdbcUrl: jdbc:mysql://47.104.5.214:3306/wuhvote?characterEncoding=utf8&serverTimezone=UTC
+  dbUser: wuhvote
+  dbPwd: wuhvote...2018
+
+weixin:
+  loginUrl: https://api.weixin.qq.com/sns/jscode2session
+  APPID: wx3c90b45c83bd8a1e
+  APPSECRET: 020acbca530664df4a8bc81acf56304b
+  grant_type: authorization_code
+
