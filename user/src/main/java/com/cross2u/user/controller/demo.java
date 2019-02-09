@@ -15,4 +15,6 @@ public class demo {
         String s = restTemplate.getForObject("http://Indent/getIndent",String.class);
         return "my indent？"+s;
     }
+
+
 }

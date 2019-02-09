@@ -1,5 +1,6 @@
 package com.cross2u.user.util;
 
+import com.cross2u.user.model._MappingKit;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.activerecord.dialect.MysqlDialect;
 import com.jfinal.plugin.druid.DruidPlugin;
