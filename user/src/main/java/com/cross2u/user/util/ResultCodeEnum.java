@@ -4,7 +4,7 @@ package com.cross2u.user.util;
 public enum ResultCodeEnum
 {
 	SUCCESS("10000", "Success"),
-	NetERROR("10001","网络错误,请稍后再试"),
+	NET_ERROR("10001","网络错误,请稍后再试"),
 	NOT_FIND("10002","访问资源不存在"),
 	DATABASE_ERROR("10003","数据库异常，请稍后重试"),
 	UPDATE_ERROR("10004","修改失败"),
@@ -19,6 +19,7 @@ public enum ResultCodeEnum
 	EXIST_USER_PHONE("10013","手机号已经被注册"),
 	ERROR_ACCOUNT_OR_PASSWORD("10014","账户或密码错误"),
 	NOT_LOGIN("10015", "您还未登录，请先登录！"),
+	EXIST_XOMPANY("10016","该公司已注册"),
 	ADD_FAILURE("20001","添加失败"),
     DELETE_FAILURE("20003","删除失败"),
 	FIND_FAILURE("20004","查询失败");
