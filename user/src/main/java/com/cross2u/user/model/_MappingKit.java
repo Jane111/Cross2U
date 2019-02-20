@@ -50,7 +50,6 @@ public class _MappingKit {
 		arp.addMapping("mbchat", "mbchId", Mbchat.class);
 		arp.addMapping("mevalreply", "mepId", Mevalreply.class);
 		arp.addMapping("outindent", "outId", Outindent.class);
-		arp.addMapping("outorderware", "oowId", Outorderware.class);
 		arp.addMapping("product", "pId", Product.class);
 		arp.addMapping("productformat", "pfId", Productformat.class);
 		arp.addMapping("publicinfo", "piId", Publicinfo.class);

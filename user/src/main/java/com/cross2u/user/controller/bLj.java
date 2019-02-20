@@ -2,6 +2,7 @@ package com.cross2u.user.controller;
 
 import com.cross2u.user.util.HttpClientUtil;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
+@EnableConfigurationProperties
 @ConfigurationProperties(prefix = "weixin")
 @RequestMapping("/business")
 public class bLj {

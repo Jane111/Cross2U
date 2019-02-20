@@ -33,6 +33,14 @@ public abstract class BaseBrowserecord<M extends BaseBrowserecord<M>> extends Mo
 		return get("brWare");
 	}
 
+	public void setBrIsDelete(Integer brIsDelete) {
+		set("brIsDelete", brIsDelete);
+	}
+
+	public Integer getBrIsDelete() {
+		return get("BrIsDelete");
+	}
+
 	public void setBrCreateTime(java.util.Date brCreateTime) {
 		set("brCreateTime", brCreateTime);
 	}
