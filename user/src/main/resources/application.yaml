@@ -13,13 +13,9 @@ eureka:
 
 jfinal:
   debug: true
-  jdbcUrl: jdbc:mysql://127.0.0.1:3306/cross2u?characterEncoding=utf8&serverTimezone=UTC
+  jdbcUrl: jdbc:mysql://120.79.79.141:3306/cross2u?characterEncoding=utf8&serverTimezone=UTC
   dbUser: root
-  dbPwd: '!yue980122M!'
+  dbPwd: 123456
 
-weixin:
-  loginUrl: https://api.weixin.qq.com/sns/jscode2session
-  APPID: wx3c90b45c83bd8a1e
-  APPSECRET: 020acbca530664df4a8bc81acf56304b
-  grant_type: authorization_code
+
 

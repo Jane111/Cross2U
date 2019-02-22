@@ -49,4 +49,12 @@ public abstract class BaseBusinesssearchrecord<M extends BaseBusinesssearchrecor
 		return get("bsrModifyTime");
 	}
 
+	public void setBWeiXinIcon(String bWeiXinIcon){set("bWeiXinIcon",bWeiXinIcon);}
+
+	public String getBWeiXinIcon(){return get("bWeiXinIcon");}
+
+	public void setBWeiXinName(String bWeiXinName){set("bWeiXinName",bWeiXinName);}
+
+	public String getBWeiXinName(){return get("bWeiXinName");}
+
 }

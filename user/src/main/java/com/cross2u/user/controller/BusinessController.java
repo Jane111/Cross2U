@@ -1,23 +1,22 @@
 package com.cross2u.user.controller;
 
 import com.cross2u.user.model.Business;
-import com.cross2u.user.model.Outindent;
-import com.cross2u.user.model.Publicinfo;
-import com.cross2u.user.model.Ware;
 import com.cross2u.user.service.BusinessServiceZ;
 import com.cross2u.user.util.BaseResponse;
 import com.cross2u.user.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
 
+@RestController
 public class BusinessController {
 
     @RequestMapping("/business/deleteSearchRecord")
@@ -25,30 +24,36 @@ public class BusinessController {
     /**
      * 删除搜索记录
      */
-    public BaseResponse deleteSearchRecord(String bsrBusiness)
+    public BaseResponse deleteSearchRecord(HttpServletRequest request)
     {
         BusinessServiceZ businessService=new BusinessServiceZ();
         BaseResponse baseResponse=new BaseResponse();
-
+        String bsrBusiness=request.getParameter("bsrBusiness");
         if(businessService.deleteSearchRecord(bsrBusiness))
         {
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
-
+        else {
+            baseResponse.setResult(ResultCodeEnum.DELETE_FAILURE);
+        }
         return baseResponse;
     }
 
-    @RequestMapping("/business/addBusiness")
-    @ResponseBody
+
+
     /**
-     * B注册
+     * B注册步骤一
      */
-    public BaseResponse addBusiness(HttpServletRequest request)
+    @RequestMapping("/business/addBusinessStep1")
+    @ResponseBody
+    public BaseResponse addBusinessStep1(HttpServletRequest request)
     {
         //获取的参数
         String bOpenId=request.getParameter("bOpenId");
+        String bWeiXinIcon=request.getParameter("bWeiXinIcon");//微信头像
+        String bWeiXinName=request.getParameter("bWeiXinName");//微信名称
         String bName=request.getParameter("bName");
-        String bPhone=request.getParameter("bPhone");//????
+        String bPhone=request.getParameter("bPhone");//
         String bEmail=request.getParameter("bEmail");
         String bIdNumber=request.getParameter("bIdNumber");//身份证号
         String bIdUpImage=request.getParameter("bIdUpImage");//可以调用api获得身份证号码
@@ -59,6 +64,8 @@ public class BusinessController {
 
         Business business=new Business();
         business.setBOpenId(bOpenId);
+        business.setBWeiXinIcon(bWeiXinIcon);
+        business.setBWeiXinName(bWeiXinName);
         business.setBName(bName);
         business.setBPhone(bPhone);
         business.setBEmail(bEmail);
@@ -77,6 +84,14 @@ public class BusinessController {
         else {
             baseResponse.setResult(ResultCodeEnum.ADD_FAILURE);//添加失败
         }
+        return baseResponse;
+    }
+
+    @RequestBody("/business/addBusinessStep2")
+    @ResponseBody
+    public BaseResponse addBusinessStep2(HttpServletRequest request) {
+        BaseResponse baseResponse=new BaseResponse();
+
         return baseResponse;
     }
 
@@ -135,8 +150,8 @@ public class BusinessController {
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
         String wStore=request.getParameter("wStore");//店铺id
-        Record ware=businessService.showStoreWare(wStore);
-        if (!ware.equals(null)){
+        List<Record> ware=businessService.showStoreWare(wStore);
+        if (ware!=null){
             baseResponse.setData(ware);
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
@@ -177,7 +192,7 @@ public class BusinessController {
         BusinessServiceZ businessService = new BusinessServiceZ();
         String wbWFDId = request.getParameter("wbWFDId");//一级id
         String wbWSDId = request.getParameter("wbWSDId");//二级id
-        if (wbWSDId.equals(null))//如果是一级
+        if (wbWSDId==null||wbWSDId.equals(""))//如果是一级
         {
             List<Record> record=businessService.showStoreFClassWare(wbWFDId);
             baseResponse.setData(record);
@@ -190,20 +205,7 @@ public class BusinessController {
         return baseResponse;
     }
 
-    /**
-     * 看系统通知
-     */
-    @RequestMapping("/business/showPublicInfo")
-    @ResponseBody
-    public BaseResponse showPublicInfo(HttpServletRequest request){
-        BaseResponse baseResponse=new BaseResponse();
-        BusinessServiceZ businessService=new BusinessServiceZ();
 
-        List<Publicinfo> publicinfos=businessService.showPublicInfo();
-        baseResponse.setData(publicinfos);
-        baseResponse.setResult(ResultCodeEnum.SUCCESS);
-        return baseResponse;
-    }
 
     /**
      * 查看浏览记录
@@ -214,7 +216,7 @@ public class BusinessController {
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
 
-        String bid=request.getParameter("bid");
+        String bid=request.getParameter("bId");
         List<Record> browserecords= businessService.showBrowseRecord(bid);
         baseResponse.setData(browserecords);
         baseResponse.setResult(ResultCodeEnum.SUCCESS);
@@ -292,7 +294,7 @@ public class BusinessController {
     /**
      * 删除收藏记录
      */
-    @RequestMapping("/business/showCollectStore")
+    @RequestMapping("/business/deleteCollect")
     @ResponseBody
     public BaseResponse deleteCollect(HttpServletRequest request)
     {
@@ -337,17 +339,185 @@ public class BusinessController {
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
         String copId=request.getParameter("copId");
-
+        //System.out.println(copId+"???? null?");
         if(businessService.deleteCop(copId))
         {
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
         else
         {
-            baseResponse.setResult(ResultCodeEnum.DELETE_FAILURE);
+            baseResponse.setResult(ResultCodeEnum.DELETE_ERROR);
         }
         return baseResponse;
     }
+
+
+    @RequestMapping("/business/intoMine")
+    @ResponseBody
+    public BaseResponse intoMine(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+        BusinessServiceZ service=new BusinessServiceZ();
+        String openId=request.getParameter("openId");
+        Record mine=service.intoMine(openId);
+        if (mine==null){
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        else {
+            baseResponse.setData(mine);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        return baseResponse;
+    }
+
+
+    /*放到indent
+    @RequestMapping("/business/showCIndentList")
+    @ResponseBody
+    public BaseResponse showCIndentList(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+        BusinessServiceZ businessService = new BusinessServiceZ();
+        String bid = request.getParameter("bId");
+        String outStatus = request.getParameter("outStatus");//订单状态
+        List<Record> outindents = null;
+
+        switch (outStatus) {
+            case "1"://1：未发货
+            case "2"://2：已发货
+            case "3":
+                outindents = businessService.showCIndentList(bid, outStatus);//3：已完成
+                break;
+            case "4":
+                outindents = businessService.showCRturnIndent(bid, outStatus);//售后
+                break;
+            default:
+                baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);//查询失败
+                return baseResponse;
+        }
+
+        if (!outindents.equals(null)) {
+            baseResponse.setData(outindents);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        } else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);//查询失败
+        }
+        return baseResponse;
+
+    }
+
+    *//**
+     * 显示与C的订单
+     * @param request
+     * @return
+     *//*
+    @RequestMapping("/business/showCIndent")
+    @ResponseBody
+    public BaseResponse showCIndent(HttpServletRequest request){
+        BaseResponse baseResponse = new BaseResponse();
+        BusinessServiceZ businessService = new BusinessServiceZ();
+        String bId=request.getParameter("bId");
+        String outStatus=request.getParameter("outStatus");
+        String outId=request.getParameter("outId");
+
+        Record outindent = null;
+
+        switch (outStatus) {
+            case "1"://1：未发货
+            case "2"://2：已发货
+            case "3":
+                outindent = businessService.showCIndentInfo(bId, outStatus,outId);//3：已完成
+                break;
+            case "4":
+                outindent = businessService.showCRturnInfo(bId,outStatus, outId);//售后
+                break;
+            default:
+                baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);//查询失败
+                return baseResponse;
+        }
+
+        if (outindent!=null) {
+            baseResponse.setData(outindent);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        } else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);//查询失败
+        }
+        return baseResponse;
+
+    }
+
+    @RequestMapping("/business/showMIndentList")
+    @ResponseBody
+    public BaseResponse showMIndentList(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        BusinessServiceZ businessService=new BusinessServiceZ();
+        String bId=request.getParameter("bId");
+        String inStatus=request.getParameter("inStatus");
+
+        List<Record> mIndentList=new ArrayList<>();
+        switch(inStatus){
+            case "0"://待付款
+            case "2"://待评价
+                mIndentList=businessService.showMIndentList0(bId,inStatus);
+                break;
+            case "3"://已完成
+                mIndentList=businessService.showMIndentList3(bId,inStatus);
+                break;
+            case "1"://合作中
+                mIndentList=businessService.showMIndentList1(bId,inStatus);
+                break;
+            case "4"://申请退款
+                mIndentList=businessService.showMIndentList4(bId,inStatus);
+                break;
+
+                default:
+                    baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);//查找失败
+                    return baseResponse;
+        }
+
+        if (mIndentList!=null) {
+            baseResponse.setData(mIndentList);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        } else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);//查询失败
+        }
+        return baseResponse;
+    }
+    @RequestMapping("/business/showMReturnIndent")
+    @ResponseBody
+    public BaseResponse showMReturnIndent(HttpServletRequest request) {
+        BaseResponse baseResponse=new BaseResponse();
+        BusinessServiceZ businessService=new BusinessServiceZ();
+        String inId=request.getParameter("inId");
+        String diId=request.getParameter("diId");
+        Record drawbackInfo=businessService.showMReturnIndent(inId,diId);
+        if (drawbackInfo.equals(null)){
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        else {
+            baseResponse.setData(drawbackInfo);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/business/showMFinishIndent")
+    @ResponseBody
+    public BaseResponse showMFinishIndent(HttpServletRequest request) {
+        BaseResponse baseResponse=new BaseResponse();
+        BusinessServiceZ businessService=new BusinessServiceZ();
+        String inId=request.getParameter("inId");
+        Record drawbackInfo=businessService.showMFinishIndent(inId);
+        if (drawbackInfo.equals(null)){
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        else {
+            baseResponse.setData(drawbackInfo);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        return baseResponse;
+    }*/
+
+
 
 
 }
