@@ -25,20 +25,20 @@ public abstract class BaseCategory<M extends BaseCategory<M>> extends Model<M> i
 		return get("ctParentId");
 	}
 
-	public void setCtName(String ctName) {
-		set("ctName", ctName);
+	public void setCtChName(String ctChName) {
+		set("ctChName", ctChName);
 	}
 
-	public String getCtName() {
-		return get("ctName");
+	public String getCtChName() {
+		return get("ctChName");
 	}
 
-	public void setCtRank(Integer ctRank) {
-		set("ctRank", ctRank);
+	public void setCtEnName(String ctEnName) {
+		set("ctEnName", ctEnName);
 	}
 
-	public Integer getCtRank() {
-		return get("ctRank");
+	public String getCtEnName() {
+		return get("ctEnName");
 	}
 
 	public void setCtCreateTime(java.util.Date ctCreateTime) {

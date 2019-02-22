@@ -22,8 +22,9 @@ public enum ResultCodeEnum
 	ADD_FAILURE("20001","添加失败"),
 	ADD_PRODUCT_FAILURE("20010","单品添加失败"),
 	ADD_WARE_FAILURE("20011","商品添加失败"),
-	WARE_CLASS_FAILURE("20012","商品分类失败");
-	private String code;
+	WARE_CLASS_FAILURE("20012","商品分类失败"),
+	HAS_ING_INDENT("20005","存在正在执行的订单");
+    private String code;
     private String desc;
 
     ResultCodeEnum(String code, String desc)

@@ -15,5 +15,10 @@ public class IndentApplication {
 		SpringApplication.run(IndentApplication.class, args);
 	}
 
+	@LoadBalanced
+	@Bean
+	public RestTemplate restTemplate(){
+		return new RestTemplate();
+	}
 }
 

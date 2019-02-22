@@ -1,24 +1,29 @@
 package com.cross2u.indent.Controller;
 
 import com.cross2u.indent.Service.IndentServiceZ;
-import com.cross2u.indent.model.Indent;
+import com.cross2u.indent.model.Drawbackinfo;
 import com.cross2u.indent.util.BaseResponse;
 import com.cross2u.indent.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+@RestController
 public class IndentController {
 
     @Autowired
     private IndentServiceZ service;
+    @Autowired
+    private BaseResponse response;
 
-    @RequestMapping("/business/showCIndentList")
+    @RequestMapping("/indent/showCIndentList")
     @ResponseBody
     public BaseResponse showCIndentList(HttpServletRequest request) {
         BaseResponse baseResponse = new BaseResponse();
@@ -55,7 +60,7 @@ public class IndentController {
      * @param request
      * @return
      */
-    @RequestMapping("/business/showCIndent")
+    @RequestMapping("/indent/showCIndent")
     @ResponseBody
     public BaseResponse showCIndent(HttpServletRequest request){
         BaseResponse baseResponse = new BaseResponse();
@@ -89,7 +94,7 @@ public class IndentController {
 
     }
 
-    @RequestMapping("/business/showMIndentList")
+    @RequestMapping("/indent/showMIndentList")
     @ResponseBody
     public BaseResponse showMIndentList(HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
@@ -125,7 +130,7 @@ public class IndentController {
         }
         return baseResponse;
     }
-    @RequestMapping("/business/showMReturnIndent")
+    @RequestMapping("/indent/showMReturnIndent")
     @ResponseBody
     public BaseResponse showMReturnIndent(HttpServletRequest request) {
         BaseResponse baseResponse=new BaseResponse();
@@ -143,7 +148,7 @@ public class IndentController {
     }
 
 
-    @RequestMapping("/business/showMFinishIndent")
+    @RequestMapping("/indent/showMFinishIndent")
     @ResponseBody
     public BaseResponse showMFinishIndent(HttpServletRequest request) {
         BaseResponse baseResponse=new BaseResponse();
@@ -158,4 +163,58 @@ public class IndentController {
         }
         return baseResponse;
     }
+
+    /**
+     * 该商品是否有正在进行的订单
+     * @return
+     */
+    @RequestMapping("indent/hasINGIndent")
+    @ResponseBody
+    public Boolean hasINGIndent(HttpServletRequest request){
+        String wId=request.getParameter("wId");
+        return service.hasINGIndent(wId);
+    }
+
+    @RequestMapping("/indent/drawbackGetInfo")
+    @ResponseBody
+    public BaseResponse drawbackGetInfo(HttpServletRequest request) {
+        String inId=request.getParameter("inId");
+        Record drawbackInfo=service.drawbackGetInfo(inId);
+        if(drawbackInfo!=null){
+            response.setData(drawbackInfo);
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return response;
+    }
+
+
+    @RequestMapping("/indent/drawback")
+    @ResponseBody
+    public BaseResponse drawback(HttpServletRequest request) {
+        Drawbackinfo drawbackinfo=new Drawbackinfo();
+        drawbackinfo.setDiType(new BigInteger(request.getParameter("diType")));//退款类型
+        drawbackinfo.setDiReporter(new BigInteger(request.getParameter("diReporter")));//退款申请者
+        drawbackinfo.setDiInId(new BigInteger(request.getParameter("diInId")));//订单id
+        drawbackinfo.setDiNUmber(new Integer(request.getParameter("diNumber")));//申请数目
+        drawbackinfo.setDiMoney(new Float(request.getParameter("diMoney")));//退款金额
+        drawbackinfo.setDiReasons(request.getParameter("diReasons"));//申请理由
+        drawbackinfo.setDiImg1(request.getParameter("diImg1"));//退款凭证1
+        drawbackinfo.setDiImg2(request.getParameter("diImg2"));//退款凭证2
+        drawbackinfo.setDiImg3(request.getParameter("diImg3"));//退款凭证3
+
+        if(service.drawback(drawbackinfo))
+        {
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.ADD_FAILURE);
+        }
+
+        return response;
+
+    }
+
 }

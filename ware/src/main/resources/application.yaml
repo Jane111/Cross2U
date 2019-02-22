@@ -10,11 +10,10 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
-    register-with-eureka: false
-    fetch-registry: false
+
 
 jfinal:
   debug: true
-  jdbcUrl: jdbc:mysql://127.0.0.1:3306/cross2u?characterEncoding=utf8&serverTimezone=UTC
+  jdbcUrl: jdbc:mysql://120.79.79.141:3306/cross2u?characterEncoding=utf8&serverTimezone=UTC
   dbUser: root
-  dbPwd: '!yue980122M!'
+  dbPwd: 123456

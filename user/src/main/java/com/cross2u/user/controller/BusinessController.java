@@ -87,7 +87,8 @@ public class BusinessController {
         return baseResponse;
     }
 
-    @RequestBody("/business/addBusinessStep2")
+
+    @RequestMapping("/business/addBusinessStep2")
     @ResponseBody
     public BaseResponse addBusinessStep2(HttpServletRequest request) {
         BaseResponse baseResponse=new BaseResponse();

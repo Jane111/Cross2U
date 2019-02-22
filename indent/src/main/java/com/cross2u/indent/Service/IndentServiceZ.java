@@ -1,13 +1,26 @@
 package com.cross2u.indent.Service;
 
+import com.alibaba.fastjson.JSONObject;
+import com.cross2u.indent.model.Drawbackinfo;
+import com.cross2u.indent.model.Indent;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 @Service
 public class IndentServiceZ {
+
+    @Autowired
+    RestTemplate restTemplate;
 
     public List<Record> showCIndentList(String bId, String outStatus) {
         String sql="SELECT outId,outPlatform,outStore,pId,wTitle,wMainImage,sId,sName,outCName,outCreateTime,outModifyTime " +
@@ -134,4 +147,69 @@ public class IndentServiceZ {
         return  baserecord;
     }
 
+    public Boolean hasINGIndent(String wId) {
+        String sql="SELECT count(*) as num " +
+                "FROM `indent` " +
+                "WHERE inWare=? and inStatus not in (2,3,5,6,7,8,9)";//已完成订单
+        Record indentNum=Db.findFirst(sql,wId);
+        return indentNum.getInt("num")>0?true:false;//有订单true 没有 false
+    }
+
+    public Record drawbackGetInfo(String inId) {
+        Record drawbackInfo=new Record();
+        String sql="select drId,drReasons  from drawbackreasons ";
+        if (isOverDeadLine(inId)){//超过期限
+            sql=sql+" where drId not in (4,5)";
+        }
+        List<Record> drawbackType=Db.find(sql);
+
+        String indentsql="select inLeftNum, (inTotalMoney/inProductNum)*inLeftNum as inLeftMoney,(inTotalMoney/inProductNum) as pMoney " +
+                " from indent INNER JOIN product on inProduct = product.pId " +
+                " WHERE inId=? ";//订单信息 inLeftMoney订单可退金额 inLeft 订单剩余数目
+        Record indent=Db.findFirst(indentsql,inId);
+        drawbackInfo.set("drawbackInfo",drawbackType);
+        drawbackInfo.setColumns(indent);
+        return drawbackInfo;
+    }
+    public boolean isOverDeadLine(String inId)
+    {
+        String dateSql="SELECT wReplaceDays  " +
+                "from ware  INNER JOIN indent on wId=inWare " +
+                "where inId=?";
+        int date=Db.queryInt(dateSql);//包退换的天数
+
+        Date  currdate = null;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yy-MM-dd");
+            Indent indent=Indent.dao.findById(inId);
+            String payStr=sdf.format(indent.getInPayTime());
+            Date payTime=sdf.parse(payStr);//
+
+            Date now=new Date();
+            String nowStr=sdf.format(now);
+            currdate = sdf.parse(nowStr);
+            System.out.println("现在的日期是：" + currdate);
+            Calendar ca = Calendar.getInstance();
+            ca.add(Calendar.DATE, date);// date为增加的天数，可以改变的
+            currdate = ca.getTime();
+            String enddatestr = sdf.format(currdate);
+            System.out.println("增加天数以后的日期：" + enddatestr);
+            Date enddate=sdf.parse(enddatestr);
+            if (payTime.before(enddate)){
+                return false;//在包退期限
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return true;
+        }
+
+        return true;
+    }
+
+    public boolean drawback(Drawbackinfo drawbackinfo) {
+        Indent indent=Indent.dao.findById(drawbackinfo.getDiInId());
+        indent.setInStatus(4);
+        drawbackinfo.setDiStatus(0);
+        return drawbackinfo.save()&&indent.update();
+    }
 }

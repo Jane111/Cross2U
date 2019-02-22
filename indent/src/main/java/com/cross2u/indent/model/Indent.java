@@ -1,5 +1,6 @@
 package com.cross2u.indent.model;
 
+
 import com.cross2u.indent.model.base.BaseIndent;
 
 /**

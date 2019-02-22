@@ -1,10 +1,16 @@
 package com.cross2u.ware.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.cross2u.ware.model.*;
+import com.cross2u.ware.util.BaseResponse;
+import com.cross2u.ware.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.template.stat.ast.For;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -17,23 +23,23 @@ import java.util.regex.Pattern;
 
 @Service
 public class WareServicesZ {
+    @Autowired
+    RestTemplate restTemplate;
 
-    public List<Warefdispatch> showFDispatch(String wfdSId) {
-        String sql="SELECT wfdName,wfdId " +
-                " FROM warefdispatch " +
-                " WHERE wfdSId=? ORDER BY wfdSort ";
-        List<Warefdispatch> warefdispatches=Warefdispatch.dao.find(sql,wfdSId);
-        return warefdispatches;
+
+    //根据id找ware
+    public Ware getWareById(String wId) {
+        return Ware.dao.findById(wId);
     }
 
-    public List<Waresdispatch> showSDispatch(String wfdId) {
-        String sql="SELECT wsdName,wsdId,wsdImg " +
-                " from waresdispatch " +
-                " WHERE wsdWFDId=? ORDER BY wsdSort";
-        List<Waresdispatch> waresdispatches= Waresdispatch.dao.find(sql,wfdId);
-        return waresdispatches;
+    //下架商品
+    public Boolean editUndercarriage(String wId) {
+        Ware ware=getWareById(wId);
+        ware.setWStatus(1);
+        return ware.update();
     }
 
+    //根据规格id显示选项
     public List<Record> showForOptions(String fId) {
         String sql="SELECT foId,foName " +
                 " from formatoption  " +
@@ -50,7 +56,7 @@ public class WareServicesZ {
         return formatoptions;
     }
 
-
+    //根据属性id显示属性的选项
     public List<Attributeoption> showAttrOptions(String atId) {
         String sql="select aoName,aoId from Attributeoption where aoAttribute=?";
         List<Attributeoption> attributeoptions=Attributeoption.dao.find(sql,atId);
@@ -251,8 +257,15 @@ public class WareServicesZ {
         return ware.getWId();
     }
 
-    public boolean addOneWareBelong(Warebelong warebelong) {
-        return warebelong.save();
+    public boolean addOneWareBelong(String wbWFDId, String wbWSDId, BigInteger wId) {
+        Record wbEntity=new Record();
+        wbEntity.set("wbWFDId",wbWFDId);
+        wbEntity.set("wbWSDId",wbWSDId);
+        wbEntity.set("wId",wId);
+
+        BaseResponse response = restTemplate.getForObject("http://Store/store/addOneWareBelong?wId="+wId+"&wbWFDId="+wbWFDId+"&wbWSDId="+wbWSDId,BaseResponse.class);
+        System.out.println("ws response"+response);
+        return (response.getResultCode()).equals("10000");
     }
 
     public boolean addOneProductFormat(String fId, String fo,BigInteger pId) {
@@ -317,12 +330,12 @@ public class WareServicesZ {
                 " WHERE wId=?";
         Record ware=Db.findFirst(waresql,wId);
 
-        String wbelongSql="SELECT wbWFDId,wfdName,wbWSDId,wsdName " +
+        String wbelongSql="SELECT wbId,wbWFDId,wfdName,wbWSDId,wsdName " +
                 " FROM (warebelong INNER JOIN warefdispatch on wfdId=wbWFDId ) INNER JOIN waresdispatch on wsdId=wbWSDId " +
                 " WHERE wbWId=?";
         Record wareBelong=Db.findFirst(wbelongSql,wId);
 
-        String caSql="SELECT c.ctName as caFName, a.ctId as caSecond,a.ctName as caSName,b.ctId as caThird,b.ctName as caTName " +
+        String caSql="SELECT c.ctId as caFirst,c.ctName as caFName, a.ctId as caSecond,a.ctName as caSName,b.ctId as caThird,b.ctName as caTName " +
                 "FROM ((category a INNER JOIN category b on a.ctId=b.ctParentId) INNER JOIN ware on b.ctId=wClass) INNER JOIN category c on c.ctId=a.ctParentId " +
                 "WHERE wId=? ";
         Record category=Db.findFirst(caSql,wId);//父子id
@@ -397,5 +410,186 @@ public class WareServicesZ {
             }
         }
         return formats;
+    }
+
+
+    public boolean hasINGIndent(String wId) {
+        boolean hasIndent = restTemplate.getForObject("http://Indent/indent/hasINGIndent?wId="+wId,Boolean.class);
+        return hasIndent;
+    }
+
+
+    public boolean updateWareBelong(String wbId, String wbWFDId, String wbWSDId) {
+        BaseResponse baseResponse = restTemplate.getForObject("http://Store/store/updateWareBelong?wbId="+wbId+"&wbWFDId="+wbWFDId+"&wbWFDId="+wbWSDId,BaseResponse.class);
+        return baseResponse.getResultCode().equals("10000");
+    }
+
+    public boolean updateOneWare(Ware ware) {
+        return ware.update();
+    }
+
+    public boolean editDelete(String wId) {
+        Ware ware=Ware.dao.findById(wId);
+        ware.setWStatus(0);
+        return ware.update();
+    }
+
+    public boolean editupcarriage(String wId) {
+        Ware ware=Ware.dao.findById(wId);
+        ware.setWStatus(2);
+        return ware.update();
+    }
+
+    public boolean batchSelectDispatchs(String wIds, String wfdId,String wsdId) {
+        String[] widStr=wIds.split(",");
+        for (String wId:widStr){
+            if(!addOneWareBelong(wfdId, wsdId,new BigInteger (wId)))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean batchChangeMoney(String wIds, String money, String unit) {
+        String[] wIdstr=wIds.split(",");
+        String sql="select * from product where pWare=?";
+        for (String wId:wIdstr){
+            Ware ware=Ware.dao.findById(wId);
+            ware.setWStartPrice(new Float(money));
+            ware.setWHighPrice(new Float(money));
+            ware.setWPriceUnit(new Integer(unit));
+            List<Product> products=Product.dao.find(sql,wId);
+            for (Product product:products)
+            {
+                product.setPMoney(new Float(money));
+                product.setPMoneyUnit(new Integer(unit));
+                if (!product.update())
+                {
+                    return false;
+                }
+            }
+            if (!ware.update()){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    public boolean mulMoney(String wIds, String number) {
+        String[] wIdStr=wIds.split(",");
+        Float change=new Float(number);
+        String sql="select * from product where pWare=?";
+        for (String wId:wIdStr){
+            Ware ware=Ware.dao.findById(wId);
+            Float originStartMoney=ware.getWStartPrice();
+            Float originHighMoney=ware.getWHighPrice();
+            Float startMoney=originStartMoney*change;
+            Float highMoney=originHighMoney*change;
+            ware.setWStartPrice(startMoney);
+            ware.setWHighPrice(highMoney);
+            List<Product> products=Product.dao.find(sql,wId);
+            for (Product product:products){
+                Float pOriginStart=product.getPMoney();
+                Float pLaterStart=pOriginStart*change;
+                product.setPMoney(pLaterStart);
+                if (!product.update()){
+                    return false;
+                }
+            }
+            if (!ware.update()){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    //在原价格基础上减去
+    public boolean subMoney(String wIds, String number) {
+        String[] wIdStr=wIds.split(",");
+        Float change=new Float(number);
+        String sql="select * from product where pWare=?";
+        for (String wId:wIdStr){
+            Ware ware=Ware.dao.findById(wId);
+            Float originStartMoney=ware.getWStartPrice();
+            Float originHighMoney=ware.getWHighPrice();
+            Float startMoney=originStartMoney-change;
+            if (startMoney<0) {return false;}
+            Float highMoney=originHighMoney-change;
+            ware.setWStartPrice(startMoney);
+            ware.setWHighPrice(highMoney);
+            List<Product> products=Product.dao.find(sql,wId);
+            for (Product product:products){
+                Float pOriginStart=product.getPMoney();
+                Float pLaterStart=pOriginStart-change;
+                product.setPMoney(pLaterStart);
+                if (!product.update()){
+                    return false;
+                }
+            }
+            if (!ware.update()){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    //在原价格上加上
+    public boolean addMoney(String wIds, String number) {
+        String[] wIdStr=wIds.split(",");
+        Float change=new Float(number);
+        String sql="select * from product where pWare=?";
+        for (String wId:wIdStr){
+            Ware ware=Ware.dao.findById(wId);
+            Float originStartMoney=ware.getWStartPrice();
+            Float originHighMoney=ware.getWHighPrice();
+            Float startMoney=originStartMoney+change;
+            Float highMoney=originHighMoney+change;
+            ware.setWStartPrice(startMoney);
+            ware.setWHighPrice(highMoney);
+            List<Product> products=Product.dao.find(sql,wId);
+            for (Product product:products){
+                Float pOriginStart=product.getPMoney();
+                Float pLaterStart=pOriginStart+change;
+                product.setPMoney(pLaterStart);
+                if (!product.update()){
+                    return false;
+                }
+            }
+            if (!ware.update()){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    public boolean divideMoney(String wIds, String number) {
+        String[] wIdStr=wIds.split(",");
+        Float change=new Float(number);
+        String sql="select * from product where pWare=?";
+        for (String wId:wIdStr){
+            Ware ware=Ware.dao.findById(wId);
+            Float originStartMoney=ware.getWStartPrice();
+            Float originHighMoney=ware.getWHighPrice();
+            Float startMoney=originStartMoney/change;
+            Float highMoney=originHighMoney/change;
+            ware.setWStartPrice(startMoney);
+            ware.setWHighPrice(highMoney);
+            List<Product> products=Product.dao.find(sql,wId);
+            for (Product product:products){
+                Float pOriginStart=product.getPMoney();
+                Float pLaterStart=pOriginStart/change;
+                product.setPMoney(pLaterStart);
+                if (!product.update()){
+                    return false;
+                }
+            }
+            if (!ware.update()){
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -177,19 +177,19 @@ public abstract class BaseWare<M extends BaseWare<M>> extends Model<M> implement
 		return get("wDeliverHour");
 	}
 
-	public void setWStartNum(Long wStartNum) {
+	public void setWStartNum(Integer wStartNum) {
 		set("wStartNum", wStartNum);
 	}
 
-	public Long getWStartNum() {
+	public Integer getWStartNum() {
 		return get("wStartNum");
 	}
 
-	public void setWHighNum(Long wHighNum) {
+	public void setWHighNum(Integer wHighNum) {
 		set("wHighNum", wHighNum);
 	}
 
-	public Long getWHighNum() {
+	public Integer getWHighNum() {
 		return get("wHighNum");
 	}
 

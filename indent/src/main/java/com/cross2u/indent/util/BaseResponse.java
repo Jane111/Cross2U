@@ -2,7 +2,9 @@ package com.cross2u.indent.util;
 
 
 import com.jfinal.kit.JsonKit;
+import org.springframework.stereotype.Component;
 
+@Component
 public class BaseResponse
 {
 	private Object data;

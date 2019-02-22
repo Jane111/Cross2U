@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -38,42 +39,6 @@ public class WareController  {
         return baseResponse;
     }
 
-    @RequestMapping("/ware/showFDispatch")
-    @ResponseBody
-    public BaseResponse showFDispatch(HttpServletRequest request){
-        BaseResponse baseResponse=new BaseResponse();
-
-        String wfdSId=request.getParameter("wfdSId");//店铺id
-        List<Warefdispatch> warefdispatchs=wareServices.showFDispatch(wfdSId);
-        if (warefdispatchs!=null)
-        {
-            baseResponse.setData(warefdispatchs);
-            baseResponse.setResult(ResultCodeEnum.SUCCESS);
-        }
-        else {
-            baseResponse.setResult(ResultCodeEnum.NOT_FIND);//空
-        }
-        return baseResponse;
-    }
-
-    @RequestMapping("/ware/showSDispatch")
-    @ResponseBody
-    public BaseResponse showSDispatch(HttpServletRequest request){
-        BaseResponse baseResponse=new BaseResponse();
-
-        String wfdId=request.getParameter("wfdId");
-
-        List<Waresdispatch> waresdispatches=wareServices.showSDispatch(wfdId);
-        if (waresdispatches!=null)
-        {
-            baseResponse.setData(waresdispatches);
-            baseResponse.setResult(ResultCodeEnum.SUCCESS);
-        }
-        else {
-            baseResponse.setResult(ResultCodeEnum.NOT_FIND);//空
-        }
-        return baseResponse;
-    }
 
     /**
      * 显示规格
@@ -341,8 +306,8 @@ public class WareController  {
         ware.setWImage3(request.getParameter("wImage3"));
         ware.setWImage4(request.getParameter("wImage4"));
         ware.setWDescription(request.getParameter("wDescription"));
-        ware.setWStartNum(new Long(request.getParameter("wStartNum")));
-        ware.setWHighNum(new Long(request.getParameter("wHighNum")));
+        ware.setWStartNum(new Integer(request.getParameter("wStartNum")));
+        ware.setWHighNum(new Integer(request.getParameter("wHighNum")));
         ware.setWStatus(new Integer(request.getParameter("wStatus")));
         ware.setWIsReceipt(new Integer(request.getParameter("wIsReceipt")));
         ware.setWIsEnsure(new Integer(request.getParameter("wIsEnsure")));
@@ -384,11 +349,9 @@ public class WareController  {
             return baseResponse;
         }
         //-----商品分类
-        Warebelong warebelong=new Warebelong();
-        warebelong.setWbWFDId(new Long (request.getParameter("wbWFDId")));
-        warebelong.setWbWSDId(new Long(request.getParameter("wbWSDId")));
-        warebelong.setWbWId(Long.valueOf(wId.toString()));
-        if(!wareServices.addOneWareBelong(warebelong))
+        String wbWFDId=request.getParameter("wbWFDId");
+        String wbWSDId=request.getParameter("wbWSDId");
+        if(!wareServices.addOneWareBelong(wbWFDId,wbWSDId,wId))
         {
             baseResponse.setResult(ResultCodeEnum.WARE_CLASS_FAILURE);//商品分类错误
             return baseResponse;
@@ -456,15 +419,259 @@ public class WareController  {
         String wId=request.getParameter("wId");//商品id
         String mId=request.getParameter("mId");//店铺id
         Record ware=wareServices.editShow(wId,mId);
+        if (ware!=null)
+        {
+            if (wareServices.hasINGIndent(wId))
+            {
+                baseResponse.setResult(ResultCodeEnum.HAS_ING_INDENT);//存在正在进行的订单
+                baseResponse.setData(ware);
+            }
+            else {
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
+                baseResponse.setData(ware);
+            }
+        }
         return baseResponse;
     }
 
 
     @RequestMapping("/ware/editSubmit")
     @ResponseBody
-    public BaseResponse editSubmit(HttpServletRequest request){
-        BaseResponse baseResponse=new BaseResponse();
+    public BaseResponse editSubmit(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+
+        String wIdOld=request.getParameter("wId");
+        Boolean undercarriage = wareServices.editUndercarriage(wIdOld);//下架原来的商品
+
+        baseResponse=addSecondStep(request);//创建一个新的
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/editSubmitOld")
+    @ResponseBody
+    public BaseResponse editSubmitOld(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+
+        String sId=request.getParameter("sId");
+        String wId=request.getParameter("wId");
+        Ware ware=wareServices.getWareById(wId);
+        ware.setWTitle(request.getParameter("wTitle"));
+        ware.setWMainImage(request.getParameter("wMainImage"));
+        ware.setWImage1(request.getParameter("wImage1"));
+        ware.setWImage2(request.getParameter("wImage2"));
+        ware.setWImage3(request.getParameter("wImage3"));
+        ware.setWImage4(request.getParameter("wImage4"));
+        ware.setWDescription(request.getParameter("wDescription"));
+        ware.setWStartNum(Integer.valueOf(request.getParameter("wStartNum")));
+        ware.setWHighNum(Integer.valueOf(request.getParameter("wHighNum")));
+        ware.setWStatus(Integer.valueOf(request.getParameter("wStatus")));
+        String wbWFDId=request.getParameter("wbWFDId");
+        String wbWSDId=request.getParameter("wbWSDId");
+        String wbId=request.getParameter("wbId");
+        if(!wareServices.updateWareBelong(wbId,wbWFDId,wbWSDId))
+        {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        else {
+            if(!wareServices.updateOneWare(ware))
+            {
+                baseResponse.setResult(ResultCodeEnum.NetERROR);
+            }
+            else {
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
+            }
+        }
 
         return baseResponse;
     }
+
+
+    @RequestMapping("/ware/editDelete")
+    @ResponseBody
+    public BaseResponse editDelete(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+        String wId=request.getParameter("wId");
+        if(wareServices.hasINGIndent(wId))
+        {
+            baseResponse.setResult(ResultCodeEnum.HAS_ING_INDENT);
+        }
+        else {
+            if(wareServices.editDelete(wId))
+            {
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
+            }
+            else {
+                baseResponse.setResult(ResultCodeEnum.DELETE_ERROR);
+            }
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/editUndercarriage")
+    @ResponseBody
+    public BaseResponse editUndercarriage(HttpServletRequest request)
+    {
+        BaseResponse baseResponse = new BaseResponse();
+        String wId=request.getParameter("wId");
+        if (wareServices.editUndercarriage(wId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/editupcarriage")
+    @ResponseBody
+    public BaseResponse editupcarriage(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+        String wId=request.getParameter("wId");
+        if (wareServices.editupcarriage(wId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/batchSelectDispatchs")
+    @ResponseBody
+    public BaseResponse batchSelectDispatchs(HttpServletRequest request )
+    {
+        BaseResponse baseResponse=new BaseResponse();
+        String wIds=request.getParameter("wIds");
+        String wsdId=request.getParameter("wsdId");
+        String wfdId=request.getParameter("wfdId");
+        if(wareServices.batchSelectDispatchs(wIds,wfdId,wsdId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/batchChangeMoney")
+    @ResponseBody
+    public BaseResponse batchChangeMoney(HttpServletRequest request )
+    {
+        BaseResponse baseResponse=new BaseResponse();
+        String wIds=request.getParameter("wIds");
+
+        String[] wIdStr=wIds.split(",");//判断是否有正在执行的订单
+        for (String wId:wIdStr){
+            if(wareServices.hasINGIndent(wId)){
+                baseResponse.setResult(ResultCodeEnum.HAS_ING_INDENT);
+                return baseResponse;
+            }
+        }
+
+        String money=request.getParameter("money");
+        String unit=request.getParameter("unit");
+        if(wareServices.batchChangeMoney(wIds,money,unit))
+        {
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/batchChangeOriginMoney")
+    @ResponseBody
+    public BaseResponse batchChangeOriginMoney(HttpServletRequest request )
+    {
+        BaseResponse baseResponse=new BaseResponse();
+        String wIds=request.getParameter("wIds");
+
+        String[] wIdStr=wIds.split(",");//判断是否有正在执行的订单
+        for (String wId:wIdStr){
+            if(wareServices.hasINGIndent(wId)){
+                baseResponse.setResult(ResultCodeEnum.HAS_ING_INDENT);
+                return baseResponse;
+            }
+        }
+
+        String calculate=request.getParameter("calculate");
+        String number=request.getParameter("number");
+        switch (calculate){
+            case "1"://加
+                if(!wareServices.addMoney(wIds,number))
+                    baseResponse.setResult(ResultCodeEnum.NetERROR);
+                else
+                    baseResponse.setResult(ResultCodeEnum.SUCCESS);
+                break;
+            case "2"://减
+                if(!wareServices.subMoney(wIds,number))
+                    baseResponse.setResult(ResultCodeEnum.NetERROR);
+                else
+                    baseResponse.setResult(ResultCodeEnum.SUCCESS);
+                break;
+            case "3"://乘
+                if(!wareServices.mulMoney(wIds,number))
+                    baseResponse.setResult(ResultCodeEnum.NetERROR);
+                else
+                    baseResponse.setResult(ResultCodeEnum.SUCCESS);
+                break;
+            case "4"://除
+                if (!wareServices.divideMoney(wIds,number))
+                    baseResponse.setResult(ResultCodeEnum.NetERROR);
+                else
+                    baseResponse.setResult(ResultCodeEnum.SUCCESS);
+                break;
+            default:
+                baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/batchDeleteMany")
+    @ResponseBody
+    public BaseResponse batchDeleteMany(HttpServletRequest request ) {
+        BaseResponse baseResponse = new BaseResponse();
+        String wIds=request.getParameter("wIds");
+        String[] wIdStr=wIds.split(",");//判断是否有正在执行的订单
+        for (String wId:wIdStr){
+            if(wareServices.hasINGIndent(wId)){
+                baseResponse.setResult(ResultCodeEnum.HAS_ING_INDENT);
+                return baseResponse;
+            }
+        }
+
+        for (String wId:wIdStr){
+            if (!wareServices.editDelete(wId)){
+                baseResponse.setData(wId);
+                baseResponse.setResult(ResultCodeEnum.DELETE_ERROR);
+                return baseResponse;
+            }
+        }
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/batchUndercarriage")
+    @ResponseBody
+    public BaseResponse batchUndercarriage(HttpServletRequest request ) {
+        BaseResponse baseResponse = new BaseResponse();
+        String wIds=request.getParameter("wId");
+        String[] wIdStr=request.getParameterValues(",");
+        for (String wId:wIdStr){
+            if(!wareServices.editUndercarriage(wId))
+            {
+                baseResponse.setResult(ResultCodeEnum.NetERROR);
+                baseResponse.setData(wId);
+                return baseResponse;
+            }
+        }
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }
+
 }

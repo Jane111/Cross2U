@@ -6,7 +6,6 @@ import com.cross2u.ware.service.WareServicesZ;
 import com.cross2u.ware.util.BaseResponse;
 import com.cross2u.ware.util.ResultCodeEnum;
 import com.cross2u.ware.util.Util;
-import com.google.gson.JsonObject;
 import com.jfinal.json.Json;
 import com.jfinal.plugin.activerecord.Record;
 import org.json.JSONArray;
@@ -20,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,8 +33,9 @@ public class WareApplicationTests {
 	@Test
     public void test()
     {
-        String random2= UUID.randomUUID().toString().replaceAll("-","").substring(20);
-        System.out.println(  random2);
+        BigInteger wId=new BigInteger("2");
+        Boolean response=ws.addOneWareBelong("1","",wId);
+        System.out.println(response);
     }
 
 	@Test
