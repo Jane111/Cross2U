@@ -12,8 +12,8 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigInteger;
 import java.util.List;
 
-@Service
-public class IndentServiceL {
+    @Service
+    public class IndentServiceL {
 
     @Autowired
     RestTemplate restTemplate;

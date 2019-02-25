@@ -1,5 +1,6 @@
 package com.cross2u.ware;
 
+import com.alibaba.fastjson.JSONObject;
 import com.cross2u.ware.model.Attributeoption;
 import com.cross2u.ware.model.Ware;
 import com.cross2u.ware.service.WareServicesZ;
@@ -62,7 +63,7 @@ public class WareApplicationTests {
 
     @Test
     public void addFirstStep(){
-        Record record=ws.addFirstStep("352","355");
+        JSONObject record=ws.addFirstStep("352","355");
         System.out.println(record);
     }
 

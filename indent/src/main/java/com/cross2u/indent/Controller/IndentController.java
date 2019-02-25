@@ -1,5 +1,7 @@
 package com.cross2u.indent.Controller;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.cross2u.indent.Service.IndentServiceZ;
 import com.cross2u.indent.model.Drawbackinfo;
 import com.cross2u.indent.util.BaseResponse;
@@ -29,7 +31,7 @@ public class IndentController {
         BaseResponse baseResponse = new BaseResponse();
         String bid = request.getParameter("bId");
         String outStatus = request.getParameter("outStatus");//订单状态
-        List<Record> outindents = null;
+        JSONArray outindents = null;
 
         switch (outStatus) {
             case "1"://1：未发货
@@ -68,7 +70,7 @@ public class IndentController {
         String outStatus=request.getParameter("outStatus");
         String outId=request.getParameter("outId");
 
-        Record outindent = null;
+        JSONObject outindent = null;
 
         switch (outStatus) {
             case "1"://1：未发货
@@ -101,7 +103,7 @@ public class IndentController {
         String bId=request.getParameter("bId");
         String inStatus=request.getParameter("inStatus");
 
-        List<Record> mIndentList=new ArrayList<>();
+        JSONArray mIndentList=new JSONArray();
         switch(inStatus){
             case "1"://待付款
                 mIndentList=service.showMIndentList0(bId,inStatus);
@@ -136,7 +138,7 @@ public class IndentController {
         BaseResponse baseResponse=new BaseResponse();
         String inId=request.getParameter("inId");
         String diId=request.getParameter("diId");
-        Record drawbackInfo=service.showMReturnIndent(inId,diId);
+        JSONObject drawbackInfo=service.showMReturnIndent(inId,diId);
         if (drawbackInfo==null){
             baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
         }
@@ -153,7 +155,7 @@ public class IndentController {
     public BaseResponse showMFinishIndent(HttpServletRequest request) {
         BaseResponse baseResponse=new BaseResponse();
         String inId=request.getParameter("inId");
-        Record drawbackInfo=service.showMFinishIndent(inId);
+        JSONObject drawbackInfo=service.showMFinishIndent(inId);
         if (drawbackInfo==null){
             baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
         }
@@ -179,7 +181,7 @@ public class IndentController {
     @ResponseBody
     public BaseResponse drawbackGetInfo(HttpServletRequest request) {
         String inId=request.getParameter("inId");
-        Record drawbackInfo=service.drawbackGetInfo(inId);
+        JSONObject drawbackInfo=service.drawbackGetInfo(inId);
         if(drawbackInfo!=null){
             response.setData(drawbackInfo);
             response.setResult(ResultCodeEnum.SUCCESS);

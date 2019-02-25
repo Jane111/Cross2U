@@ -41,6 +41,15 @@ public abstract class BaseAttributeoption<M extends BaseAttributeoption<M>> exte
 		return get("aoEnName");
 	}
 
+	public void setAoName(String aoName) {
+		set("aoName", aoName);
+	}
+
+	public String getAoName() {
+		return get("aoName");
+	}
+
+
 	public void setAoCreateTime(java.util.Date aoCreateTime) {
 		set("aoCreateTime", aoCreateTime);
 	}

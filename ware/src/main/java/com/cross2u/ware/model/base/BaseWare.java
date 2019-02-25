@@ -181,7 +181,7 @@ public abstract class BaseWare<M extends BaseWare<M>> extends Model<M> implement
 		set("wStartNum", wStartNum);
 	}
 
-	public Integer getWStartNum() {
+	public Long getWStartNum() {
 		return get("wStartNum");
 	}
 
@@ -189,7 +189,7 @@ public abstract class BaseWare<M extends BaseWare<M>> extends Model<M> implement
 		set("wHighNum", wHighNum);
 	}
 
-	public Integer getWHighNum() {
+	public Long getWHighNum() {
 		return get("wHighNum");
 	}
 

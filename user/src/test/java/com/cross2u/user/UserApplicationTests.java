@@ -1,5 +1,6 @@
 package com.cross2u.user;
 
+import com.alibaba.fastjson.JSONObject;
 import com.cross2u.user.service.BusinessServiceZ;
 import com.cross2u.user.util.BaseResponse;
 import org.junit.Test;
@@ -20,13 +21,20 @@ public class UserApplicationTests {
 
 	@Test
 	public void contextLoads() {
-		bs.deleteCollect("2");
+//		bs.showStoreDetail("1","12121");
+		String sId="1";
+		JSONObject array = restTemplate.getForObject("http://localhost:8003/ware/getTopFourWare?sId="+sId,JSONObject.class);
+		System.out.println(array.get("data"));
 
 	}
+
 	@Test
-	public void test(){
-		BaseResponse response = restTemplate.getForObject("http://Store/store/deleteCop?copId=5",BaseResponse.class);
-		System.out.println(response);
+	public void test() {
+		System.out.println("restTemplete+"+(restTemplate==null));
+		String sId="1";
+		String array = restTemplate.getForObject("http://localhost:8003/ware/demo?sId="+sId,String.class);
+		System.out.println(array);
+
 	}
 
 }

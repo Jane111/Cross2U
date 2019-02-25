@@ -18,9 +18,13 @@ public class MServiceL {
     /*
     * 面向其他模块 provider
     * */
-    public Mainmanufacturer selectMMLogoDetail(BigInteger mmId)
+    public JSONObject selectMMLogoDetail(BigInteger mmId)
     {
-        return Mainmanufacturer.dao.findFirst("select mmlogo from Mainmanufacturer where mmId=?",mmId);
+        JSONObject mmLogoDetail = new JSONObject();
+        Mainmanufacturer mainmanufacturer = Mainmanufacturer.dao.findFirst("select mmLogo from mainmanufacturer where mmId=?",mmId);
+        mmLogoDetail.put("mmlogo",mainmanufacturer.getMmLogo());
+        return mmLogoDetail;
+
     }
 
     /*

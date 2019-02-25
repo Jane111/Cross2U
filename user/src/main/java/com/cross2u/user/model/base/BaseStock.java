@@ -59,6 +59,14 @@ public abstract class BaseStock<M extends BaseStock<M>> extends Model<M> impleme
 		return get("sSum");
 	}
 
+	public void setSSumUnit(Integer sSumUnit) {
+		set("sSumUnit", sSumUnit);
+	}
+
+	public Integer getSSumUnit() {
+		return get("sSumUnit");
+	}
+
 	public void setSCreateTime(java.util.Date sCreateTime) {
 		set("sCreateTime", sCreateTime);
 	}

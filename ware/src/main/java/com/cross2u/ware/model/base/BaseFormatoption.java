@@ -49,6 +49,14 @@ public abstract class BaseFormatoption<M extends BaseFormatoption<M>> extends Mo
 		return get("foEnName");
 	}
 
+	public void setFoName(String foName) {
+		set("foName", foName);
+	}
+
+	public String getFoName() {
+		return get("foName");
+	}
+
 	public void setFoCreateTime(java.util.Date foCreateTime) {
 		set("foCreateTime", foCreateTime);
 	}

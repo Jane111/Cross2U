@@ -6,6 +6,8 @@ import com.cross2u.user.util.Constant;
 import com.cross2u.user.util.HttpClientUtil;
 import com.cross2u.user.util.*;
 import com.cross2u.user.service.*;
+import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.IAtom;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigInteger;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,13 +54,46 @@ public class BusinessControllerL {
         jr.setData(result);
         return jr;
     }
+    //2、一次得到多个B的头像和昵称
+    @RequestMapping("/findManyBusinessByBId/{bId}")
+    public JsonResult findManyBusinessByBId(
+            @PathVariable("bId") String bId)
+    {
+        JSONArray result = bs.selectManyBusinessByBId(bId);
+        if(result!=null)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
+    //3、查看某个用户是否收藏某个商品
+    @RequestMapping("/findBIsCollectW")
+    public Integer findBIsCollectW(
+            @RequestParam("bId") BigInteger bId,
+            @RequestParam("wId") BigInteger wId)
+    {
+        Collect result = bs.selectBIsCollectW(bId,wId);
+        if(result!=null)
+        {
+            return 1;
+        }
+        else
+        {
+            return 0;
+        }
+    }
     /*
     * 面向前端的controller
     * */
     //1、小程序用户授权
     @RequestMapping("/authorize")
     public JsonResult authorize(
-            @RequestParam("code") String code)
+            @RequestParam(value="code",required = false) String code)
 //            @RequestParam("vWeiXinIcon") String vWeiXinIcon,
 //            @RequestParam("vWeiXinName") String vWeiXinName
     {
@@ -68,7 +104,9 @@ public class BusinessControllerL {
         param.put("js_code", code);
         param.put("grant_type", Constant.GRANTTYPE);
         // 发送请求
+        System.out.println("code="+code);
         String wxResult = HttpClientUtil.doGet(Constant.LOGINURL, param);
+        System.out.println(wxResult);
         JSONObject jsonObject = JSONObject.parseObject(wxResult);
         // 获取参数返回的
         String session_key = jsonObject.get("session_key").toString();
@@ -116,27 +154,40 @@ public class BusinessControllerL {
         {
             jr.setResult(ResultCodeEnum.ADD_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
-
+//todo 加多个
 //    9、加入购物车
     @RequestMapping("/addStock")
     public JsonResult addStock(
-            @RequestParam("sPId") BigInteger sPId,
+            @RequestParam("sPId") BigInteger[] sPId,
             @RequestParam("sSId") BigInteger sSId,
             @RequestParam("sBid") BigInteger sBid,
-            @RequestParam("sNumber") Integer sNumber,
-            @RequestParam("sSum") Float sSum
+            @RequestParam("sNumber") Integer[] sNumber,
+            @RequestParam("sSum") Float[] sSum,
+            @RequestParam("sSumUnit") Integer[] sSumUnit
             )
     {
-        Stock stock = new Stock();
-        stock.setSPId(sPId);
-        stock.setSId(sSId);
-        stock.setSBid(sBid);
-        stock.setSNumber(sNumber);
-        stock.setSSum(sSum);
-        boolean result = bs.insertStock(stock);
-        if(result)
+        boolean succeed = Db.tx(new IAtom(){
+            int index;
+            boolean result = true;
+            public boolean run() throws SQLException {
+                for(index=0;index<sPId.length;index++)
+                {
+                    Stock stock = new Stock();
+                    stock.setSPId(sPId[index]);
+                    stock.setSSId(sSId);
+                    stock.setSBid(sBid);
+                    stock.setSNumber(sNumber[index]);
+                    stock.setSSum(sSum[index]);
+                    stock.setSSumUnit(sSumUnit[index]);
+                    result = bs.insertStock(stock) & result;
+                }
+                return result;
+            }
+        });
+        if(succeed)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
         }
@@ -144,6 +195,7 @@ public class BusinessControllerL {
         {
             jr.setResult(ResultCodeEnum.ADD_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
 
@@ -166,6 +218,7 @@ public class BusinessControllerL {
         {
             jr.setResult(ResultCodeEnum.ADD_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //16、显示用户搜索记录

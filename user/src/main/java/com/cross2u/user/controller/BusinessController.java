@@ -1,26 +1,36 @@
 package com.cross2u.user.controller;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.cross2u.user.model.Business;
+import com.cross2u.user.model.Visitor;
 import com.cross2u.user.service.BusinessServiceZ;
 import com.cross2u.user.util.BaseResponse;
+import com.cross2u.user.util.Constant;
+import com.cross2u.user.util.CosStsClient;
 import com.cross2u.user.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
 
 @RestController
 public class BusinessController {
+    @Autowired
+    RestTemplate restTemplate;
 
     @RequestMapping("/business/deleteSearchRecord")
-    @ResponseBody
     /**
      * 删除搜索记录
      */
@@ -39,28 +49,39 @@ public class BusinessController {
         return baseResponse;
     }
 
-
+    @RequestMapping("/business/isAuthorize")
+    @ResponseBody
+    public BaseResponse isAuthorize(HttpServletRequest request){
+        BaseResponse response=new BaseResponse();
+        BusinessServiceZ businessService=new BusinessServiceZ();
+        String openId=request.getParameter("openId");
+        if(businessService.isArthorise(openId))//已授权
+        {
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.FIND_FAILURE);//未授权
+        }
+        return response;
+    }
 
     /**
      * B注册步骤一
      */
     @RequestMapping("/business/addBusinessStep1")
-    @ResponseBody
     public BaseResponse addBusinessStep1(HttpServletRequest request)
     {
         //获取的参数
         String bOpenId=request.getParameter("bOpenId");
-        String bWeiXinIcon=request.getParameter("bWeiXinIcon");//微信头像
-        String bWeiXinName=request.getParameter("bWeiXinName");//微信名称
         String bName=request.getParameter("bName");
         String bPhone=request.getParameter("bPhone");//
         String bEmail=request.getParameter("bEmail");
-        String bIdNumber=request.getParameter("bIdNumber");//身份证号
-        String bIdUpImage=request.getParameter("bIdUpImage");//可以调用api获得身份证号码
-        String bIdDownImage=request.getParameter("bIdDownImage");
-        String bMainBusiness=request.getParameter("bMainBusiness");
-        String bOtherPlat1=request.getParameter("bOtherPlat1");//1-1-Ebay 2-亚马逊 3-速卖通
-        String bOtherStore1=request.getParameter("bOtherStore1");//店铺名
+
+        BusinessServiceZ businessService=new BusinessServiceZ();
+
+        Visitor visitor=businessService.getVisitorByOpenId(bOpenId);
+        String bWeiXinIcon=visitor.getVWeiXinIcon();
+        String bWeiXinName=visitor.getVWeiXinName();
 
         Business business=new Business();
         business.setBOpenId(bOpenId);
@@ -69,16 +90,10 @@ public class BusinessController {
         business.setBName(bName);
         business.setBPhone(bPhone);
         business.setBEmail(bEmail);
-        business.setBIdNumber(bIdNumber);
-        business.setBIdUpImage(bIdUpImage);
-        business.setBIdDownImage(bIdDownImage);
-        business.setBMainBusiness(Integer.valueOf(bMainBusiness));
-        business.setBOtherPlat1(Integer.valueOf(bOtherPlat1));
-        business.setBOtherStore1(bOtherStore1);
-        BusinessServiceZ businessService=new BusinessServiceZ();
-        BaseResponse baseResponse=new BaseResponse();
 
-        if(businessService.addBusiness(business)){
+        BaseResponse baseResponse=new BaseResponse();
+        BigInteger bId=businessService.addBusinessStep1(business);
+        if(bId!=null){
             baseResponse.setResult(ResultCodeEnum.SUCCESS);//添加成功
         }
         else {
@@ -89,15 +104,59 @@ public class BusinessController {
 
 
     @RequestMapping("/business/addBusinessStep2")
-    @ResponseBody
+    
     public BaseResponse addBusinessStep2(HttpServletRequest request) {
         BaseResponse baseResponse=new BaseResponse();
+        BusinessServiceZ service=new BusinessServiceZ();
 
+        String bId=request.getParameter("bId");//零售商id
+        String bIdNumber=request.getParameter("bIdNumber");//身份证号
+        String bIdUpImage=request.getParameter("bIdUpImage");//可以调用api获得身份证号码
+        String bIdDownImage=request.getParameter("bIdDownImage");
+
+        Business business=service.findById(bId);
+        business.setBIdNumber(bIdNumber);
+        business.setBIdUpImage(bIdUpImage);
+        business.setBIdDownImage(bIdDownImage);
+        if(service.addBusinessStep23(business))
+        {
+         baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.ADD_FAILURE);//20001
+        }
         return baseResponse;
     }
 
+    @RequestMapping("/business/addBusinessStep3")
+    
+    public BaseResponse addBusinessStep3(HttpServletRequest request) {
+        BaseResponse response=new BaseResponse();
+        BusinessServiceZ service=new BusinessServiceZ();
+
+        String bId=request.getParameter("bId");//零售商id
+        String bMainBusiness=request.getParameter("bMainBusiness");
+        String bOtherPlat1=request.getParameter("bOtherPlat1");//1-1-Ebay 2-亚马逊 3-速卖通
+        String bOtherStore1=request.getParameter("bOtherStore1");//店铺名
+
+        Business business=service.findById(bId);
+        business.setBMainBusiness(Integer.valueOf(bMainBusiness));
+        business.setBOtherPlat1(Integer.valueOf(bOtherPlat1));
+        business.setBOtherStore1(bOtherStore1);
+        if(service.addBusinessStep23(business))
+        {
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.ADD_FAILURE);//20001
+        }
+        return response;
+    }
+
+
+
     @RequestMapping("/business/addCollectStore")
-    @ResponseBody
+    
     /**
      * 收藏店铺
      */
@@ -108,12 +167,19 @@ public class BusinessController {
 
         String cOwner=request.getParameter("cOwner");//bID
         String cStore=request.getParameter("cStore");//店铺id
-        if (businessService.addCollectStore(cOwner,cStore)){
-            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        if(cOwner==null||cOwner.equals(""))
+        {
+            baseResponse.setResult(ResultCodeEnum.NOT_REGISTER);//未注册
         }
         else {
-            baseResponse.setResult(ResultCodeEnum.ADD_FAILURE);
+            if (businessService.addCollectStore(cOwner,cStore)){
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
+            }
+            else {
+                baseResponse.setResult(ResultCodeEnum.ADD_FAILURE);
+            }
         }
+
         return baseResponse;
     }
 
@@ -121,15 +187,17 @@ public class BusinessController {
      * 显示店铺界面
      */
     @RequestMapping("/business/showStoreDetail")
-    @ResponseBody
     public BaseResponse showStoreDetail(HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
         String sId=request.getParameter("sId");//店铺id
+        String openId=request.getParameter("openId");
+        JSONObject store =businessService.showStoreDetail(sId,openId);
 
-        Record store =businessService.showStoreDetail(sId);
-        if (!store.equals(null))
+        if (store!=null)
         {
+            Object array=getTopFourWare(sId);
+            store.put("sWares",array);
             baseResponse.setData(store);
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
@@ -140,71 +208,19 @@ public class BusinessController {
         return baseResponse;
     }
 
-    /**
-     *显示店铺的商品
-     * @param request
-     * @return
-     */
-    @RequestMapping("/business/showStoreWare")
-    @ResponseBody
-    public BaseResponse showStoreWare(HttpServletRequest request){
-        BaseResponse baseResponse=new BaseResponse();
-        BusinessServiceZ businessService=new BusinessServiceZ();
-        String wStore=request.getParameter("wStore");//店铺id
-        List<Record> ware=businessService.showStoreWare(wStore);
-        if (ware!=null){
-            baseResponse.setData(ware);
-            baseResponse.setResult(ResultCodeEnum.SUCCESS);
-        }
-        else {
-            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
-        }
-        return baseResponse;
+    //获取店铺Top4商品
+    private Object getTopFourWare(String sId) {
+        System.out.println(sId+" "+(restTemplate==null));
+        JSONObject array = restTemplate.getForObject("http://localhost:8003/ware/getTopFourWare?sId="+sId,JSONObject.class);
+        return array.get("data");
+        //return null;
     }
 
-    /**
-     * 显示店铺自定义分类
-     */
-    @RequestMapping("/business/showStoreClass")
-    @ResponseBody
-    public BaseResponse showStoreClass(HttpServletRequest request){
-        BaseResponse baseResponse=new BaseResponse();
-        BusinessServiceZ businessService=new BusinessServiceZ();
-        String wStore=request.getParameter("wStore");//店铺id
+    /*@RequestMapping("")
+    @ResponseBody*/
 
-        List<Record> record=businessService.showStoreClass(wStore);
-        if (!record.equals(null)){
-            baseResponse.setData(record);
-            baseResponse.setResult(ResultCodeEnum.SUCCESS);
-        }
-        else {
-            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
-        }
-        return baseResponse;
-    }
 
-    /**
-     * 显示一级或二级分类中的商品
-     */
-    @RequestMapping("/business/showStoreClassWare")
-    @ResponseBody
-    public BaseResponse showStoreClassWare(HttpServletRequest request) {
-        BaseResponse baseResponse = new BaseResponse();
-        BusinessServiceZ businessService = new BusinessServiceZ();
-        String wbWFDId = request.getParameter("wbWFDId");//一级id
-        String wbWSDId = request.getParameter("wbWSDId");//二级id
-        if (wbWSDId==null||wbWSDId.equals(""))//如果是一级
-        {
-            List<Record> record=businessService.showStoreFClassWare(wbWFDId);
-            baseResponse.setData(record);
-        }
-        else {
-            List<Record> record=businessService.showStoreSClassWare(wbWSDId);
-            baseResponse.setData(record);
-        }
-        baseResponse.setResult(ResultCodeEnum.SUCCESS);
-        return baseResponse;
-    }
+
 
 
 
@@ -212,15 +228,20 @@ public class BusinessController {
      * 查看浏览记录
      */
     @RequestMapping("/business/showBrowseRecord")
-    @ResponseBody
+    
     public BaseResponse showBrowseRecord(HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
 
         String bid=request.getParameter("bId");
-        List<Record> browserecords= businessService.showBrowseRecord(bid);
-        baseResponse.setData(browserecords);
-        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        JSONArray browserecords= businessService.showBrowseRecord(bid);
+        if (!browserecords.isEmpty()){
+            baseResponse.setData(browserecords);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
         return baseResponse;
     }
 
@@ -228,7 +249,7 @@ public class BusinessController {
      * 删除浏览记录
      */
     @RequestMapping("/business/deleteBrowseRecord")
-    @ResponseBody
+    
     public BaseResponse deleteBrowseRecord(HttpServletRequest request)
     {
         BaseResponse baseResponse=new BaseResponse();
@@ -263,16 +284,21 @@ public class BusinessController {
      * 查看收藏的商品
      */
     @RequestMapping("/business/showCollectWare")
-    @ResponseBody
+    
     public BaseResponse showCollectWare(HttpServletRequest request)
     {
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
         String bId=request.getParameter("bId");
 
-        List<Record> collextwares=businessService.showCollectWare(bId);
-        baseResponse.setData(collextwares);
-        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        JSONArray collextwares=businessService.showCollectWare(bId);
+        if (!collextwares.isEmpty()){
+            baseResponse.setData(collextwares);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
         return baseResponse;
     }
 
@@ -280,15 +306,20 @@ public class BusinessController {
      * 查看收藏的店铺
      */
     @RequestMapping("/business/showCollectStore")
-    @ResponseBody
+    
     public BaseResponse showCollectStore(HttpServletRequest request)
     {
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
         String bId=request.getParameter("bId");
-        List<Record> collextstore=businessService.showCollectStore(bId);
-        baseResponse.setData(collextstore);
-        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        JSONArray collextstore=businessService.showCollectStore(bId);
+        if (!collextstore.isEmpty()){
+            baseResponse.setData(collextstore);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
         return baseResponse;
     }
 
@@ -296,14 +327,15 @@ public class BusinessController {
      * 删除收藏记录
      */
     @RequestMapping("/business/deleteCollect")
-    @ResponseBody
+    
     public BaseResponse deleteCollect(HttpServletRequest request)
     {
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
-        String cId=request.getParameter("cId");
+        String sId=request.getParameter("sId");
+        String bId=request.getParameter("bId");
 
-        if(businessService.deleteCollect(cId)){
+        if(businessService.deleteCollect(sId,bId)){
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
         else
@@ -317,7 +349,7 @@ public class BusinessController {
      *查看代理店铺
      */
     @RequestMapping("/business/showCopStore")
-    @ResponseBody
+    
     public BaseResponse showCopStore(HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
@@ -325,9 +357,16 @@ public class BusinessController {
         String bId=request.getParameter("bId");
         String copState=request.getParameter("copState");
 
-        List<Record> copStores=businessService.showCopStore(bId,copState);
-        baseResponse.setData(copStores);
-        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+       JSONArray copStores=businessService.showCopStore(bId,copState);
+       if (!copStores.isEmpty())
+       {
+           baseResponse.setData(copStores);
+           baseResponse.setResult(ResultCodeEnum.SUCCESS);
+       }
+       else
+       {
+           baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+       }
         return baseResponse;
     }
 
@@ -335,7 +374,7 @@ public class BusinessController {
      * 终止代理
      */
     @RequestMapping("/business/deleteCop")
-    @ResponseBody
+    
     public BaseResponse deleteCop(HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
@@ -354,26 +393,93 @@ public class BusinessController {
 
 
     @RequestMapping("/business/intoMine")
-    @ResponseBody
     public BaseResponse intoMine(HttpServletRequest request) {
         BaseResponse baseResponse = new BaseResponse();
         BusinessServiceZ service=new BusinessServiceZ();
+
         String openId=request.getParameter("openId");
-        Record mine=service.intoMine(openId);
-        if (mine==null){
-            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        if (!service.isArthorise(openId)){
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);//未授权
+            return baseResponse;
         }
-        else {
+        JSONObject mine=service.intoMine(openId);
+
+        if (mine==null){
+            Visitor visitor=service.getVisitorByOpenId(openId);
+            baseResponse.setData(visitor);
+            baseResponse.setData(visitor);
+            baseResponse.setResult(ResultCodeEnum.NOT_REGISTER);//未注册 已授权
+        }
+        else {//已注册 已授权
             baseResponse.setData(mine);
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
         return baseResponse;
     }
 
+    @RequestMapping("/business/getWeixinInfo")
+    public BaseResponse getWeixinInfo(HttpServletRequest request){
+        String openId=request.getParameter("openId");
+        String weixinName=request.getParameter("weixinName");
+        String weixinIcon=request.getParameter("weixinIcon");
+        BaseResponse response=new BaseResponse();
+        BusinessServiceZ service=new BusinessServiceZ();
+        service.addVisitor(openId,weixinName,weixinIcon);
+        response.setResult(ResultCodeEnum.SUCCESS);
+        return response;
+    }
+
+
+    /**
+     * 获取cos临时密钥
+     */
+    @RequestMapping("/business/getTempKey")
+    @ResponseBody
+    public org.json.JSONObject getTempKey()
+    {
+        TreeMap<String, Object> config = new TreeMap<String, Object>();
+        org.json.JSONObject credential;
+        try {
+            // 固定密钥
+            config.put("SecretId", Constant.Secret_id);
+            // 固定密钥
+            config.put("SecretKey", Constant.Secret_key);
+
+            // 临时密钥有效时长，单位是秒
+            config.put("durationSeconds", 1800);
+
+            // 换成您的 bucket
+            config.put("bucket", "examplebucket-appid");
+            // 换成 bucket 所在地区
+            config.put("region", "ap-guangzhou");
+
+            // 这里改成允许的路径前缀，可以根据自己网站的用户登录态判断允许上传的目录，例子：* 或者 a/* 或者 a.jpg
+            config.put("allowPrefix", "*");
+
+            // 密钥的权限列表。简单上传和分片需要以下的权限，其他权限列表请看 https://cloud.tencent.com/document/product/436/31923
+            String[] allowActions = new String[] {
+                    // 简单上传
+                    "name/cos:PutObject",
+                    // 分片上传
+                    "name/cos:InitiateMultipartUpload",
+                    "name/cos:ListMultipartUploads",
+                    "name/cos:ListParts",
+                    "name/cos:UploadPart",
+                    "name/cos:CompleteMultipartUpload"
+            };
+            config.put("allowActions", allowActions);
+
+            credential = CosStsClient.getCredential(config);
+            System.out.println(credential);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("no valid secret !");
+        }
+        return credential;
+    }
 
     /*放到indent
     @RequestMapping("/business/showCIndentList")
-    @ResponseBody
+    
     public BaseResponse showCIndentList(HttpServletRequest request) {
         BaseResponse baseResponse = new BaseResponse();
         BusinessServiceZ businessService = new BusinessServiceZ();
@@ -411,7 +517,7 @@ public class BusinessController {
      * @return
      *//*
     @RequestMapping("/business/showCIndent")
-    @ResponseBody
+    
     public BaseResponse showCIndent(HttpServletRequest request){
         BaseResponse baseResponse = new BaseResponse();
         BusinessServiceZ businessService = new BusinessServiceZ();
@@ -446,7 +552,7 @@ public class BusinessController {
     }
 
     @RequestMapping("/business/showMIndentList")
-    @ResponseBody
+    
     public BaseResponse showMIndentList(HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
@@ -483,7 +589,7 @@ public class BusinessController {
         return baseResponse;
     }
     @RequestMapping("/business/showMReturnIndent")
-    @ResponseBody
+    
     public BaseResponse showMReturnIndent(HttpServletRequest request) {
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
@@ -502,7 +608,7 @@ public class BusinessController {
 
 
     @RequestMapping("/business/showMFinishIndent")
-    @ResponseBody
+    
     public BaseResponse showMFinishIndent(HttpServletRequest request) {
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();

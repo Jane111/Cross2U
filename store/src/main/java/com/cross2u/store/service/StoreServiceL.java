@@ -1,9 +1,6 @@
 package com.cross2u.store.service;
 
-import com.cross2u.store.model.Manufacturer;
-import com.cross2u.store.model.Returngoodmould;
-import com.cross2u.store.model.Store;
-import com.cross2u.store.model.Storebill;
+import com.cross2u.store.model.*;
 import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSONObject;
 
@@ -21,6 +18,28 @@ public class StoreServiceL {
         return Returngoodmould.dao.findById(rgmId);
     }
     //2、根据Id，找Store的Detail
+    public JSONObject selectStoreDetailCoop(BigInteger sId,BigInteger bId)
+    {
+        JSONObject storeDetail = new JSONObject();
+        Store store = Store.dao.findById(sId);
+        storeDetail.put("sName",store.getSName());//店铺名称
+        storeDetail.put("sScore",store.getSScore());//店铺评分
+        storeDetail.put("sMmId",store.getSMmId());//店铺对应的mmId
+        //用户代理该店铺的状态
+        Cooperation cooperation = Cooperation.dao.findFirst("select copState from cooperation " +
+                "where copBId=? AND copSId=?",bId,sId);
+        Integer isCoop=0;
+        if(cooperation!=null)
+        {
+            isCoop = cooperation.getCopState();
+            if(isCoop==1)
+            {
+                storeDetail.put("isCoop",1);//该用户代理了该店铺
+            }
+        }
+        storeDetail.put("isCoop",isCoop);//该用户代理该店铺
+        return storeDetail;
+    }
     public JSONObject selectStoreDetail(BigInteger sId)
     {
         JSONObject storeDetail = new JSONObject();

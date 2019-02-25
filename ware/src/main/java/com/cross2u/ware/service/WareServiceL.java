@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import com.alibaba.fastjson.JSONArray;
@@ -26,9 +27,20 @@ public class WareServiceL {
     {
         JSONObject response = restTemplate.getForObject("http://User/business/findBusinessDetailByBId/"+bId,JSONObject.class);
         return response.getJSONObject("data");
-
     }
-    //2、得到商店的store的detail
+    //得到多个business的信息
+    public JSONArray getManyBusinessByBId(String bId)
+    {
+        JSONObject response = restTemplate.getForObject("http://User/business/findManyBusinessByBId/"+bId,JSONObject.class);
+        return response.getJSONArray("data");
+    }
+    //2、得到商店的store的detail,含有代理信息
+    public JSONObject getStoreDetailCoop(BigInteger bId,BigInteger sId)
+    {
+        JSONObject response = restTemplate.getForObject("http://Store/store/findStoreDetailCoop?bId="+bId+"&sId="+sId,JSONObject.class);
+        return response.getJSONObject("data");
+    }
+    //没有代理信息
     public JSONObject getStoreDetail(BigInteger sId)
     {
         JSONObject response = restTemplate.getForObject("http://Store/store/findStoreDetail/"+sId,JSONObject.class);
@@ -37,9 +49,15 @@ public class WareServiceL {
     //3、得到mm的logo
     public JSONObject getMMLogoDetail(BigInteger mmId)
     {
-        JSONObject response = restTemplate.getForObject("http://User/manufacturer/findStoreDetail/"+mmId,JSONObject.class);
+        JSONObject response = restTemplate.getForObject("http://User/manufacturer/findMMLogoDetail/"+mmId,JSONObject.class);
         return response.getJSONObject("data");
     }
+    //4、得到某个用户是否收藏某个商品
+    public Integer getBIsCollectW(BigInteger bId,BigInteger wId)
+    {
+        return restTemplate.getForObject("http://User/business/findBIsCollectW?wId="+wId+"&bId="+bId,Integer.class);
+    }
+
     /*
      * 与其他模块进行通信provider
     * */
@@ -87,17 +105,19 @@ public class WareServiceL {
     }
 
     //提取得到单品规格的代码，封装
-    public JSONArray getFormatForProduct(BigInteger pId)
+    public String getFormatForProduct(BigInteger pId)
     {
-        List<Productformat> pfList = Productformat.dao.find("select pfFormat,pfFormatOption,pfDefineOption" +
+        List<Productformat> pfList = Productformat.dao.find("select pfFormat,pfFormatOption,pfDefineOption " +
                 "from productformat where pfProduct=?",pId);//得到该单品对应的规格
-        JSONArray formatList = new JSONArray();//单品对应的规格数组
+        String formatList = "";//单品对应的规格数组
         for(Productformat pf:pfList)
         {
-            JSONObject format=new JSONObject();
-            format.put("fName",Format.dao.findById(pf.getPfFormat()).getFChName());//得到规格名
-            format.put("foName", Formatoption.dao.findById(pf.getPfFormat()).getFoChName());//得到规格对应的选项名
-            formatList.add(format);
+//            JSONObject format=new JSONObject();
+            String format = Format.dao.findById(pf.getPfFormat()).getFName()+":"+Formatoption.dao.findById(pf.getPfFormatOption()).getFoName();
+            formatList+=format+" ";
+            //            format.put("fName",Format.dao.findById(pf.getPfFormat()).getFName());//得到规格名
+//            format.put("foName", Formatoption.dao.findById(pf.getPfFormatOption()).getFoName());//得到规格对应的选项名
+//            formatList.add(format);
         }
         return formatList;
     }
@@ -106,7 +126,7 @@ public class WareServiceL {
     {
         JSONObject aComment=new JSONObject();
         //对应单品规格信息format
-        JSONArray formatList = getFormatForProduct(ew.getEwPId());//单品对应的规格数组
+        String formatList = getFormatForProduct(ew.getEwPId());//单品对应的规格数组
         aComment.put("format",formatList);//评价内容ID
         //评价回复数 ReplyNum
         Integer ReplyNum = Db.queryInt("select count(*) from bevalreply where berECId=?",ew.getEwId());
@@ -115,22 +135,25 @@ public class WareServiceL {
         aComment.put("ewId",ew.getEwId());//评价内容ID
         aComment.put("ewCommentatorId",ew.getEwCommentator());//评论者Id
 
-//        Visitor commentator=Visitor.dao.findById(Business.dao.findById(ew.getEwCommentator()).getBOpenId());
-//        aComment.put("ewCommentatorIcon",commentator.getVWeiXinIcon());//评论者头像
-//        aComment.put("ewCommentatorName",commentator.getVWeiXinName());//评论者昵称
-
         /*与其他模块通信*/
         JSONObject business = getBusinessDetail(ew.getEwCommentator());
         aComment.put("ewCommentatorName",business.getString("vWeiXinName"));//代理商昵称
-        aComment.put("ewCommentatorIcon",business.getInteger("vWeiXinIcon"));//评论者头像
+        aComment.put("ewCommentatorIcon",business.getString("vWeiXinIcon"));//评论者头像
         /*与其他模块通信*/
 
         aComment.put("ewRank",ew.getEwRank());//商品描述等级
         aComment.put("ewCotent",ew.getEwCotent());//评价文字内容
-        aComment.put("ewImg",ew.getEwImg());//附加图片
-        aComment.put("ewImg2",ew.getEwImg2());//附加图片2
-        aComment.put("ewImg3",ew.getEwImg3());//附加图片3
-        aComment.put("ewCreate",ew.getEwCreateTime());//创建时间
+
+        //图片以数组的形式发送
+        JSONArray Img = new JSONArray();
+        Img.add(ew.getEwImg());
+        Img.add(ew.getEwImg2());
+        Img.add(ew.getEwImg3());
+        aComment.put("ewImg",Img);//附加图片
+
+        //时间的形式格式化
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        aComment.put("ewCreate",sdf.format(ew.getEwCreateTime()));//创建时间
         aComment.put("mepCotent",ew.getEwReply());//回复文字内容
         return aComment;
     }
@@ -142,12 +165,12 @@ public class WareServiceL {
         //2、得到的类只有select出来的内容
         //3、如果不用jason封装，则表字段名为期jason中的名字
         JSONArray showCategory=new JSONArray();
-        List<Category> caList=Category.dao.find("select ctId,ctChName from category where ctParentId=?",0);
+        List<Category> caList=Category.dao.find("select ctId,ctName from category where ctParentId=?",0);
         for(Category ca:caList)
         {
             JSONObject aCate=new JSONObject();
             aCate.put("ctId",ca.getCtId());
-//            aCate.put("ctChName",ca.getCtChName());//中文名
+            aCate.put("ctName",ca.getCtName());//中文名
             showCategory.add(aCate);
         }
         return showCategory;
@@ -156,21 +179,21 @@ public class WareServiceL {
     public JSONArray selectSecondClass(BigInteger ctParentId)
     {
         JSONArray showSecondCate=new JSONArray();
-        List<Category> secondCate=Category.dao.find("select ctId,ctChName from Category where ctParentId=?",ctParentId);
+        List<Category> secondCate=Category.dao.find("select ctId,ctName from category where ctParentId=?",ctParentId);
         for(Category ca:secondCate)
         {
             JSONObject aCate=new JSONObject();
             aCate.put("ct2Id",ca.getCtId());
-//            aCate.put("ct2ChName",ca.getCtChName());//中文名
+            aCate.put("ct2Name",ca.getCtName());//中文名
             BigInteger bSecondId=ca.getCtId();
-            List<Category> thirdList=Category.dao.find("select ctId,ctChName from Category where ctParentId=?",bSecondId);
+            List<Category> thirdList=Category.dao.find("select ctId,ctName,ctImg from category where ctParentId=?",bSecondId);
             aCate.put("ct2",thirdList);//三级目录中的内容
             showSecondCate.add(aCate);
         }
         return showSecondCate;
     }
-    //首页显示商品，游客身份和登录身份
-    public JSONArray selectAllWare(BigInteger bId)
+    //2、首页显示商品，游客身份和登录身份
+    public JSONArray selectAllWare(BigInteger bId,Integer pageIndex,Integer pageSize)
     {
         JSONArray showWareList=new JSONArray();
         List<Ware> wareList = new ArrayList<>();
@@ -197,8 +220,8 @@ public class WareServiceL {
             for(Category thirdca:thirdList)
             {
                 //显示出商品,没有考虑货币单位和商品的数量
-                List<Ware> wareListPart = Ware.dao.find("select wId,wMainImage,wTitle,wStartPrice," +
-                        "wHighPrice,wPriceUnit from ware where wClass=?",thirdca.getCtId());
+                List<Ware> wareListPart = Ware.dao.find("select wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit " +
+                        "from ware where wClass=? limit "+pageSize+" offset "+(pageIndex-1)*pageSize,thirdca.getCtId());
                 wareList.addAll(wareListPart);
             }
         }
@@ -206,8 +229,8 @@ public class WareServiceL {
         {
             // todo 显示出商品,没有考虑货币单位和商品的数量
             wareList=Ware.dao.find("select wId,wMainImage,wTitle,wStartPrice," +
-                    "wHighPrice,wPriceUnit from ware");
-            //todo 分页的语句limit pageSize offset (pageIndex-1)*pageSize
+                    "wHighPrice,wPriceUnit from ware limit "+pageSize+" offset "+(pageIndex-1)*pageSize);
+            //分页的语句limit pageSize offset (pageIndex-1)*pageSize
         }
 
         for(Ware w:wareList)
@@ -227,8 +250,8 @@ public class WareServiceL {
         }
         return showWareList;
     }
-    //显示商品详情
-    public JSONObject selectWareBrief(BigInteger wId)
+    //4、显示商品详情
+    public JSONObject selectWareBrief(BigInteger wId,BigInteger bId)
     {
         JSONObject wareBrief=new JSONObject();
 
@@ -236,11 +259,18 @@ public class WareServiceL {
         Ware w = Ware.dao.findById(wId);
         JSONObject baseInfo=new JSONObject();
         baseInfo.put("wId",w.getWId());
-        baseInfo.put("wMainImage",w.getWMainImage());
-        baseInfo.put("wImage1",w.getWImage1());
-        baseInfo.put("wImage2",w.getWImage2());
-        baseInfo.put("wImage3",w.getWImage3());
-        baseInfo.put("wImage4",w.getWImage4());
+        JSONArray imageList = new JSONArray();
+        imageList.add(w.getWMainImage());
+        imageList.add(w.getWImage1());
+        imageList.add(w.getWImage2());
+        imageList.add(w.getWImage3());
+        imageList.add(w.getWImage4());
+//        baseInfo.put("wMainImage",w.getWMainImage());
+//        baseInfo.put("wImage1",w.getWImage1());
+//        baseInfo.put("wImage2",w.getWImage2());
+//        baseInfo.put("wImage3",w.getWImage3());
+//        baseInfo.put("wImage4",w.getWImage4());
+        baseInfo.put("imageList",imageList);
         baseInfo.put("wTitle",w.getWTitle());
         baseInfo.put("wStartPrice",w.getWStartPrice());
         baseInfo.put("wHighPrice",w.getWHighPrice());
@@ -252,9 +282,18 @@ public class WareServiceL {
         baseInfo.put("wIsEnsureQuality",w.getWIsEnsureQuality());
         baseInfo.put("wReplaceDays",w.getWReplaceDays());
         baseInfo.put("wDeliverHour",w.getWDeliverHour());
-        baseInfo.put("wDescription",w.getWDescription());
+        baseInfo.put("wDescription",w.getWDescription().split(","));
         baseInfo.put("wMonthSale",getMonthSale(wId));//通过函数得到商品的月销量
         baseInfo.put("wDeliverArea",w.getWDeliverArea());//得到配送区域的内容
+
+        if(bId!=null)
+        {
+            baseInfo.put("isCollect",getBIsCollectW(bId,wId));//是否收藏该商品
+        }
+        else
+        {
+            baseInfo.put("isCollect",0);//是否收藏该商品
+        }
         wareBrief.put("baseInfo",baseInfo);
 
         //评价内容,按时间进行排序
@@ -262,72 +301,112 @@ public class WareServiceL {
 
         Integer ewCount = Db.queryInt( "select count(*) from evalware WHERE ewWId=?",wId);
         comment.put("ewCount",ewCount);
-        Evalware com= Evalware.dao.findFirst("select * from evalware where ewWId=?",wId);
-        comment.put("ewId",com.getEwId());
-        comment.put("ewCommentatorId",com.getEwCommentator());//评论者Id
+        JSONArray commentList = new JSONArray();
+        List<Evalware> comList= Evalware.dao.find("select * from evalware where ewWId=? limit 4",wId);
 
-//        Visitor commentator=Visitor.dao.findById(Business.dao.findById(com.getEwCommentator()).getBOpenId());
-//        comment.put("ewCommentatorIcon",commentator.getVWeiXinIcon());//评论者头像
-//        comment.put("ewCommentatorName",commentator.getVWeiXinName());//评论者昵称
-
-         /*与其他模块通信*/
-        JSONObject business = getBusinessDetail(com.getEwCommentator());
-        comment.put("ewCommentatorName",business.getString("vWeiXinName"));//代理商昵称
-        comment.put("ewCommentatorIcon",business.getString("vWeiXinIcon"));//评论者头像
+        String manyBId = "";
+        for(Evalware com:comList)//
+        {
+            if(com!=null)
+            {
+                manyBId+=com.getEwCommentator()+",";
+            }
+        }
         /*与其他模块通信*/
+        JSONArray manyBusiness = getManyBusinessByBId(manyBId);
+        /*与其他模块通信*/
+        int index=0;
+        //如果小于4个
+        for(Evalware com:comList)
+        {
+            if(com!=null)
+            {
+                JSONObject aCom = new JSONObject();
+                aCom.put("ewId",com.getEwId());
+                aCom.put("ewCommentatorId",com.getEwCommentator());//评论者Id
 
-        comment.put("ewCotent",com.getEwCotent());
+                JSONObject business = manyBusiness.getJSONObject(index);
+                aCom.put("ewCommentatorName",business.getString("vWeiXinName"));//代理商昵称
+                aCom.put("ewCommentatorIcon",business.getString("vWeiXinIcon"));//评论者头像
+
+                aCom.put("ewCotent",com.getEwCotent());
+                commentList.add(aCom);
+                index++;
+            }
+        }
+
+        comment.put("commentList",commentList);//多个评论
 
         wareBrief.put("comment",comment);
 
-        //讨论区内容，可能删除
-//        JSONObject talkAera=new JSONObject();
-//
-//        Integer qCount = Db.queryInt( "select count(*) from question WHERE qWare=?",wId);
-//        talkAera.put("qCount",qCount);//问题数qCount
-//        List<Question> questList = Question.dao.find("SELECT qId,qContent FROM question" +
-//                "where qWare=? Limit 2");
-//        talkAera.put("q1Id",questList.get(0).getQId());//问题一ID	q1Id
-//        talkAera.put("q1Content",questList.get(0).getQContent());//问题一内容	q1Content
-////        问题一的回答数（计数） q1AnswerNum
-////        问题二的回答数（计数） q2AnswerNum
-//        talkAera.put("q2Id",questList.get(1).getQId());//问题二ID	q2Id
-//        talkAera.put("q2Content",questList.get(1).getQContent());//问题二内容	q2Content
-//        wareBrief.put("talkAera",talkAera);
-
         //店铺信息
         JSONObject storeInfo=new JSONObject();
-
-//        Store store = Store.dao.findById(w.getWStore());
-//        storeInfo.put("sName",store.getSName());//店铺名称
-//        storeInfo.put("sScore",store.getSScore());//店铺评分
-
-        /*与其他模块通信*/
-        JSONObject store = getStoreDetail(w.getWStore());
-        storeInfo.put("sName",store.getString("sName"));
-        storeInfo.put("sScore",store.getInteger("sScore"));
-        storeInfo.putAll(getMMLogoDetail(store.getBigInteger("sMmId")));//供货商公司Logo
-//        String mmLogo = Mainmanufacturer.dao.findById(store.getSMmId()).getMmLogo();
-//        storeInfo.put("mmLogo",mmLogo);//供货商公司Logo
-        /*与其他模块通信*/
-
-        JSONObject test = new JSONObject();
-        storeInfo.putAll(test);
+        BigInteger storeId = w.getWStore();
+        if(bId!=null)
+        {
+            /*与其他模块通信*/
+            JSONObject store = getStoreDetailCoop(bId,storeId);
+            storeInfo.put("sId",storeId);//店铺Id
+            storeInfo.put("sName",store.getString("sName"));
+            storeInfo.put("sScore",store.getInteger("sScore"));
+            storeInfo.put("isCoop",store.getInteger("isCoop"));//是否收藏该商品
+            storeInfo.putAll(getMMLogoDetail(store.getBigInteger("sMmId")));//供货商公司Logo
+            /*与其他模块通信*/
+        }
+        else
+        {
+            /*与其他模块通信*/
+            JSONObject store = getStoreDetail(storeId);
+            storeInfo.put("sId",storeId);
+            storeInfo.put("sName",store.getString("sName"));
+            storeInfo.put("sScore",store.getInteger("sScore"));
+            storeInfo.put("isCoop",0);//该用户没有代理该店铺
+            storeInfo.putAll(getMMLogoDetail(store.getBigInteger("sMmId")));//供货商公司Logo
+            /*与其他模块通信*/
+        }
 
         wareBrief.put("storeInfo",storeInfo);
 
-        //店铺商品推荐,推荐规则未定？？
-//        TODO  店铺推荐规则有待完善
-        JSONObject recommend=new JSONObject();
-        wareBrief.put("recommend",recommend);
+        //店铺商品推荐,推荐规则未定,推荐最新添加的六个商品
+//        JSONObject recommend=new JSONObject();
+        List<Ware> wareList= Ware.dao.find("select wId,wMainImage,wTitle,wStartPrice,wPriceUnit " +
+                "from ware where wStore=? order by wCreateTime limit 6",storeId);//店铺最新添加的六个商品
+        wareBrief.put("recommend",wareList);
+
         return wareBrief;
     }
-    //显示商品评价
-// todo 如果评价太多，是否考虑分页
-    public JSONArray selectWareComment(BigInteger ewWId)
+    //5、查看单个商品参数
+    public JSONArray selectWareAttributeByWId(BigInteger wId)
+    {
+        JSONArray attrDetailList = new JSONArray();
+        List<Wareattribute> attrList = Wareattribute.dao.find("select waAttribute,waAttributeOption " +
+                "from wareattribute where waWare=?",wId);
+        for(Wareattribute attr:attrList)
+        {
+            JSONObject attrDetail = new JSONObject();
+            attrDetail.put("WareAttribute",Atrribute.dao.findById(attr.getWaAttribute()).getAtName());
+            attrDetail.put("WareAttributeOption",Attributeoption.dao.findById(attr.getWaAttributeOption()).getAoName());
+            attrDetailList.add(attrDetail);
+        }
+        return attrDetailList;
+    }
+
+    //7、显示商品评价
+// 评价太多分页
+    public JSONArray selectWareComment(BigInteger ewWId,Integer comStar,Integer pageIndex,Integer pageSize)
     {
         JSONArray commentList=new JSONArray();
-        List<Evalware> evalList = Evalware.dao.find("select * from evalware where ewWId=?",ewWId);
+        List<Evalware> evalList;
+        if(comStar==0)
+        {
+            evalList = Evalware.dao.find("select * from evalware " +
+                    "where ewWId=? limit "+pageSize+" offset "+(pageIndex-1)*pageSize,ewWId);
+        }
+        else
+        {
+            evalList = Evalware.dao.find("select * from evalware " +
+                    "where ewWId=? AND ewRank =? limit "+pageSize+" offset "+(pageIndex-1)*pageSize,ewWId,comStar);
+        }
         for(Evalware ew:evalList)
         {
             JSONObject aComment=getLookFromEvalWare(ew);
@@ -349,7 +428,7 @@ public class WareServiceL {
             aProduct.put("pStorage",p.getPStorage());//单品库存量
             aProduct.put("pImage",p.getPImage());//单品图片
 
-            JSONArray formatList = getFormatForProduct(p.getPId());//单品对应的规格数组
+            String formatList = getFormatForProduct(p.getPId());//单品对应的规格数组
 
             aProduct.put("format",formatList);//规格
             productList.add(aProduct);
@@ -361,35 +440,53 @@ public class WareServiceL {
     public JSONObject selectCommentDetail(BigInteger ewId)
     {
         JSONObject commentDetail=new JSONObject();
-
+        Evalware evalware = Evalware.dao.findById(ewId);
         //评价内容
         JSONObject aComment=getLookFromEvalWare(Evalware.dao.findById(ewId));
         commentDetail.putAll(aComment);//评价内容封装
 
+        //添加单品的信息
+        Ware ware = Ware.dao.findById(evalware.getEwWId());
+        Product product = Product.dao.findById(evalware.getEwPId());
+        commentDetail.put("wId",ware.getWId());//商品的Id
+        commentDetail.put("wTitle",ware.getWTitle());//商品的标题
+        commentDetail.put("wMonthSale", getMonthSale(ware.getWId()));//商品的月销量
+        commentDetail.put("pImage",product.getPImage());//单品的图片
+        commentDetail.put("pMoney",product.getPMoney());//单品的价格
+        commentDetail.put("pMoneyUnit",product.getPMoneyUnit());//单品的价格单位
+
         //回复评价内容
         JSONArray replyList = new JSONArray();
-        List<Bevalreply> rePartList= Bevalreply.dao.find("select berSpeaker,berCotent,berCreate " +
+        List<Bevalreply> rePartList= Bevalreply.dao.find("select berSpeaker,berCotent,berCreateTime " +
                 "from bevalreply where berECId=?",ewId);//得到该评论的回复列表
+        String manyBId = "";
+        for(Bevalreply rePart:rePartList)
+        {
+            manyBId+=rePart.getBerSpeaker()+",";
+        }
+
+        /*与其他模块通信*/
+        JSONArray manyBusiness = getManyBusinessByBId(manyBId);
+        /*与其他模块通信*/
+
+        int index=0;
         for(Bevalreply rePart:rePartList)
         {
             JSONObject aReply = new JSONObject();
 
-//            Visitor commentator=Visitor.dao.findById(Business.dao.findById(rePart.getBerSpeaker()).getBOpenId());
-//            aReply.put("berSpeakerIcon",commentator.getVWeiXinIcon());//评论者头像
-//            aReply.put("berSpeakerName",commentator.getVWeiXinName());//评论者昵称
-
             aReply.put("berSpeakerId",rePart.getBerSpeaker());//评论者id
-
-            /*与其他模块通信*/
-            JSONObject business = getBusinessDetail(rePart.getBerSpeaker());
-            aReply.put("berSpeakerName",business.getString("vWeiXinName"));//代理商昵称
-            aReply.put("berSpeakerIcon",business.getInteger("vWeiXinIcon"));//评论者头像
-           /*与其他模块通信*/
+            //
+            JSONObject business = manyBusiness.getJSONObject(index);
+            aReply.put("ewCommentatorName",business.getString("vWeiXinName"));//代理商昵称
+            aReply.put("ewCommentatorIcon",business.getString("vWeiXinIcon"));//评论者头像
 
             aReply.put("berCotent",rePart.getBerCotent());//回复文字内容
-            aReply.put("berCreate",rePart.getBerCreateTime());//创建时间
+            //时间的形式格式化
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            aReply.put("berCreate",sdf.format(rePart.getBerCreateTime()));//创建时间
 
             replyList.add(aReply);
+            index++;
         }
         commentDetail.put("replyList",replyList);
         return commentDetail;
@@ -399,8 +496,5 @@ public class WareServiceL {
     {
         return bevalreply.save();
     }
-
-
-
 
 }

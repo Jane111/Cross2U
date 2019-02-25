@@ -31,6 +31,7 @@ public class IndentControllerL {
             @RequestParam("inBusiness") BigInteger inBusiness,
             @RequestParam("inStore") BigInteger inStore,
             @RequestParam("inProduct") BigInteger inProduct,
+            @RequestParam("inWare") BigInteger inWare,
             @RequestParam("inProductNum") Integer inProductNum,
             @RequestParam("inTotalMoney") Float inTotalMoney
     )
@@ -39,6 +40,7 @@ public class IndentControllerL {
         indent.setInBusiness(inBusiness);
         indent.setInStore(inStore);
         indent.setInProduct(inProduct);
+        indent.setInWare(inWare);
         indent.setInProductNum(inProductNum);
         indent.setInTotalMoney(inTotalMoney);
         //默认填充的东西
@@ -67,6 +69,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.ADD_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
 
@@ -168,6 +171,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
 
@@ -190,6 +194,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.UPDATE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //11.M-B售后退款详情界面
@@ -205,6 +210,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //12.供货商操作退款
@@ -243,6 +249,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.UPDATE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //下游买家订单管理
@@ -261,6 +268,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //发货,单发一件
@@ -286,6 +294,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.UPDATE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //发货，操作多件
@@ -317,6 +326,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.UPDATE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //10.M-C售后订单操作之浏览待处理退货订单详情
@@ -333,6 +343,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
+        jr.setData(result);
         return jr;
     }
     //11.M-C售后订单操作之M拒绝-->发通知B，修改申请退货表中的状态
@@ -353,6 +364,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.UPDATE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //12.M-C售后订单操作之M同意-->发通知B，修改状态和退货模版
@@ -377,6 +389,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.UPDATE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //13.M-C售后订单之浏览已同意订单
@@ -393,6 +406,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
+        jr.setData(result);
         return jr;
     }
     //14.M-C售后订单之M确认收货，改变ReturnGoods表中退货状态rgState为6-退货退款完成（M确认收货，删除）
@@ -403,7 +417,7 @@ public class IndentControllerL {
         Returngoods returngoods = new Returngoods();
         returngoods.setRgId(rgId);//申请退货的Id
         returngoods.setRgState(6);
-        Boolean result = indentServiceL.updateReturnGoods(returngoods);
+        boolean result = indentServiceL.updateReturnGoods(returngoods);
         if(result)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
@@ -412,6 +426,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.UPDATE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //（七）我的收支明细
@@ -427,6 +442,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
+        jr.setData(result);
         return jr;
     }
 

@@ -1,6 +1,8 @@
 package com.cross2u.ware.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.cross2u.ware.model.*;
 import com.cross2u.ware.service.WareServicesZ;
 import com.cross2u.ware.util.BaseResponse;
@@ -8,12 +10,12 @@ import com.cross2u.ware.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,16 +28,89 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@RestController
 public class WareController  {
 
     @Autowired
-    private WareServicesZ wareServices=new WareServicesZ();
+    private WareServicesZ wareServices;
+
+    @Autowired
+    private BaseResponse baseResponse;
 
     @RequestMapping("/ware/demo")
     @ResponseBody
-    public BaseResponse demmo(HttpServletRequest request){
+    public String demmo(HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
+        String sId=request.getParameter("sId");
+        return "tongxin!"+sId;
+    }
 
+
+
+    /**
+     * 显示店铺前四个商品
+     */
+    @RequestMapping("/ware/getTopFourWare")
+    public JSONObject  getTopFourWare(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        JSONObject object=new JSONObject();
+        JSONArray array=wareServices.getTopFourWare(sId);
+        if (array!=null){
+            object.put("data",array);
+            object.put("result",ResultCodeEnum.SUCCESS);
+        }
+        else {
+            object.put("result",ResultCodeEnum.FIND_FAILURE);
+        }
+        return object;
+    }
+
+
+
+    /**
+     *显示店铺的商品
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/showStoreWare")
+    public BaseResponse showStoreWare(HttpServletRequest request){
+        String wStore=request.getParameter("wStore");//店铺id
+        String bId=request.getParameter("bId");//bId 若为null
+        JSONArray ware=wareServices.showStoreWare(wStore);
+
+
+        if (ware!=null){
+            System.out.println(ware);
+            baseResponse.setData(ware);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        System.out.println("baseResponse"+baseResponse);
+        return baseResponse;
+    }
+
+
+    /**
+     * 显示一级或二级分类中的商品
+     */
+    @RequestMapping("/ware/showStoreClassWare")
+
+    public BaseResponse showStoreClassWare(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+        String wbWFDId = request.getParameter("wbWFDId");//一级id
+        String wbWSDId = request.getParameter("wbWSDId");//二级id
+        if (wbWSDId==null||wbWSDId.equals(""))//如果是一级
+        {
+           JSONArray record=wareServices.showStoreFClassWare(wbWFDId);
+            baseResponse.setData(record);
+        }
+        else {
+            JSONArray record=wareServices.showStoreSClassWare(wbWSDId);
+            baseResponse.setData(record);
+        }
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
         return baseResponse;
     }
 
@@ -49,7 +124,6 @@ public class WareController  {
     @ResponseBody
     public BaseResponse showForOptions(HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
-
 
         String fId=request.getParameter("fId");
         List<Record> formatoptions=wareServices.showForOptions(fId);
@@ -281,7 +355,7 @@ public class WareController  {
         String ctSId=request.getParameter("ctSId");
         String ctTId=request.getParameter("ctTId");
 
-        Record atrAndFor=wareServices.addFirstStep(ctSId,ctTId);
+        JSONObject atrAndFor=wareServices.addFirstStep(ctSId,ctTId);
         baseResponse.setData(atrAndFor);
         baseResponse.setResult(ResultCodeEnum.SUCCESS);
         return baseResponse;
@@ -324,8 +398,9 @@ public class WareController  {
             return baseResponse;
         }
 
-        JSONArray attriArray=new JSONArray(request.getParameter("attribute"));
-        for (int m=0;m<attriArray.length();m++){
+        String attribute=request.getParameter("attribute");
+        JSONArray attriArray=JSONArray.parseArray(attribute);
+        for (int m=0;m<attriArray.size();m++){
             JSONObject oneAtr=attriArray.getJSONObject(m);
             Wareattribute wareattribute=new Wareattribute();
             wareattribute.setWaWare(wId);
@@ -365,14 +440,14 @@ public class WareController  {
     {
         Float wareStartPrice= 0.0f;
         Float wareHighPrice= 0.0f;
-        JSONArray productArray=new JSONArray(products);
-        for (int i=0;i<productArray.length();i++){
+        JSONArray productArray=JSONObject.parseArray(products);
+        for (int i=0;i<productArray.size();i++){
             JSONObject oneProduct=productArray.getJSONObject(i);
             Product product=new Product();
             product.setPImage(oneProduct.getString("pImage"));
             Float pMoney=new Float(oneProduct.getString("pMoney"));
             product.setPMoney(pMoney);
-            product.setPStorage(new BigInteger(oneProduct.getString("pStorage")));
+            product.setPStorage(new Integer(oneProduct.getString("pStorage")));
             product.setPMoneyUnit(new Integer(pMoneyUnit));
             BigInteger pId=wareServices.addOneProduct(product);
             if (pId==null){
@@ -395,7 +470,7 @@ public class WareController  {
         return true;
     }
     private boolean saveProductFormat(JSONArray formats,BigInteger pId){
-        for (int i=0;i<formats.length();i++){
+        for (int i=0;i<formats.size();i++){
             JSONObject format=formats.getJSONObject(i);
             String fId=format.getString("fId");
             String fo=format.getString("fo");
@@ -418,7 +493,7 @@ public class WareController  {
         BaseResponse baseResponse=new BaseResponse();
         String wId=request.getParameter("wId");//商品id
         String mId=request.getParameter("mId");//店铺id
-        Record ware=wareServices.editShow(wId,mId);
+        JSONObject ware=wareServices.editShow(wId,mId);
         if (ware!=null)
         {
             if (wareServices.hasINGIndent(wId))
@@ -674,4 +749,37 @@ public class WareController  {
         return baseResponse;
     }
 
+    @RequestMapping("/ware/dispatchShowWares")
+    @ResponseBody
+    public BaseResponse dispatchShowWares(HttpServletRequest request)
+    {
+        String wfdId=request.getParameter("wfdId");
+        String wsdId=request.getParameter("wsdId");
+        if (wfdId!=null && wsdId==null){
+            if(wareServices.getWFDWares(wfdId))
+            {
+
+            }
+            else baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        else if(wfdId==null && wsdId!=null)
+        {
+            if(wareServices.getWSDWares(wsdId))
+            {
+
+            }
+            else baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+    /**
+     * 显示店铺 商品排序
+     */
+    public BaseResponse showStoreWareRank(HttpServletRequest request){
+        return baseResponse;
+    }
 }

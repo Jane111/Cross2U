@@ -33,6 +33,14 @@ public abstract class BaseAtrribute<M extends BaseAtrribute<M>> extends Model<M>
 		return get("atEnName");
 	}
 
+	public void setAtName(String atName) {
+		set("atName", atName);
+	}
+
+	public String getAtName() {
+		return get("atName");
+	}
+
 	public void setAtCreateTime(java.util.Date atCreateTime) {
 		set("atCreateTime", atCreateTime);
 	}

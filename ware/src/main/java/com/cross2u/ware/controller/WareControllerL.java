@@ -96,14 +96,19 @@ public class WareControllerL {
         jr.setData(result);
         return jr;
     }
+
     /*
     * 面向前端的controller
     * */
     //2、首页显示商品（根据零售商所选的主营类别进行显示）
     @RequestMapping("/showWare")
-    public BaseResponse showWare(@RequestParam(value = "bId", required = false) BigInteger bId)
+    public BaseResponse showWare(
+            @RequestParam(value = "bId", required = false) BigInteger bId,
+            @RequestParam(value = "pageIndex", required = true) Integer pageIndex,
+            @RequestParam(value = "pageSize", required = true) Integer pageSize
+            )
     {
-        JSONArray showWareList = ws.selectAllWare(bId);
+        JSONArray showWareList = ws.selectAllWare(bId,pageIndex,pageSize);
         if(!showWareList.isEmpty())
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
@@ -118,10 +123,11 @@ public class WareControllerL {
 
     //4、商品详情页
     @RequestMapping("/showWareBrief")
-    public BaseResponse showWareBrief(@RequestParam("wId") String wId)
+    public BaseResponse showWareBrief(
+            @RequestParam("wId") BigInteger wId,
+            @RequestParam(value = "bId",required = false) BigInteger bId)
     {
-        BigInteger wId1 = new BigInteger(wId);
-        JSONObject result = ws.selectWareBrief(wId1);
+        JSONObject result = ws.selectWareBrief(wId,bId);
         if(!result.isEmpty())
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
@@ -133,11 +139,31 @@ public class WareControllerL {
         jr.setData(result);
         return jr;
     }
-    //    7、查看商品的评价
-    @RequestMapping("/showComment")
-    public BaseResponse showComment(@RequestParam("ewWId") BigInteger ewWId)
+    //5、查看商品参数
+    @RequestMapping("/showWareAttribute")
+    public BaseResponse showWareAttribute(@RequestParam("wId") BigInteger wId)
     {
-        JSONArray result = ws.selectWareComment(ewWId);
+        JSONArray result = ws.selectWareAttributeByWId(wId);
+        if(!result.isEmpty())
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
+    //7、查看商品的评价
+    @RequestMapping("/showComment")
+    public BaseResponse showComment(
+            @RequestParam("ewWId") BigInteger ewWId,
+            @RequestParam("comStar") Integer comStar,
+            @RequestParam("pageIndex") Integer pageIndex,
+            @RequestParam("pageSize") Integer pageSize)
+    {
+        JSONArray result = ws.selectWareComment(ewWId,comStar,pageIndex,pageSize);
         if(!result.isEmpty())
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
@@ -151,7 +177,7 @@ public class WareControllerL {
     }
     //8、查看商品包含的单品
     @RequestMapping("/showProduct")
-    public BaseResponse showProduct(@RequestParam("ewWId") BigInteger pWare)
+    public BaseResponse showProduct(@RequestParam("pWare") BigInteger pWare)
     {
         JSONArray result = ws.selectProductFromWare(pWare);
         if(!result.isEmpty())
@@ -169,7 +195,7 @@ public class WareControllerL {
     @RequestMapping("/addCommentReply")
     public BaseResponse addCommentReply(
             @RequestParam("berECId") BigInteger berECId,
-            @RequestParam("berErId") BigInteger berErId,
+            @RequestParam(value="berErId",required = false) BigInteger berErId,
             @RequestParam("berSpeaker") BigInteger berSpeaker,
             @RequestParam("berCotent") String berCotent
 
@@ -189,6 +215,7 @@ public class WareControllerL {
         {
             jr.setResult(ResultCodeEnum.ADD_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //11、查看单个商品评价的详情
@@ -225,7 +252,7 @@ public class WareControllerL {
     }
     //44、显示二级三级目录
     @RequestMapping("/showSecondClass")
-    public BaseResponse showSecondClass(@RequestParam("ewWId") BigInteger ctParentId)
+    public BaseResponse showSecondClass(@RequestParam("ctParentId") BigInteger ctParentId)
     {
         JSONArray result = ws.selectSecondClass(ctParentId);
         if(!result.isEmpty())
