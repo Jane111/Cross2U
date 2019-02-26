@@ -30,11 +30,8 @@ public class UserApplicationTests {
 
 	@Test
 	public void test() {
-		System.out.println("restTemplete+"+(restTemplate==null));
-		String sId="1";
-		String array = restTemplate.getForObject("http://localhost:8003/ware/demo?sId="+sId,String.class);
-		System.out.println(array);
-
+		JSONObject store=bs.showStoreDetail("1","oN-l35HI2__QtMjANr0r0fyEF84Q");
+		System.out.println(store);
 	}
 
 }

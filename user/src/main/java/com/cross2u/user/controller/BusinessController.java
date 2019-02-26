@@ -79,17 +79,22 @@ public class BusinessController {
 
         BusinessServiceZ businessService=new BusinessServiceZ();
 
-        Visitor visitor=businessService.getVisitorByOpenId(bOpenId);
-        String bWeiXinIcon=visitor.getVWeiXinIcon();
-        String bWeiXinName=visitor.getVWeiXinName();
-
         Business business=new Business();
         business.setBOpenId(bOpenId);
-        business.setBWeiXinIcon(bWeiXinIcon);
-        business.setBWeiXinName(bWeiXinName);
+        business.setBRank(1);
+        business.setBScore(0);
+        business.setBStatus(2);
         business.setBName(bName);
         business.setBPhone(bPhone);
         business.setBEmail(bEmail);
+
+        Visitor visitor=businessService.getVisitorByOpenId(bOpenId);
+        if (visitor!=null){
+            String bWeiXinIcon=visitor.getVWeiXinIcon();
+            String bWeiXinName=visitor.getVWeiXinName();
+            business.setBWeiXinIcon(bWeiXinIcon);
+            business.setBWeiXinName(bWeiXinName);
+        }
 
         BaseResponse baseResponse=new BaseResponse();
         BigInteger bId=businessService.addBusinessStep1(business);
@@ -332,16 +337,19 @@ public class BusinessController {
     {
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
-        String sId=request.getParameter("sId");
-        String bId=request.getParameter("bId");
+        String cId=request.getParameter("cId");
+        String [] cIds=cId.split(",");
+        for (String id :cIds){
+            if(businessService.deleteCollect(id)){
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
+            }
+            else
+            {
+                baseResponse.setResult(ResultCodeEnum.DELETE_FAILURE);
+                break;
+            }
+        }
 
-        if(businessService.deleteCollect(sId,bId)){
-            baseResponse.setResult(ResultCodeEnum.SUCCESS);
-        }
-        else
-        {
-            baseResponse.setResult(ResultCodeEnum.DELETE_FAILURE);
-        }
         return baseResponse;
     }
 
@@ -435,7 +443,7 @@ public class BusinessController {
      */
     @RequestMapping("/business/getTempKey")
     @ResponseBody
-    public org.json.JSONObject getTempKey()
+    public String getTempKey()
     {
         TreeMap<String, Object> config = new TreeMap<String, Object>();
         org.json.JSONObject credential;
@@ -474,7 +482,16 @@ public class BusinessController {
         } catch (Exception e) {
             throw new IllegalArgumentException("no valid secret !");
         }
-        return credential;
+        /*JSONObject object=new JSONObject();
+        if (credential!=null&&credential.get("codeDesc").equals("Success")){
+            object.put("codeDesc",credential.getString("codeDesc"));
+            object.put("code",credential.get("code"));
+            JSONObject object1=new JSONObject();
+            object1.put("tmpSecretId",credential.get("data").get("").get("tmpSecretId"));
+            object.put("data",credential.get("data"));
+
+        }*/
+        return credential.toString();
     }
 
     /*放到indent

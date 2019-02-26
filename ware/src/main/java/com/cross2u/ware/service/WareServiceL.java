@@ -49,7 +49,7 @@ public class WareServiceL {
     //3、得到mm的logo
     public JSONObject getMMLogoDetail(BigInteger mmId)
     {
-        JSONObject response = restTemplate.getForObject("http://User/manufacturer/findMMLogoDetail/"+mmId,JSONObject.class);
+        JSONObject response = restTemplate.getForObject("http://localhost:8001/manufacturer/findMMLogoDetail/"+mmId,JSONObject.class);
         return response.getJSONObject("data");
     }
     //4、得到某个用户是否收藏某个商品
@@ -209,12 +209,12 @@ public class WareServiceL {
 
 //            Integer bMainBusiness = Business.dao.findById(bId).getBMainBusiness();
             //得到其对应的商品类别
-            List<Category> secondList=Category.dao.find("select ctId from Category where ctParentId=?",bMainBusiness);
+            List<Category> secondList=Category.dao.find("select ctId from category where ctParentId=?",bMainBusiness);
             List<Category> thirdList = new ArrayList<>();
             for(Category ca:secondList)
             {
                 BigInteger bSecondId=ca.getCtId();
-                List<Category> thirdListPart=Category.dao.find("select ctId from Category where ctParentId=?",bSecondId);
+                List<Category> thirdListPart=Category.dao.find("select ctId from category where ctParentId=?",bSecondId);
                 thirdList.addAll(thirdListPart);//List进行合并
             }
             for(Category thirdca:thirdList)

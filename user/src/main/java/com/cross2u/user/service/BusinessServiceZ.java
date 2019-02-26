@@ -19,7 +19,7 @@ public class BusinessServiceZ {
     //根据openid 查找business中的bId
     private String getBIdByOpenId(String openId) {
         String sql="SELECT bOpenId,bId from business WHERE bOpenId  like '"+openId+"'";
-        Record business=Db.findFirst(sql,openId);
+        Record business=Db.findFirst(sql);
         if (business!=null)
         {
             return business.getBigInteger("bId").toString();
@@ -38,6 +38,7 @@ public class BusinessServiceZ {
     private Integer isCollect(String bId,String sId) {
         String sql="SELECT cId from collect WHERE cOwner=? and cStore=? and cWare is NULL";
         Record isCollect=Db.findFirst(sql,bId,sId);
+        System.out.println(isCollect);
         return isCollect==null?0:1;
     }
 
@@ -107,6 +108,7 @@ public class BusinessServiceZ {
         jsonObject.put("collectNumber",collect);
         String bId=getBIdByOpenId(openId);
         if (bId!=null){
+
             jsonObject.put("isCollect",isCollect(bId,sId));
             jsonObject.put("isCooperation",isCooperation(bId,sId));
         }
@@ -205,9 +207,9 @@ public class BusinessServiceZ {
         return array;
     }
 
-    public boolean deleteCollect(String sId,String bId){
-        String sql="delete from collect where cStore=? and cOwner=?";
-        return Db.update(sql,sId,bId)>=1;
+    public boolean deleteCollect(String cId){
+        String sql="delete from collect where cId=? ";
+        return Db.update(sql,cId)>=1;
     }
 
     public JSONArray showCopStore(String bId, String copState) {
@@ -421,7 +423,11 @@ public class BusinessServiceZ {
     public Visitor getVisitorByOpenId(String openId)
     {
         String sql="select vWeiXinIcon,vWeiXinName from visitor where vOpenId like '"+openId+"'";
-        return Visitor.dao.findFirst(sql);
+        Visitor visitor=Visitor.dao.findFirst(sql);
+        if (visitor.getVWeiXinIcon()==null||visitor.getVWeiXinIcon().equals("")) {
+            return null;
+        }
+        return visitor;
     }
     public JSONObject intoMine(String openId) {
         String updateS="select bId,bRank from business where bOpenId=?";
@@ -443,12 +449,13 @@ public class BusinessServiceZ {
     }
 
     private Integer updatBRank(Business business) {
-        Integer bRank=business.getBRank();
-        if (bRank>=0 && bRank<200) bRank=1;
-        else if (bRank>=200 && bRank<400) bRank=2;
-        else if (bRank>=400 && bRank<800) bRank=3;
-        else if (bRank>=800 && bRank<1000) bRank=4;
-        else if (bRank>=1000) bRank=5;
+        Integer bRank=0;
+        Integer bScore=business.getBScore();
+        if (bScore>=0 && bScore<200) bRank=1;
+        else if (bScore>=200 && bScore<400) bRank=2;
+        else if (bScore>=400 && bScore<800) bRank=3;
+        else if (bScore>=800 && bScore<1000) bRank=4;
+        else if (bScore>=1000) bRank=5;
 
         business.setBRank(bRank);
         business.update();

@@ -2,41 +2,33 @@ package com.cross2u.ware;
 
 import com.alibaba.fastjson.JSONObject;
 import com.cross2u.ware.model.Attributeoption;
-import com.cross2u.ware.model.Ware;
+import com.cross2u.ware.service.WareServiceL;
 import com.cross2u.ware.service.WareServicesZ;
-import com.cross2u.ware.util.BaseResponse;
-import com.cross2u.ware.util.ResultCodeEnum;
-import com.cross2u.ware.util.Util;
-import com.jfinal.json.Json;
 import com.jfinal.plugin.activerecord.Record;
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 
-import javax.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.UUID;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class WareApplicationTests {
 
 	@Autowired
-	WareServicesZ ws;
+    WareServiceL wsL;
+
+    @Autowired
+    WareServicesZ ws;
 
 	@Test
     public void test()
     {
-        BigInteger wId=new BigInteger("2");
-        Boolean response=ws.addOneWareBelong("1","",wId);
-        System.out.println(response);
+        JSONObject object=wsL.getStoreDetail(new BigInteger("1"));
+        System.out.println(object);
     }
 
 	@Test

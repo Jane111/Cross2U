@@ -106,8 +106,9 @@ public class WareServicesZ {
         return Db.findFirst(sql,wId);
     }
 
-    public List<Record> showWares(String sId, String operation) {
-        String selectSql="SELECT wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit,sum(inProductNum) as wSale,sum(pStorage) as wStorage,wStatus,wCreateTime " +
+    public JSONArray showWares(String sId, String operation) {
+        String selectSql="SELECT wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit," +
+                "sum(inProductNum) as wSale,sum(pStorage) as wStorage,wStatus,wCreateTime " +
                 " from (ware INNER JOIN indent on inWare=wId)INNER JOIN product on wId=pWare " +
                 " WHERE wStore=? and inStatus!=0 and inStatus!=5 and inStatus!=6 ";
         String andSql="";
@@ -128,18 +129,39 @@ public class WareServicesZ {
         }
         String sql=selectSql+andSql;
         List<Record> wares=Db.find(sql,sId);
+        JSONArray array=new JSONArray();
         for (Record ware :wares){
-            Record belong=getWBelong(ware.get("wId"));
-            ware.setColumns(belong);
+            JSONObject object=new JSONObject();
+            object.put("wId",ware.getBigInteger("wId"));
+            object.put("wMainImage",ware.get("wMainImage"));
+            object.put("wTitle",ware.get("wTitle"));
+            object.put("wStartPrice",ware.get("wStartPrice"));
+            object.put("wHighPrice",ware.get("wHighPrice"));
+            object.put("wPriceUnit",ware.get("wPriceUnit"));
+            object.put("wSale",ware.get("wSale"));
+            object.put("wStorage",ware.get("wStorage"));
+            object.put("wStatus",ware.get("wStatus"));
+            object.put("wCreateTime",ware.get("wCreateTime"));
+            JSONObject belong=getWBelong(ware.get("wId"));
+
+            object.put("belong",belong);
+
+            array.add(object);
         }
-        return wares;
+        return array;
     }
-    private Record getWBelong(String wId)
+    private JSONObject getWBelong(String wId)
     {
-        String sql="SELECT wbWFDId,wfdName,wbWSDId,wsdName " +
+        String sql="SELECT wbId,wbWFDId,wfdName,wbWSDId,wsdName " +
                 " FROM (warebelong INNER JOIN warefdispatch on wbWFDId=wfdId) INNER JOIN waresdispatch on wbWSDId=wsdId " +
                 " WHERE wbWId=?";
-        return Db.findFirst(sql,wId);
+        Record record=Db.findFirst(sql,wId);
+        JSONObject object=new JSONObject();
+        object.put("wbWFDId",record.get("wbWFDId"));
+        object.put("wfdName",record.get("wfdName"));
+        object.put("wbWSDId",record.get("wbWSDId"));
+        object.put("wsdName",record.get("wsdName"));
+        return object;
     }
 
     public List<Category> addGetCata(String ctParantId) {
@@ -718,7 +740,7 @@ public class WareServicesZ {
         String sql="insert into browserecord(brOwner,brWare) values(?,?)";
         return Db.update(sql,brOwner,brWare)>=1;
     }
-
+    //其他模块调用
     public JSONArray getTopFourWare(String sId) {
         String sql="SELECT sum(inProductNum) as wMonthSale,inWare " +
                 "from indent " +
@@ -745,7 +767,7 @@ public class WareServicesZ {
         }
         return array;
     }
-
+    //其他模块调用
     public JSONArray showStoreFClassWare(String wbWFDId) {
         JSONArray array=new JSONArray();
         String sql="select wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit " +
@@ -780,7 +802,7 @@ public class WareServicesZ {
     }
 
 
-
+    //其他模块调用
     public JSONArray showStoreSClassWare(String wbWSDId) {
         JSONArray array=new JSONArray();
         String sql="select wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit " +
@@ -815,13 +837,153 @@ public class WareServicesZ {
     }
 
 
-    public boolean getWFDWares(String wfdId) {
-        String sql="";
-        return false;
+    public JSONArray getWFDWares(String wfdId) {
+        JSONArray array= new JSONArray();
+        String getWId="SELECT wbWId from warebelong where wbWFDId=? ";
+        List<Record> wIds=Db.find(getWId);
+        for (int i=0;i<wIds.size();i++){
+            Record record=wIds.get(i);
+            BigInteger wId=record.getBigInteger("wbWId");
+            JSONObject ware=getDispatchWareById(wId);
+
+            array.add(ware);
+        }
+        return array;
     }
 
-    public boolean getWSDWares(String wsdId) {
-        String sql="";
+    public JSONArray getWSDWares(String wsdId) {
+        JSONArray array= new JSONArray();
+        String getWId="SELECT wbWId from warebelong where wbWSDId=? ";
+        List<Record> wIds=Db.find(getWId);
+        for (int i=0;i<wIds.size();i++){
+            Record record=wIds.get(i);
+            BigInteger wId=record.getBigInteger("wbWId");
+            JSONObject ware=getDispatchWareById(wId);
+
+            array.add(ware);
+        }
+        return array;
+    }
+
+    public JSONObject getDispatchWareById(BigInteger wId)
+    {
+        String selectSql="SELECT wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit," +
+                "sum(inProductNum) as wSale,sum(pStorage) as wStorage,wStatus,wCreateTime " +
+                " from (ware INNER JOIN indent on inWare=wId)INNER JOIN product on wId=pWare " +
+                " WHERE wId=? and inStatus!=0 and inStatus!=5 and inStatus!=6 ";
+        Record ware=Db.findFirst(selectSql,wId);
+        JSONObject object=new JSONObject();
+        object.put("wId",ware.getBigInteger("wId"));
+        object.put("wMainImage",ware.get("wMainImage"));
+        object.put("wTitle",ware.get("wTitle"));
+        object.put("wStartPrice",ware.get("wStartPrice"));
+        object.put("wHighPrice",ware.get("wHighPrice"));
+        object.put("wPriceUnit",ware.get("wPriceUnit"));
+        object.put("wSale",ware.get("wSale"));
+        object.put("wStorage",ware.get("wStorage"));
+        object.put("wStatus",ware.get("wStatus"));
+        object.put("wCreateTime",ware.get("wCreateTime"));
+        JSONObject belong=getWBelong(wId.toString());
+
+        object.put("belong",belong);
+        return object;
+    }
+
+    public JSONArray showStoreWareBySale(String wStore, String rank) {
+        String sql=" SELECT wId,wMainImage,wTitle,wStartNum,wHighNum,wStartPrice,wHighPrice,wPriceUnit ,wMonthSale " +
+                "from ( SELECT wId as xId,sum(inProductNum) as wMonthSale from ware LEFT  JOIN indent on wId=indent.inWare GROUP BY wId) x INNER JOIN ware on wId=xId  " +
+                "where ware.wStore=？ " +
+                "ORDER BY wMonthSale ";
+        if (rank.equals("2")) sql=sql+"DESC";//降序 销量高的在上面
+        List<Record> wares=Db.find(sql,new BigInteger(wStore));
+        JSONArray array=new JSONArray();
+        for (Record ware:wares){
+            JSONObject json=new JSONObject();
+            json.put("wId",ware.get("wId"));
+            json.put("wMainImage",ware.get("wMainImage"));
+            json.put("wTitle",ware.get("wTitle"));
+            json.put("wStartNum",ware.get("wStartNum"));
+            json.put("wHighNum",ware.get("wHighNum"));
+            json.put("wStartPrice",ware.get("wStartPrice"));
+            json.put("wHighPrice",ware.get("wHighPrice"));
+            json.put("wPriceUnit",ware.get("wPriceUnit"));
+            json.put("wMonthSale",ware.get("wMonthSale"));
+            array.add(json);
+        }
+        return  array;
+    }
+
+    public JSONArray showStoreWareByPrice(String wStore, String rank) {
+        String sql=" SELECT wId, wMainImage,wTitle,wStartNum,wHighNum,wStartPrice,wHighPrice,wPriceUnit " +
+                "from ware " +
+                "where ware.wStore=?  ORDER BY wStartNum ";
+        if (rank.equals("2")) sql=sql+"DESC"; //降序
+        List<Ware> wares=Ware.dao.find(sql,new BigInteger(wStore));
+        JSONArray array=new JSONArray();
+        for (Ware ware:wares){
+            JSONObject json=new JSONObject();
+            json.put("wId",ware.getWId());
+            json.put("wMainImage",ware.getWMainImage());
+            json.put("wTitle",ware.getWTitle());
+            json.put("wStartNum",ware.getWStartNum());
+            json.put("wHighNum",ware.getWHighNum());
+            json.put("wStartPrice",ware.getWStartNum());
+            json.put("wHighPrice",ware.getWHighPrice());
+            json.put("wPriceUnit",ware.getWPriceUnit());
+
+            BigInteger wId=ware.getWId();
+            String inProductNumSql="SELECT sum(inProductNum) as wMonthSale,wId  " +
+                    "from ware INNER JOIN indent on wId=indent.inWare  " +
+                    "WHERE wId like '"+wId+"'";
+            Integer wMonthSale=Db.queryInt(inProductNumSql);
+            json.put("wMonthSale",wMonthSale);
+            array.add(json);
+        }
+        return  array;
+    }
+
+    public JSONArray showStoreWareByTime(String wStore, String rank) {
+        String sql=" SELECT wId, wMainImage,wTitle,wStartNum,wHighNum,wStartPrice,wHighPrice,wPriceUnit " +
+                "from ware " +
+                "where ware.wStore=?  ORDER BY wCreateTime  ";//默认是显示最久的
+        if (rank.equals("2")) sql=sql+"DESC"; //降序 最新的在上面
+        List<Ware> wares=Ware.dao.find(sql,new BigInteger(wStore));
+        JSONArray array=new JSONArray();
+        for (Ware ware:wares){
+            JSONObject json=new JSONObject();
+            json.put("wId",ware.getWId());
+            json.put("wMainImage",ware.getWMainImage());
+            json.put("wTitle",ware.getWTitle());
+            json.put("wStartNum",ware.getWStartNum());
+            json.put("wHighNum",ware.getWHighNum());
+            json.put("wStartPrice",ware.getWStartNum());
+            json.put("wHighPrice",ware.getWHighPrice());
+            json.put("wPriceUnit",ware.getWPriceUnit());
+
+            BigInteger wId=ware.getWId();
+            String inProductNumSql="SELECT sum(inProductNum) as wMonthSale,wId  " +
+                    "from ware INNER JOIN indent on wId=indent.inWare  " +
+                    "WHERE wId like '"+wId+"'";
+            Integer wMonthSale=Db.queryInt(inProductNumSql);
+            json.put("wMonthSale",wMonthSale);
+            array.add(json);
+        }
+        return  array;
+    }
+
+    public boolean dispatchAddWare(String wfdId, String wsdId, String wId) {
+        if (wfdId!=null&&!wfdId.equals("")){
+            String sql="INSERT INTO warebelong SET wbWId=?,wbWFDId=? ";
+            return Db.update(sql,wId,wfdId)==1;
+        }
+        else if (wsdId!=null&&!wsdId.equals("")){
+            String sql="INSERT INTO warebelong SET wbWId=?,wbWSDId=? ";
+            return Db.update(sql,wId,wsdId)==1;
+        }
         return false;
+    }
+    public boolean dispatchDeleteWare(String wbId){
+        String sql="delete from warebelong where wbId=?";
+        return Db.update(sql,wbId)==1;
     }
 }

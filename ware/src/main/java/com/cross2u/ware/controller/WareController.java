@@ -93,6 +93,7 @@ public class WareController  {
 
 
     /**
+     * 其他模块调用
      * 显示一级或二级分类中的商品
      */
     @RequestMapping("/ware/showStoreClassWare")
@@ -319,7 +320,14 @@ public class WareController  {
         String sId=request.getParameter("sId");
         String operation=request.getParameter("operation");
 
-        List<Record>wares=wareServices.showWares(sId,operation);
+        JSONArray wares=wareServices.showWares(sId,operation);
+        if (wares!=null){
+            baseResponse.setData(wares);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
         return baseResponse;
     }
 
@@ -340,6 +348,8 @@ public class WareController  {
         BaseResponse baseResponse=new BaseResponse();
         String ctParentId=request.getParameter("ctId");
         List<Category> first=wareServices.addGetCata(ctParentId);
+        baseResponse.setData(first);
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
         return baseResponse;
     }
 
@@ -756,17 +766,21 @@ public class WareController  {
         String wfdId=request.getParameter("wfdId");
         String wsdId=request.getParameter("wsdId");
         if (wfdId!=null && wsdId==null){
-            if(wareServices.getWFDWares(wfdId))
+            JSONArray array=wareServices.getWFDWares(wfdId);
+            if(array!=null)
             {
-
+                baseResponse.setData(array);
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
             }
             else baseResponse.setResult(ResultCodeEnum.NetERROR);
         }
         else if(wfdId==null && wsdId!=null)
         {
-            if(wareServices.getWSDWares(wsdId))
+            JSONArray array=wareServices.getWSDWares(wsdId);
+            if(array!=null)
             {
-
+                baseResponse.setData(array);
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
             }
             else baseResponse.setResult(ResultCodeEnum.NetERROR);
         }
@@ -779,7 +793,60 @@ public class WareController  {
     /**
      * 显示店铺 商品排序
      */
+    @RequestMapping("/ware/showStoreWareRank")
+    @ResponseBody
     public BaseResponse showStoreWareRank(HttpServletRequest request){
+        String wStore=request.getParameter("wStore");
+        String operation=request.getParameter("operation");
+        String rank=request.getParameter("rank");
+        JSONArray ware=null;
+        switch (operation){
+            case "1"://sale
+                ware=wareServices.showStoreWareBySale(wStore,rank);
+                break;
+            case "2"://price
+                ware=wareServices.showStoreWareByPrice(wStore,rank);
+                break;
+            case "3"://上新时间
+                ware=wareServices.showStoreWareByTime(wStore,rank);
+                break;
+                default:baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+
+        }
+        if(ware!=null){
+            baseResponse.setData(ware);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
         return baseResponse;
     }
+
+    @RequestMapping("/ware/dispatchAddWare")
+    @ResponseBody
+    public BaseResponse dispatchAddWare(HttpServletRequest request)
+    {
+        String wfdId=request.getParameter("wfdId");
+        String wsdId=request.getParameter("wsdId");
+        String wId=request.getParameter("wId");
+        if (wareServices.dispatchAddWare(wfdId,wsdId,wId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else baseResponse.setResult(ResultCodeEnum.ADD_FAILURE);
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/dispatchDeleteWare")
+    @ResponseBody
+    public BaseResponse dispatchDeleteWare(HttpServletRequest request)
+    {
+        String wbId=request.getParameter("wbId");
+        if (wareServices.dispatchDeleteWare(wbId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else baseResponse.setResult(ResultCodeEnum.DELETE_ERROR);
+        return baseResponse;
+    }
+
 }
