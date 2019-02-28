@@ -11,76 +11,76 @@ import java.math.BigInteger;
 @SuppressWarnings("serial")
 public abstract class BaseStock<M extends BaseStock<M>> extends Model<M> implements IBean {
 
-	public void setSId(BigInteger sId) {
-		set("sId", sId);
+	public void setSkId(BigInteger skId) {
+		set("skId", skId);
 	}
 
-	public BigInteger getSId() {
-		return get("sId");
+	public BigInteger getSkId() {
+		return get("skId");
 	}
 
-	public void setSBid(BigInteger sBid) {
-		set("sBid", sBid);
+	public void setSkBid(BigInteger skBid) {
+		set("skBid", skBid);
 	}
 
-	public BigInteger getSBid() {
-		return get("sBid");
+	public BigInteger getSkBid() {
+		return get("skBid");
 	}
 
-	public void setSPId(BigInteger sPId) {
-		set("sPId", sPId);
+	public void setSkPId(BigInteger skPId) {
+		set("skPId", skPId);
 	}
 
-	public BigInteger getSPId() {
-		return get("sPId");
+	public BigInteger getSkPId() {
+		return get("skPId");
 	}
 
-	public void setSNumber(Integer sNumber) {
-		set("sNumber", sNumber);
+	public void setSkNumber(Integer skNumber) {
+		set("skNumber", skNumber);
 	}
 
-	public Integer getSNumber() {
-		return get("sNumber");
+	public Integer getSkNumber() {
+		return get("skNumber");
 	}
 
-	public void setSSId(BigInteger sSId) {
-		set("sSId", sSId);
+	public void setSkSId(BigInteger skSId) {
+		set("skSId", skSId);
 	}
 
-	public BigInteger getSSId() {
-		return get("sSId");
+	public BigInteger getSkSId() {
+		return get("skSId");
 	}
 
-	public void setSSum(Float sSum) {
-		set("sSum", sSum);
+	public void setSkSum(Float skSum) {
+		set("skSum", skSum);
 	}
 
-	public Float getSSum() {
-		return get("sSum");
+	public Float getSkSum() {
+		return get("skSum");
 	}
 
-	public void setSSumUnit(Integer sSumUnit) {
-		set("sSumUnit", sSumUnit);
+	public void setSkSumUnit(Integer skSumUnit) {
+		set("skSumUnit", skSumUnit);
 	}
 
-	public Integer getSSumUnit() {
-		return get("sSumUnit");
+	public Integer getSkSumUnit() {
+		return get("skSumUnit");
 	}
 
-	public void setSCreateTime(java.util.Date sCreateTime) {
-		set("sCreateTime", sCreateTime);
+	public void setSkCreateTime(java.util.Date skCreateTime) {
+		set("skCreateTime", skCreateTime);
 	}
 
-	public java.util.Date getSCreateTime() {
-		return get("sCreateTime");
+	public java.util.Date getSkCreateTime() {
+		return get("skCreateTime");
 	}
 
-	public void setSModifyTime(java.util.Date sModifyTime) {
-		set("sModifyTime", sModifyTime);
+	public void setSkModifyTime(java.util.Date skModifyTime) {
+		set("skModifyTime", skModifyTime);
 	}
 
-	public java.util.Date getSModifyTime() {
-		return get("sModifyTime");
+	public java.util.Date getSkModifyTime() {
+		return get("skModifyTime");
 	}
 
 }
