@@ -9,8 +9,6 @@ import java.util.*;
 import org.ansj.domain.Result;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.ToAnalysis;
-import com.alibaba.fastjson.JSONObject;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
