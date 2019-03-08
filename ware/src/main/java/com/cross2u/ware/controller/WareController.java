@@ -127,7 +127,7 @@ public class WareController  {
         BaseResponse baseResponse=new BaseResponse();
 
         String fId=request.getParameter("fId");
-        List<Record> formatoptions=wareServices.showForOptions(fId);
+        JSONArray formatoptions=wareServices.showForOptions(fId);
         if (formatoptions!=null)
         {
             baseResponse.setData(formatoptions);
@@ -192,29 +192,29 @@ public class WareController  {
             cell.setCellValue(wTitle);
 
             cell=row.createCell(2);
-            String wStartNum=info.get("wStartNum");//起批数目
+            String wStartNum=info.get("wStartNum").toString();//起批数目
             cell.setCellValue(wStartNum);
 
             cell=row.createCell(3);
-            String wHighNum=info.get("wHighNum");//最高批发数目
+            String wHighNum=info.get("wHighNum").toString();//最高批发数目
             cell.setCellValue(wHighNum);
 
             //商品最低价格 商品最高价格
             cell=row.createCell(4);
-            String wStartPrice=info.get("wStartPrice");//最低价格数目
+            Float wStartPrice=info.get("wStartPrice");//最低价格数目
             cell.setCellValue(wStartPrice);
 
             cell=row.createCell(5);
-            String wHighPrice=info.get("wHighPrice");//最高价格数目
+            Float wHighPrice=info.get("wHighPrice");//最高价格数目
             cell.setCellValue(wHighPrice);
 
             //// 销量 商品描述评分 商品编号
             cell=row.createCell(6);
-            String wSale=info.get("wSale");//最高价格数目
+            String wSale=info.get("wSale").toString();//最高价格数目
             cell.setCellValue(wSale);
 
             cell=row.createCell(7);
-            String wDesScore=info.get("wDesScore");//商品描述评分
+            Integer wDesScore=info.get("wDesScore");//商品描述评分
             cell.setCellValue(wDesScore);
 
             cell=row.createCell(8);
@@ -223,13 +223,15 @@ public class WareController  {
             rowNum++;
         }
 
-        String fileName= UUID.randomUUID().toString();
+        String fileName= UUID.randomUUID().toString()+".xls";
 
         try {
             //生成excel文件
             buildExcelFile(fileName, workbook);
             //浏览器下载excel
             buildExcelDocument(fileName,workbook,response);
+            //删除本地文件
+            deleteExcelFile(fileName);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(e);
@@ -297,6 +299,23 @@ public class WareController  {
         fos.flush();
         fos.close();
     }
+    //删除本地文档
+    protected boolean deleteExcelFile(String fileName)throws Exception{
+        File file = new File(fileName);
+        // 如果文件路径所对应的文件存在，并且是一个文件，则直接删除
+        if (file.exists() && file.isFile()) {
+            if (file.delete()) {
+                System.out.println("删除单个文件" + fileName + "成功！");
+                return true;
+            } else {
+                System.out.println("删除单个文件" + fileName + "失败！");
+                return false;
+            }
+        } else {
+            System.out.println("删除单个文件失败：" + fileName + "不存在！");
+            return false;
+        }
+    }
 
     //浏览器下载excel
     protected void buildExcelDocument(String filename,HSSFWorkbook workbook,HttpServletResponse response) throws Exception{
@@ -332,7 +351,7 @@ public class WareController  {
     }
 
 
-    @RequestMapping(" /ware/addGetFirstCata")
+    @RequestMapping("/ware/addGetFirstCata")
     @ResponseBody
     public BaseResponse addGetFirstCata(HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
@@ -342,7 +361,7 @@ public class WareController  {
         return baseResponse;
     }
 
-    @RequestMapping(" /ware/addGetSonCata")
+    @RequestMapping("/ware/addGetSonCata")
     @ResponseBody
     public BaseResponse addGetSonCata(HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
@@ -846,6 +865,56 @@ public class WareController  {
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
         else baseResponse.setResult(ResultCodeEnum.DELETE_ERROR);
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/showGoodEval")
+    @ResponseBody
+    public BaseResponse showGoodEval(HttpServletRequest request)
+    {
+        String sId=request.getParameter("sId");
+        JSONArray array=wareServices.showGoodEval(sId);
+        if (!array.isEmpty()){
+            baseResponse.setData(array);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return baseResponse;
+    }
+
+    /**
+     * 1、显示好评评价列表（4、5星）
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/showNormalEval")
+    public BaseResponse showNormalEval(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        JSONArray array=wareServices.showNormalEval(sId);
+        if (array==null){
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        else {
+            baseResponse.setData(array);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/showBadEval")
+    public BaseResponse showBadEval(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        JSONArray array=wareServices.showBadEval(sId);
+        if (array==null){
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        else {
+            baseResponse.setData(array);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
         return baseResponse;
     }
 

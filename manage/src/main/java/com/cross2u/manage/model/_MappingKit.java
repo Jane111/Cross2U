@@ -23,7 +23,7 @@ public class _MappingKit {
 		arp.addMapping("publicinfo", "piId", Publicinfo.class);
 		arp.addMapping("reportevaluatereasons", "rerId", Reportevaluatereasons.class);
 		arp.addMapping("reportmanufacturereasons", "rmrId", Reportmanufacturereasons.class);
-		arp.addMapping("sensitive", "senId", Sensitive.class);
+		arp.addMapping("sensi", "senId", Sensi.class);
 	}
 }
 

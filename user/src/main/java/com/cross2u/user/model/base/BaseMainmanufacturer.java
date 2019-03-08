@@ -153,11 +153,11 @@ public abstract class BaseMainmanufacturer<M extends BaseMainmanufacturer<M>> ex
 		return get("mmIdDownImage");
 	}
 
-	public void setMmMajorBusiness(String mmMajorBusiness) {
+	public void setMmMajorBusiness(Long mmMajorBusiness) {
 		set("mmMajorBusiness", mmMajorBusiness);
 	}
 
-	public String getMmMajorBusiness() {
+	public Long getMmMajorBusiness() {
 		return get("mmMajorBusiness");
 	}
 
@@ -185,22 +185,6 @@ public abstract class BaseMainmanufacturer<M extends BaseMainmanufacturer<M>> ex
 		return get("mmCompanyContinent");
 	}
 
-	public void setMmEnsureMoney(java.math.BigInteger mmEnsureMoney) {
-		set("mmEnsureMoney", mmEnsureMoney);
-	}
-
-	public java.math.BigInteger getMmEnsureMoney() {
-		return get("mmEnsureMoney");
-	}
-
-	public void setMmEnsureMoneyUnit(Integer mmEnsureMoneyUnit) {
-		set("mmEnsureMoneyUnit", mmEnsureMoneyUnit);
-	}
-
-	public Integer getMmEnsureMoneyUnit() {
-		return get("mmEnsureMoneyUnit");
-	}
-
 	public void setMmFialReasonSelect(Integer mmFialReasonSelect) {
 		set("mmFialReasonSelect", mmFialReasonSelect);
 	}
@@ -215,6 +199,14 @@ public abstract class BaseMainmanufacturer<M extends BaseMainmanufacturer<M>> ex
 
 	public String getMmFailReasonText() {
 		return get("mmFailReasonText");
+	}
+
+	public void setMmAOpeateTime(java.util.Date mmAOperateTime) {
+		set("mmAOperateTime", mmAOperateTime);
+	}
+
+	public java.util.Date getMmAOperateTime() {
+		return get("mmAOperateTime");
 	}
 
 	public void setMmCreateTime(java.util.Date mmCreateTime) {

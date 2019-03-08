@@ -1,9 +1,12 @@
 package com.cross2u.ware.service;
 
+import com.alibaba.fastjson.JSON;
+import com.cross2u.ware.util.MoneyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +22,25 @@ public class WareServiceL {
 
     @Autowired
     RestTemplate restTemplate;
+
+    //获取当前汇率 美元转人民币
+    public Float transferMoney(Float origin,String unit)
+    {
+        if (unit.equals("1"))
+        {
+            return origin;
+        }
+        DecimalFormat df = new DecimalFormat("###.00");
+        String rateStr= MoneyUtil.getRMB(unit);
+        JSONObject object= JSON.parseObject(rateStr);
+        Float rate=(object.getFloat("fSellPri")) /100;
+        System.out.println("rate"+rate);
+        String result=df.format(rate*origin);
+        Float resultMoney=new Float(result);
+        return resultMoney;
+    }
+
+
     /*
     * 与其他模块进行通信consumer
     * */
@@ -31,7 +53,7 @@ public class WareServiceL {
     //得到多个business的信息
     public JSONArray getManyBusinessByBId(String bId)
     {
-        JSONObject response = restTemplate.getForObject("http://User/business/findManyBusinessByBId/"+bId,JSONObject.class);
+        JSONObject response = restTemplate.getForObject("http://localhost:ware:8003/business/findManyBusinessByBId/"+bId,JSONObject.class);
         return response.getJSONArray("data");
     }
     //2、得到商店的store的detail,含有代理信息
@@ -285,6 +307,16 @@ public class WareServiceL {
         baseInfo.put("wDescription",w.getWDescription().split(","));
         baseInfo.put("wMonthSale",getMonthSale(wId));//通过函数得到商品的月销量
         baseInfo.put("wDeliverArea",w.getWDeliverArea());//得到配送区域的内容
+
+        Float rmbStartPrice= w.getWStartPrice();
+        Float rmbHighPrice=w.getWStartPrice();
+        if (!w.getWPriceUnit().equals("1"))//不是rmb单位 进行汇率转换
+        {
+            rmbStartPrice=transferMoney(w.getWStartPrice(),w.getWPriceUnit().toString());
+            rmbHighPrice=transferMoney(w.getWStartPrice(),w.getWHighPrice().toString());
+        }
+        baseInfo.put("rmbStartPrice",rmbStartPrice);
+        baseInfo.put("rmbHighPrice",rmbHighPrice);
 
         if(bId!=null)
         {

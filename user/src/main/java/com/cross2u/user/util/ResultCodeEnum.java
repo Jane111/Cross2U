@@ -21,11 +21,13 @@ public enum ResultCodeEnum
 	NOT_LOGIN("10015", "您还未登录，请先登录！"),
 	EXIST_XOMPANY("10016","该公司已注册"),
 	ADD_FAILURE("20001","添加失败"),
+	UPDATE_FAILURE("2002","更新失败"),
     DELETE_FAILURE("20003","删除失败"),
 	FIND_FAILURE("20004","查询失败"),
 	ADMIN_NO_ACCOUNT("20005","没有该账号"),
 	HAS_BEN_FORBIDDEN("20006","该账号被禁用"),
-	NOT_REGISTER("20013","未注册");
+	NOT_REGISTER("20013","未注册"),
+	HAS_BEEN_REGISTER("20014","已经被注册");
 
 	private String code;
     private String desc;

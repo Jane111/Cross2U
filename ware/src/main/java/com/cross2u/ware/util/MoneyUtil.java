@@ -1,5 +1,7 @@
 package com.cross2u.ware.util;
 
+import com.alibaba.fastjson.JSON;
+import net.sf.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import sun.net.www.protocol.http.HttpURLConnection;
 
@@ -19,16 +21,36 @@ import java.util.Random;
  * 现汇卖出价格来计算
  */
 public class MoneyUtil {
-    @Autowired
-    private static String APPKEY;
+    //@Autowired
+    private static String APPKEY=Constant.APPKEY;
 
     public static final String DEF_CHATSET = "UTF-8";
     public static final int DEF_CONN_TIMEOUT = 30000;
     public static final int DEF_READ_TIMEOUT = 30000;
     public static String userAgent =  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36";
 
+    //2-美元
+    public static String getRMB(String unitStr){
+        if (unitStr.equals("1"))//1-代表人民币
+            return null;
+
+        Object request=getRequest().get(0);;//.getJSONArray(0);
+        JSONArray array=JSONArray.fromObject(request);
+
+        if (array==null){
+            return null;
+        }
+        System.out.println("array="+array);
+        JSONObject object=array.getJSONObject(0);
+        Integer unit=new Integer(unitStr)-1;
+        String data="data"+unit;
+        String result=object.get(data).toString();
+
+        return result;
+    }
+
     //1.人民币牌价
-    public static void getRequestRMB(){
+    public static JSONArray getRequest(){
         String result =null;
         String url ="http://web.juhe.cn:8080/finance/exchange/rmbquot";//请求接口地址
         Map params = new HashMap();//请求参数
@@ -40,13 +62,19 @@ public class MoneyUtil {
             JSONObject object = JSONObject.fromObject(result);
             if(object.getInt("error_code")==0){
                 System.out.println(object.get("result"));
-            }else{
+                String code=object.get("result").toString();
+                JSONArray array=JSONArray.fromObject(code);
+                return array;
+            }
+            else{
                 System.out.println(object.get("error_code")+":"+object.get("reason"));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
     }
+
 
     /**
      *

@@ -25,22 +25,6 @@ public abstract class BaseCategory<M extends BaseCategory<M>> extends Model<M> i
 		return get("ctParentId");
 	}
 
-	public void setCtChName(String ctChName) {
-		set("ctChName", ctChName);
-	}
-
-	public String getCtChName() {
-		return get("ctChName");
-	}
-
-	public void setCtEnName(String ctEnName) {
-		set("ctEnName", ctEnName);
-	}
-
-	public String getCtEnName() {
-		return get("ctEnName");
-	}
-
 	public void setCtName(String ctName) {
 		set("ctName", ctName);
 	}

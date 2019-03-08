@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.cross2u.user.model.*;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -14,6 +15,8 @@ import java.util.List;
 
 @Service
 public class BusinessServiceZ {
+
+
 
 
     //根据openid 查找business中的bId
@@ -108,16 +111,17 @@ public class BusinessServiceZ {
         jsonObject.put("collectNumber",collect);
         String bId=getBIdByOpenId(openId);
         if (bId!=null){
-
+            System.out.println("bID"+bId);
             jsonObject.put("isCollect",isCollect(bId,sId));
             jsonObject.put("isCooperation",isCooperation(bId,sId));
         }
         else{//没有授权认证
+            System.out.println("null????");
             jsonObject.put("isCollect",0);
             jsonObject.put("isCooperation",0);
         }
 
-
+        System.out.println(jsonObject);
         return jsonObject;
     }
 
@@ -214,9 +218,10 @@ public class BusinessServiceZ {
 
     public JSONArray showCopStore(String bId, String copState) {
         JSONArray array=new JSONArray();
-        String sql="SELECT copId,sId,sName,sScore,mmLogo" +
+        String sql="SELECT copId,sId,sName,sScore,mmLogo,copState" +
                 " from (cooperation INNER JOIN store on store.sId=cooperation.copSId) INNER JOIN mainmanufacturer on mainmanufacturer.mmStore=store.sId " +
                 " WHERE cooperation.copBId=? and cooperation.copState=? ";
+        if(copState.equals("2")){sql=sql+" or cooperation.copState=3 or cooperation.copState=4";}
         List<Record> copStores=Db.find(sql,bId,copState);
         for (Record store: copStores){
             JSONObject object=new JSONObject();
@@ -225,7 +230,7 @@ public class BusinessServiceZ {
             object.put("sName",store.get("sName"));
             object.put("sScore",store.getInt("sScore"));
             object.put("mmLogo",store.get("mmLogo"));
-
+            object.put("copState",store.get("copState"));
             array.add(object);
         }
         return array;
@@ -422,7 +427,7 @@ public class BusinessServiceZ {
     }
     public Visitor getVisitorByOpenId(String openId)
     {
-        String sql="select vWeiXinIcon,vWeiXinName from visitor where vOpenId like '"+openId+"'";
+        String sql="select vWeiXinIcon as bWeiXinIcon,vWeiXinName as bWeiXinName from visitor where vOpenId like '"+openId+"'";
         Visitor visitor=Visitor.dao.findFirst(sql);
         if (visitor.getVWeiXinIcon()==null||visitor.getVWeiXinIcon().equals("")) {
             return null;
@@ -430,11 +435,12 @@ public class BusinessServiceZ {
         return visitor;
     }
     public JSONObject intoMine(String openId) {
-        String updateS="select bId,bRank from business where bOpenId=?";
+        String updateS="select * from business where bOpenId=?";
         Business updateR=Business.dao.findFirst(updateS,openId);
         if (updateR==null){
             return null;
         }
+        System.out.println("--------------update:"+updateR);
         BigInteger bId=updateR.getBId();
         updatBRank(updateR);
         String sql="select bWeiXinIcon ,bWeiXinName,bScore,bRank from business where bId=?";
@@ -449,13 +455,26 @@ public class BusinessServiceZ {
     }
 
     private Integer updatBRank(Business business) {
-        Integer bRank=0;
+        int bRank=0;
         Integer bScore=business.getBScore();
-        if (bScore>=0 && bScore<200) bRank=1;
-        else if (bScore>=200 && bScore<400) bRank=2;
-        else if (bScore>=400 && bScore<800) bRank=3;
-        else if (bScore>=800 && bScore<1000) bRank=4;
-        else if (bScore>=1000) bRank=5;
+        System.out.println("bScore"+bScore);
+        if(bScore==null)
+        {
+            return null;
+        }
+        if (bScore>=0 && bScore<100) {
+            bRank=1;
+        } else if (bScore>=100 && bScore<200) {
+            bRank=2;
+        } else if (bScore>=200 && bScore<300) {
+            bRank=3;
+        }
+        else if (bScore>=300 && bScore<400) {
+            bRank=4;
+        }
+        else if (bScore>=400){
+            bRank=5;
+        }
 
         business.setBRank(bRank);
         business.update();
@@ -497,6 +516,11 @@ public class BusinessServiceZ {
         visitor.setVWeiXinIcon(weixinIcon);
         visitor.setVWeiXinName(weixinName);
         return visitor.update();
+    }
+
+    public boolean cancelCop(String copId) {
+        String sql="update cooperation set copState=4 where copId=?";
+        return Db.update(sql,copId)==1;
     }
 }
 

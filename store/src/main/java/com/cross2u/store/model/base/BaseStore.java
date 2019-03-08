@@ -57,11 +57,11 @@ public abstract class BaseStore<M extends BaseStore<M>> extends Model<M> impleme
 		return get("sDescribe");
 	}
 
-	public void setSScore(java.math.BigInteger sScore) {
+	public void setSScore(Integer sScore) {
 		set("sScore", sScore);
 	}
 
-	public java.math.BigInteger getSScore() {
+	public Integer getSScore() {
 		return get("sScore");
 	}
 

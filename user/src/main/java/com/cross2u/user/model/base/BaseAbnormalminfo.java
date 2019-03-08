@@ -49,6 +49,14 @@ public abstract class BaseAbnormalminfo<M extends BaseAbnormalminfo<M>> extends 
 		return get("amiReasons");
 	}
 
+	public void setAmiImg(String amiImg) {
+		set("amiReasons", amiImg);
+	}
+
+	public String getAmiImg() {
+		return get("amiImg");
+	}
+
 	public void setAmiIsAnymous(Integer amiIsAnymous) {
 		set("amiIsAnymous", amiIsAnymous);
 	}
@@ -57,36 +65,36 @@ public abstract class BaseAbnormalminfo<M extends BaseAbnormalminfo<M>> extends 
 		return get("amiIsAnymous");
 	}
 
-	public void setAgmiAId(Long agmiAId) {
-		set("agmiAId", agmiAId);
+	public void setAmiAId(Long amiAId) {
+		set("amiAId", amiAId);
 	}
 
-	public Long getAgmiAId() {
-		return get("agmiAId");
+	public Long getAmiAId() {
+		return get("amiAId");
 	}
 
-	public void setAgiResult(Integer agiResult) {
-		set("agiResult", agiResult);
+	public void setAmiResult(Integer amiResult) {
+		set("amiResult", amiResult);
 	}
 
-	public Integer getAgiResult() {
-		return get("agiResult");
+	public Integer getAmiResult() {
+		return get("amiResult");
 	}
 
-	public void setAgiCreateTime(java.util.Date agiCreateTime) {
-		set("agiCreateTime", agiCreateTime);
+	public void setAmiCreateTime(java.util.Date amiCreateTime) {
+		set("amiCreateTime", amiCreateTime);
 	}
 
-	public java.util.Date getAgiCreateTime() {
-		return get("agiCreateTime");
+	public java.util.Date getAmiCreateTime() {
+		return get("amiCreateTime");
 	}
 
-	public void setAgiModifyTime(java.util.Date agiModifyTime) {
-		set("agiModifyTime", agiModifyTime);
+	public void setAmiModifyTime(java.util.Date amiModifyTime) {
+		set("amiModifyTime", amiModifyTime);
 	}
 
-	public java.util.Date getAgiModifyTime() {
-		return get("agiModifyTime");
+	public java.util.Date getAmiModifyTime() {
+		return get("amiModifyTime");
 	}
 
 }

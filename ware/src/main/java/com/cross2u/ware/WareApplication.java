@@ -10,6 +10,7 @@ import org.springframework.web.client.RestTemplate;
 
 @EnableDiscoveryClient
 @SpringBootApplication
+@EnableEurekaClient
 public class WareApplication {
 
 	public static void main(String[] args) {

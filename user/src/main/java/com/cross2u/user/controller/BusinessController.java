@@ -9,10 +9,7 @@ import com.cross2u.user.util.BaseResponse;
 import com.cross2u.user.util.Constant;
 import com.cross2u.user.util.CosStsClient;
 import com.cross2u.user.util.ResultCodeEnum;
-import com.jfinal.plugin.activerecord.Record;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,8 +17,6 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.TreeMap;
 
 
@@ -88,7 +83,7 @@ public class BusinessController {
         business.setBPhone(bPhone);
         business.setBEmail(bEmail);
 
-        Visitor visitor=businessService.getVisitorByOpenId(bOpenId);
+        Visitor visitor=businessService.getVisitorByOpenId(bOpenId);//是否已经授权
         if (visitor!=null){
             String bWeiXinIcon=visitor.getVWeiXinIcon();
             String bWeiXinName=visitor.getVWeiXinName();
@@ -99,6 +94,7 @@ public class BusinessController {
         BaseResponse baseResponse=new BaseResponse();
         BigInteger bId=businessService.addBusinessStep1(business);
         if(bId!=null){
+            baseResponse.setData(bId);
             baseResponse.setResult(ResultCodeEnum.SUCCESS);//添加成功
         }
         else {
@@ -109,7 +105,6 @@ public class BusinessController {
 
 
     @RequestMapping("/business/addBusinessStep2")
-    
     public BaseResponse addBusinessStep2(HttpServletRequest request) {
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ service=new BusinessServiceZ();
@@ -145,7 +140,7 @@ public class BusinessController {
         String bOtherStore1=request.getParameter("bOtherStore1");//店铺名
 
         Business business=service.findById(bId);
-        business.setBMainBusiness(Integer.valueOf(bMainBusiness));
+        business.setBMainBusiness(new BigInteger(bMainBusiness));
         business.setBOtherPlat1(Integer.valueOf(bOtherPlat1));
         business.setBOtherStore1(bOtherStore1);
         if(service.addBusinessStep23(business))
@@ -377,6 +372,23 @@ public class BusinessController {
        }
         return baseResponse;
     }
+    /**
+     * 取消申请
+     */
+    @RequestMapping("/business/cancelCop")
+    @ResponseBody
+    public  BaseResponse cancelCop(HttpServletRequest request){
+        BusinessServiceZ service=new BusinessServiceZ();
+        BaseResponse response=new BaseResponse();
+        String copId=request.getParameter("copId");
+        if (service.cancelCop(copId)){
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.UPDATE_ERROR);
+        }
+        return response;
+    }
 
     /**
      * 终止代理
@@ -493,6 +505,9 @@ public class BusinessController {
         }*/
         return credential.toString();
     }
+
+
+
 
     /*放到indent
     @RequestMapping("/business/showCIndentList")

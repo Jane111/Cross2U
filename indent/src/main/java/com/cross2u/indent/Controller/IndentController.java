@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.cross2u.indent.Service.IndentServiceZ;
 import com.cross2u.indent.model.Drawbackinfo;
 import com.cross2u.indent.util.BaseResponse;
+import com.cross2u.indent.util.Constant;
 import com.cross2u.indent.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,19 +106,19 @@ public class IndentController {
 
         JSONArray mIndentList=new JSONArray();
         switch(inStatus){
-            case "1"://待付款
-                mIndentList=service.showMIndentList0(bId,inStatus);
+            case Constant.IN_WAIT_PAY://待付款
+                mIndentList=service.showInWaitPayList(bId,inStatus);
                 break;
-            case "2"://合作中
-                mIndentList=service.showMIndentList2(bId,inStatus);
+            case Constant.IN_COOPERATION://合作中
+                mIndentList=service.showInCooperate(bId,inStatus);//
                 break;
-            case "3"://申请退款
-                mIndentList=service.showMIndentList3(bId,inStatus);
+            case Constant.IN_APPLICATION_DRAWBACK://申请退款
+                mIndentList=service.showInDrawback(bId,inStatus);
                 break;
-            case "4"://待评价
+            case Constant.IN_B_EVAL://待评价
 
-            case "5":
-                mIndentList=service.showMIndentList0(bId,inStatus);
+            case Constant.IN_COMPLETE://已完成
+                mIndentList=service.showInCompleteList(bId,inStatus);
                 break;
             default:
                 baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);//查找失败
@@ -132,6 +133,12 @@ public class IndentController {
         }
         return baseResponse;
     }
+
+    /**
+     * 查看订单详情
+     * @param request
+     * @return
+     */
     @RequestMapping("/indent/showMReturnIndent")
     @ResponseBody
     public BaseResponse showMReturnIndent(HttpServletRequest request) {
@@ -150,12 +157,17 @@ public class IndentController {
     }
 
 
-    @RequestMapping("/indent/showMFinishIndent")
+    /**
+     * 显示订单详情 除退款
+     * @param request
+     * @return
+     */
+    @RequestMapping("/indent/showMIndentInfo")
     @ResponseBody
-    public BaseResponse showMFinishIndent(HttpServletRequest request) {
+    public BaseResponse showMIndentInfo(HttpServletRequest request) {
         BaseResponse baseResponse=new BaseResponse();
         String inId=request.getParameter("inId");
-        JSONObject drawbackInfo=service.showMFinishIndent(inId);
+        JSONObject drawbackInfo=service.showMIndentInfo(inId);
         if (drawbackInfo==null){
             baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
         }
@@ -193,21 +205,51 @@ public class IndentController {
     }
 
 
-    @RequestMapping("/indent/drawback")
-    @ResponseBody
-    public BaseResponse drawback(HttpServletRequest request) {
-        Drawbackinfo drawbackinfo=new Drawbackinfo();
-        drawbackinfo.setDiType(new BigInteger(request.getParameter("diType")));//退款类型
-        drawbackinfo.setDiReporter(new BigInteger(request.getParameter("diReporter")));//退款申请者
-        drawbackinfo.setDiInId(new BigInteger(request.getParameter("diInId")));//订单id
-        drawbackinfo.setDiNUmber(new Integer(request.getParameter("diNumber")));//申请数目
-        drawbackinfo.setDiMoney(new Float(request.getParameter("diMoney")));//退款金额
-        drawbackinfo.setDiReasons(request.getParameter("diReasons"));//申请理由
-        drawbackinfo.setDiImg1(request.getParameter("diImg1"));//退款凭证1
-        drawbackinfo.setDiImg2(request.getParameter("diImg2"));//退款凭证2
-        drawbackinfo.setDiImg3(request.getParameter("diImg3"));//退款凭证3
 
-        if(service.drawback(drawbackinfo))
+    /*获取可退款最高金额
+    @RequestMapping("/indent/getAvailableMoney")
+    @ResponseBody
+    public BaseResponse getAvailableMoney(HttpServletRequest request) {
+        String inId=request.getParameter("inId");
+        String diType=request.getParameter("diType");
+        Float availableMoney=service.getAvailableMoney(inId,diType);
+        response.setResult(ResultCodeEnum.SUCCESS);
+        response.setData(availableMoney);
+        return response;
+    }*/
+
+    @RequestMapping("/indent/inDrawback")
+    @ResponseBody
+    public BaseResponse inDrawback(HttpServletRequest request) {
+        Drawbackinfo drawbackinfo=new Drawbackinfo();
+        String diType=request.getParameter("diType");
+        String inId=request.getParameter("diInId");
+        String diNumber=request.getParameter("diNumber");
+        drawbackinfo.setDiType(new BigInteger(diType));//退款类型
+        drawbackinfo.setDiReporter(new BigInteger(request.getParameter("diReporter")));//退款申请者
+        drawbackinfo.setDiInId(new BigInteger(inId));//订单id
+        drawbackinfo.setDiNUmber(new Integer(diNumber));//申请数目
+        drawbackinfo.setDiMoney(new Float(request.getParameter("diMoney")));//退款金额
+        if (!(request.getParameter("diReasons")==null||request.getParameter("diReasons").equals(""))){
+            System.out.println("diReasons"+request.getParameter("diReasons")+"is not null ");
+            drawbackinfo.setDiReasons(request.getParameter("diReasons"));//申请理由
+        }
+        if (!(request.getParameter("diImg1")==null||request.getParameter("diImg1").equals(""))){
+            drawbackinfo.setDiImg1(request.getParameter("diImg1"));//退款凭证1
+        }
+        if (!(request.getParameter("diImg2")==null||request.getParameter("diImg2").equals(""))){
+            drawbackinfo.setDiImg2(request.getParameter("diImg2"));//退款凭证2
+        }
+        if (!(request.getParameter("diImg3")==null||request.getParameter("diImg3").equals(""))){
+            drawbackinfo.setDiImg3(request.getParameter("diImg3"));//退款凭证3
+        }
+
+        if (service.isOverDeadLine(inId)&&diType.equals(Constant.DRREASON_NO_REASON)){
+            response.setResult(ResultCodeEnum.UNAVAILABLE);//available
+            return response;
+        }
+
+        if(service.inDrawback(drawbackinfo))
         {
             response.setResult(ResultCodeEnum.SUCCESS);
         }
@@ -219,5 +261,58 @@ public class IndentController {
 
     }
 
-
+    /**
+     * B取消退款申请
+     * @param request
+     * @return
+     */
+    @RequestMapping("/indent/cancelDrawback")
+    @ResponseBody
+    public BaseResponse cancelDrawback(HttpServletRequest request) {
+        String diId=request.getParameter("diId");
+        if (!service.can_cancel(diId)){//是否可以删除
+            response.setResult(ResultCodeEnum.DELETE_FAILURE);
+        }
+        else {
+            if (service.cancelDrawback(diId)){
+                response.setResult(ResultCodeEnum.SUCCESS);
+            }
+            else {
+                response.setResult(ResultCodeEnum.DELETE_FAILURE);
+            }
+        }
+        return response;
+    }
+    /**
+     * B拒绝C的退货申请
+     */
+    @RequestMapping("/indent/cancelCReturnGood")
+    @ResponseBody
+    public BaseResponse cancelCReturnGood(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String rgId=request.getParameter("rgId");
+        if (service.cancelCReturnGood(rgId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.UPDATE_FAILURE);
+        }
+        return baseResponse;
+    }
+    /**
+     * B同意C退货申请
+    */
+    @RequestMapping("/indent/agreeCReturnGood")
+    @ResponseBody
+    public BaseResponse agreeCReturnGood(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String rgId=request.getParameter("rgId");
+        if (service.agreeCReturnGood(rgId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.UPDATE_FAILURE);
+        }
+        return baseResponse;
+    }
 }

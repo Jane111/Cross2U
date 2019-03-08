@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -17,6 +18,8 @@ import java.util.List;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class WareApplicationTests {
+    @Autowired
+    RestTemplate restTemplate;
 
 	@Autowired
     WareServiceL wsL;
@@ -27,8 +30,16 @@ public class WareApplicationTests {
 	@Test
     public void test()
     {
-        JSONObject object=wsL.getStoreDetail(new BigInteger("1"));
+        JSONObject response = restTemplate.getForObject("http://User/business/findBusinessDetailByBId/"+"1",JSONObject.class);
+        JSONObject object= response.getJSONObject("data");//wsL.getBusinessDetail(new BigInteger("1"));
         System.out.println(object);
+    }
+
+    @Test
+    public void test2()
+    {
+        Float money=wsL.transferMoney(100.00F,"3");
+        System.out.println(money);
     }
 
 	@Test

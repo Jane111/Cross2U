@@ -1,9 +1,11 @@
 package com.cross2u.ware.service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.cross2u.ware.model.*;
 import com.cross2u.ware.util.BaseResponse;
+import com.cross2u.ware.util.MoneyUtil;
 import com.cross2u.ware.util.ResultCodeEnum;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.jfinal.plugin.activerecord.Db;
@@ -17,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -28,6 +31,7 @@ import java.util.regex.Pattern;
 public class WareServicesZ {
     @Autowired
     RestTemplate restTemplate;
+
 
 
     //根据id找ware
@@ -43,25 +47,44 @@ public class WareServicesZ {
     }
 
     //根据规格id显示选项
-    public List<Record> showForOptions(String fId) {
+    public JSONArray showForOptions(String fId) {
         String sql="SELECT foId,foName " +
                 " from formatoption  " +
                 " WHERE foFormat=?";
         List<Record> formatoptions= Db.find(sql,fId);
+        JSONArray array=new JSONArray();
         for (Record formatoption : formatoptions)
         {
-            String sonSql="SELECT foId,foName " +
-                    " from formatoption " +
-                    " WHERE foParentOption=?";
-            List<Formatoption> son=Formatoption.dao.find(sql,fId);
-            formatoption.get("son",son);
+            JSONObject object=new JSONObject();
+            object.put("foId",formatoption.get("foId"));
+            object.put("foName",formatoption.get("foName"));
+            JSONArray son=getFormatoption(formatoption.get("foId").toString());
+            object.put("son",son);
+
+            array.add(object);
         }
-        return formatoptions;
+        return array;
+    }
+    ///获取选项对应的子类选项
+    private JSONArray getFormatoption(String foId){
+        String sonSql="SELECT foId,foName " +
+                " from formatoption " +
+                " WHERE foParentOption=?";
+        List<Formatoption> formatoptions=Formatoption.dao.find(sonSql,foId);
+        JSONArray array=new JSONArray();
+        for (Formatoption fo:formatoptions){
+            JSONObject object=new JSONObject();
+            object.put("foId",fo.getFoId());
+            object.put("foName",fo.getFoName());
+
+            array.add(object);
+        }
+        return array;
     }
 
     //根据属性id显示属性的选项
     public List<Attributeoption> showAttrOptions(String atId) {
-        String sql="select aoName,aoId from Attributeoption where aoAttribute=?";
+        String sql="select aoName,aoId from attributeoption where aoAttribute=?";
         List<Attributeoption> attributeoptions=Attributeoption.dao.find(sql,atId);
         return attributeoptions;
     }
@@ -74,7 +97,7 @@ public class WareServicesZ {
         for (int i=0;i<wares.size();i++)
         {
             Record ware=wares.get(i);
-            Record wSale=getSale(ware.get("wId"));
+            Record wSale=getSale(ware.get("wId").toString());
             ware.setColumns(wSale);
         }
         return wares;
@@ -107,10 +130,10 @@ public class WareServicesZ {
     }
 
     public JSONArray showWares(String sId, String operation) {
-        String selectSql="SELECT wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit," +
-                "sum(inProductNum) as wSale,sum(pStorage) as wStorage,wStatus,wCreateTime " +
-                " from (ware INNER JOIN indent on inWare=wId)INNER JOIN product on wId=pWare " +
-                " WHERE wStore=? and inStatus!=0 and inStatus!=5 and inStatus!=6 ";
+        String selectSql="SELECT wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit,  " +
+                "wStatus,wCreateTime  " +
+                "from ware  " +
+                "WHERE wStore=? ";
         String andSql="";
         switch (operation)
         {
@@ -128,21 +151,24 @@ public class WareServicesZ {
                 default: return null;
         }
         String sql=selectSql+andSql;
-        List<Record> wares=Db.find(sql,sId);
+        List<Ware> wares=Ware.dao.find(sql,sId);
         JSONArray array=new JSONArray();
-        for (Record ware :wares){
+        for (Ware ware :wares){
             JSONObject object=new JSONObject();
-            object.put("wId",ware.getBigInteger("wId"));
-            object.put("wMainImage",ware.get("wMainImage"));
-            object.put("wTitle",ware.get("wTitle"));
-            object.put("wStartPrice",ware.get("wStartPrice"));
-            object.put("wHighPrice",ware.get("wHighPrice"));
-            object.put("wPriceUnit",ware.get("wPriceUnit"));
-            object.put("wSale",ware.get("wSale"));
-            object.put("wStorage",ware.get("wStorage"));
-            object.put("wStatus",ware.get("wStatus"));
+            Integer wSale=getWSale(ware.getWId());
+            Integer wStorage=getwStorage(ware.getWId());
+
+            object.put("wId",ware.getWId());
+            object.put("wMainImage",ware.getWMainImage());
+            object.put("wTitle",ware.getWTitle());
+            object.put("wStartPrice",ware.getWStartPrice());
+            object.put("wHighPrice",ware.getWHighPrice());
+            object.put("wPriceUnit",ware.getWPriceUnit());
+            object.put("wSale",wSale);
+            object.put("wStorage",wStorage);
+            object.put("wStatus",ware.getWStatus());
             object.put("wCreateTime",ware.get("wCreateTime"));
-            JSONObject belong=getWBelong(ware.get("wId"));
+            JSONObject belong=getWBelong(ware.get("wId").toString());
 
             object.put("belong",belong);
 
@@ -150,12 +176,32 @@ public class WareServicesZ {
         }
         return array;
     }
+    //获取库存
+    private Integer getwStorage(BigInteger wId) {
+        String sql="SELECT sum(pStorage) as wStorage " +
+                "from product " +
+                "WHERE pWare=? ";
+        Integer wStorage=Db.queryInt(sql,wId);
+        return wStorage;
+    }
+    //获取销量
+    private Integer getWSale(BigInteger wId) {
+        String sql="SELECT sum(inProductNum) as wSale " +
+                "from indent  " +
+                "WHERE inWare=? and inStatus not in (0,5,6) ";
+        Integer wSale=Db.queryInt(sql,wId);
+        return wSale;
+    }
+
     private JSONObject getWBelong(String wId)
     {
         String sql="SELECT wbId,wbWFDId,wfdName,wbWSDId,wsdName " +
                 " FROM (warebelong INNER JOIN warefdispatch on wbWFDId=wfdId) INNER JOIN waresdispatch on wbWSDId=wsdId " +
                 " WHERE wbWId=?";
         Record record=Db.findFirst(sql,wId);
+        if (record==null){
+            return null;
+        }
         JSONObject object=new JSONObject();
         object.put("wbWFDId",record.get("wbWFDId"));
         object.put("wfdName",record.get("wfdName"));
@@ -171,48 +217,48 @@ public class WareServicesZ {
 
     public JSONArray getAtr(String ctSId, String ctTId){
         //-------全部类别都有的Atr
-        String allHaveAtr="SELECT caId,atName " +
+        String allHaveAtr="SELECT atId,atName " +
                 " from atrribute INNER JOIN categoryattribute on caAtrribute=atId " +
                 " WHERE caCategory=0";
         List<Record> allAtr=Db.find(allHaveAtr);
         JSONArray allAtrArray=new JSONArray();
         for (Record allOne:allAtr){
             JSONObject object=new JSONObject();
-            object.put("caId",allOne.get("caId"));
+            object.put("atId",allOne.get("atId"));
             object.put("atName",allOne.get("atName"));
-            List<Attributeoption> options=getAtrOptions(allOne.get("caId").toString());
+            List<Attributeoption> options=getAtrOptions(allOne.get("atId").toString());
             object.put("atOption",options);
 
             allAtrArray.add(object);
         }
 
         //-------二级类别有的Atr
-        String sHaveAtr="SELECT caId,atName " +
+        String sHaveAtr="SELECT atId,atName " +
                 " from atrribute INNER JOIN categoryattribute on caAtrribute=atId " +
                 " WHERE caCategory=?";
         List<Record> sAtr=Db.find(sHaveAtr,ctSId);
         for (Record sOne:sAtr) {
             JSONObject object=new JSONObject();
-            object.put("caId",sOne.get("caId"));
+            object.put("atId",sOne.get("atId"));
             object.put("atName",sOne.get("atName"));
-            List<Attributeoption> options = getAtrOptions(sOne.get("caId").toString());
+            List<Attributeoption> options = getAtrOptions(sOne.get("atId").toString());
             object.put("atOption", options);
 
             allAtrArray.add(object);
         }
 
         //-------三级类别有的Atr
-        String tHaveAtr="SELECT caId,atName " +
+        String tHaveAtr="SELECT atId,atName " +
                 " from atrribute INNER JOIN categoryattribute on caAtrribute=atId " +
                 " WHERE caCategory=?";
         List<Record> tAtr=Db.find(tHaveAtr,ctTId);
         JSONArray tAtrArray=new JSONArray();
         for (Record tOne:tAtr){
             JSONObject object=new JSONObject();
-            object.put("caId",tOne.get("caId"));
+            object.put("atId",tOne.get("atId"));
             object.put("atName",tOne.get("atName"));
 
-            List<Attributeoption> options=getAtrOptions(tOne.get("caId").toString());
+            List<Attributeoption> options=getAtrOptions(tOne.get("atId").toString());
             object.put("atOption",options);
             allAtrArray.add(object);
         }
@@ -228,9 +274,15 @@ public class WareServicesZ {
                 " from format INNER JOIN categoryformat on cfFormat=fId " +
                 " WHERE cfCategory=0";
         List<Record> allFor=Db.find(allHaveFor);
+        JSONArray array=new JSONArray();
         for (Record allOne:allFor){
+            JSONObject object=new JSONObject();
+            object.put("fId",allOne.get("fId"));
+            object.put("fName",allOne.get("fName"));
             List<Formatoption> options=getFroOptions(allOne.get("fId").toString());
-            allOne.set("fOption",options);
+            object.put("fOption",options);
+
+            array.add(object);
         }
 
         //-----二级类别有的format
@@ -239,10 +291,14 @@ public class WareServicesZ {
                 " WHERE cfCategory=?";
         List<Record> sFor=Db.find(sHaveFor,ctSId);
         for (Record sOne:sFor){
+            JSONObject object=new JSONObject();
+            object.put("fId",sOne.get("fId"));
+            object.put("fName",sOne.get("fName"));
             List<Formatoption> options=getFroOptions(sOne.get("fId").toString());
-            sOne.set("fOption",options);
-        }
+            object.put("fOption",options);
 
+            array.add(object);
+        }
 
         //-----三级类别有的format
         String tHaveFor="SELECT fId,fName " +
@@ -250,20 +306,15 @@ public class WareServicesZ {
                 " WHERE cfCategory=?";
         List<Record> tFor=Db.find(tHaveFor,ctTId);
         for (Record tOne:tFor){
-            List<Formatoption> options=getFroOptions(tOne.get("fId").toString());
-            tOne.set("fOption",options);
-        }
-
-        allFor.addAll(sFor);
-        allFor.addAll(tFor);
-
-        JSONArray array=new JSONArray();
-        for (Record fName:allFor){
             JSONObject object=new JSONObject();
-            object.put("fId",fName.get("fId"));
-            object.put("fName",fName.get("fName"));
+            object.put("fId",tOne.get("fId"));
+            object.put("fName",tOne.get("fName"));
+            List<Formatoption> options=getFroOptions(tOne.get("fId").toString());
+            object.put("fOption",options);
+
             array.add(object);
         }
+
         return  array;
     }
     public JSONObject addFirstStep(String ctSId, String ctTId) {
@@ -892,10 +943,9 @@ public class WareServicesZ {
     public JSONArray showStoreWareBySale(String wStore, String rank) {
         String sql=" SELECT wId,wMainImage,wTitle,wStartNum,wHighNum,wStartPrice,wHighPrice,wPriceUnit ,wMonthSale " +
                 "from ( SELECT wId as xId,sum(inProductNum) as wMonthSale from ware LEFT  JOIN indent on wId=indent.inWare GROUP BY wId) x INNER JOIN ware on wId=xId  " +
-                "where ware.wStore=？ " +
-                "ORDER BY wMonthSale ";
+                "where ware.wStore like '"+wStore+"'  ORDER BY wMonthSale ";
         if (rank.equals("2")) sql=sql+"DESC";//降序 销量高的在上面
-        List<Record> wares=Db.find(sql,new BigInteger(wStore));
+        List<Record> wares=Db.find(sql);
         JSONArray array=new JSONArray();
         for (Record ware:wares){
             JSONObject json=new JSONObject();
@@ -932,7 +982,7 @@ public class WareServicesZ {
             json.put("wPriceUnit",ware.getWPriceUnit());
 
             BigInteger wId=ware.getWId();
-            String inProductNumSql="SELECT sum(inProductNum) as wMonthSale,wId  " +
+            String inProductNumSql="SELECT sum(inProductNum) as wMonthSale  " +
                     "from ware INNER JOIN indent on wId=indent.inWare  " +
                     "WHERE wId like '"+wId+"'";
             Integer wMonthSale=Db.queryInt(inProductNumSql);
@@ -961,7 +1011,7 @@ public class WareServicesZ {
             json.put("wPriceUnit",ware.getWPriceUnit());
 
             BigInteger wId=ware.getWId();
-            String inProductNumSql="SELECT sum(inProductNum) as wMonthSale,wId  " +
+            String inProductNumSql="SELECT sum(inProductNum) as wMonthSale  " +
                     "from ware INNER JOIN indent on wId=indent.inWare  " +
                     "WHERE wId like '"+wId+"'";
             Integer wMonthSale=Db.queryInt(inProductNumSql);
@@ -986,4 +1036,61 @@ public class WareServicesZ {
         String sql="delete from warebelong where wbId=?";
         return Db.update(sql,wbId)==1;
     }
+
+    public JSONArray showGoodEval(String sId){
+        String sql="select ewId,ewCotent,ewRank,ewCommentator,ewInId,ewWId " +
+                "from evalware " +
+                "where  ewRank =3 and  ewInId in (SELECT inId from indent where inStore=?)";
+        List<Record> records=Db.find(sql,sId);
+        JSONArray array=getEvalArray(records);
+        return array;
+    }
+
+    public JSONArray showBadEval(String sId){
+        String sql="select ewId,ewCotent,ewRank,ewCommentator,ewInId,ewWId " +
+                "from evalware " +
+                "where  ewRank IN (1,2) and  ewInId in (SELECT inId from indent where inStore=?)";
+        List<Record> records=Db.find(sql,sId);
+        JSONArray array=getEvalArray(records);
+        return array;
+    }
+
+    public JSONArray showNormalEval(String sId){
+        String sql="select ewId,ewCotent,ewRank,ewCommentator,ewInId,ewWId " +
+                "from evalware " +
+                "where  ewRank in(4,5) and  ewInId in (SELECT inId from indent where inStore=?)";
+        List<Record> records=Db.find(sql,sId);
+        JSONArray array=getEvalArray(records);
+        return array;
+    }
+
+    private JSONArray getEvalArray(List<Record> records) {
+        JSONArray array=new JSONArray();
+        for (Record record:records){
+            JSONObject object=new JSONObject();
+
+            BigInteger bId=record.getBigInteger("ewCommentator");
+            String bSql="select bWeiXinName from business where bId=?";
+            Record business=Db.findFirst(bSql,bId);//微信昵称
+
+            BigInteger wId=record.getBigInteger("ewWId");
+            String wSql="select wTitle from ware where wId=?";
+            Record ware=Db.findFirst(wSql,wId);//商品情况
+
+            BigInteger inId=record.getBigInteger("ewInId");
+            String inSql="select inProductNum from indent where inId=?";
+            Record indent=Db.findFirst(inSql,inId);//订单信息
+
+            object.put("inProductNum",indent.get("inProductNum"));
+            object.put("wTitle",ware.get("wTitle"));
+            object.put("bWeiXinName",business.get("bWeiXinName"));//ewId,ewCotent,ewRank,
+            object.put("ewId",record.get("ewId"));
+            object.put("ewCotent",record.get("ewCotent"));
+            object.put("ewRank",record.get("ewRank"));
+
+            array.add(object);
+        }
+        return array;
+    }
+
 }
