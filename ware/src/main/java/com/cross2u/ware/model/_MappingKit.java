@@ -17,6 +17,8 @@ public class _MappingKit {
 
 	public static void mapping(ActiveRecordPlugin arp) {
 
+        arp.addMapping("abevalreport", "aerId", Abevalreport.class);
+		arp.addMapping("abnormalgoodsinfo", "agiId", Abnormalgoodsinfo.class);
 		arp.addMapping("atrribute", "atId", Atrribute.class);
 		arp.addMapping("attributeoption", "aoId", Attributeoption.class);
 		arp.addMapping("bevalreply", "berId", Bevalreply.class);
@@ -30,6 +32,7 @@ public class _MappingKit {
 		arp.addMapping("productformat", "pfId", Productformat.class);
 		arp.addMapping("ware", "wId", Ware.class);
 		arp.addMapping("wareattribute", "waId", Wareattribute.class);
+		arp.addMapping("stock", "skId", Stock.class);
 	}
 }
 

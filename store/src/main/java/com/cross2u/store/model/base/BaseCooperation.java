@@ -19,7 +19,7 @@ public abstract class BaseCooperation<M extends BaseCooperation<M>> extends Mode
 		return get("copId");
 	}
 
-	public void setCopBId(Long copBId) {
+	public void setCopBId(BigInteger copBId) {
 		set("copBId", copBId);
 	}
 
@@ -31,7 +31,7 @@ public abstract class BaseCooperation<M extends BaseCooperation<M>> extends Mode
 		set("copSId", copSId);
 	}
 
-	public Long getCopSId() {
+	public BigInteger getCopSId() {
 		return get("copSId");
 	}
 

@@ -21,6 +21,7 @@ public class _MappingKit {
 		arp.addMapping("adminreply", "arId", Adminreply.class);
 		arp.addMapping("drawbackreasons", "drId", Drawbackreasons.class);
 		arp.addMapping("publicinfo", "piId", Publicinfo.class);
+		arp.addMapping("reportgoodreasons", "rgrId", Reportgoodreasons.class);
 		arp.addMapping("reportevaluatereasons", "rerId", Reportevaluatereasons.class);
 		arp.addMapping("reportmanufacturereasons", "rmrId", Reportmanufacturereasons.class);
 		arp.addMapping("sensi", "senId", Sensi.class);

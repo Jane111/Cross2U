@@ -19,11 +19,11 @@ public abstract class BaseReturngoods<M extends BaseReturngoods<M>> extends Mode
 		return get("rgId");
 	}
 
-	public void setRgBId(Long rgBId) {
+	public void setRgBId(BigInteger rgBId) {
 		set("rgBId", rgBId);
 	}
 
-	public Long getRgBId() {
+	public BigInteger getRgBId() {
 		return get("rgBId");
 	}
 
@@ -51,11 +51,11 @@ public abstract class BaseReturngoods<M extends BaseReturngoods<M>> extends Mode
 		return get("rgState");
 	}
 
-	public void setRgRGMId(Long rgRGMId) {
+	public void setRgRGMId(BigInteger rgRGMId) {
 		set("rgRGMId", rgRGMId);
 	}
 
-	public Long getRgRGMId() {
+	public BigInteger getRgRGMId() {
 		return get("rgRGMId");
 	}
 
@@ -91,11 +91,11 @@ public abstract class BaseReturngoods<M extends BaseReturngoods<M>> extends Mode
 		return get("rgiTrakTime");
 	}
 
-	public void setRgType(Long rgType) {
+	public void setRgType(BigInteger rgType) {
 		set("rgType", rgType);
 	}
 
-	public Long getRgType() {
+	public BigInteger getRgType() {
 		return get("rgType");
 	}
 

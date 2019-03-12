@@ -10,6 +10,7 @@ import com.cross2u.indent.model.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 
     @Service
@@ -68,6 +69,12 @@ import java.util.List;
     {
         JSONObject response = restTemplate.getForObject("http://Store/store/findAdminById/"+sId,JSONObject.class);
             return response.getJSONObject("data");
+    }
+    //没有代理信息
+    public JSONObject getStoreDetail(BigInteger sId)
+    {
+        JSONObject response = restTemplate.getForObject("http://Store/store/findStoreDetail/"+sId,JSONObject.class);
+        return response.getJSONObject("data");
     }
 
     /*
@@ -216,8 +223,17 @@ import java.util.List;
     public JSONArray selectOutIndent(BigInteger sId, Integer requestFlag)
     {
         JSONArray outOrderList = new JSONArray();
-        List<Outindent> outIndentList = Outindent.dao.find("select * from outindent " +
-                "where outSId=? AND outStatus=?",sId,requestFlag);
+        List<Outindent> outIndentList;
+        if(requestFlag==null)
+        {
+            outIndentList = Outindent.dao.find("select * from outindent " +
+                    "where outSId=?",sId);
+        }else
+        {
+            outIndentList = Outindent.dao.find("select * from outindent " +
+                    "where outSId=? AND outStatus=?",sId,requestFlag);
+        }
+
         for(Outindent outindent:outIndentList)
         {
             JSONObject outorder = new JSONObject();
@@ -264,7 +280,7 @@ import java.util.List;
             JSONObject myProduct = getProductFromOther(outindent.getOutPIdentifier());//单品编号
             outorder.put("OutPIdentifier",outindent.getOutPIdentifier());//单品编号
             outorder.put("pId",myProduct.getBigInteger("pId"));//单品id
-            outorder.put("pAtr",myProduct.getJSONObject("format"));//单品规格
+            outorder.put("pAtr",myProduct.getString("format"));//单品规格
             outorder.put("outAcount",outindent.getOutNumber());//单品个数
             /*与其他模块通信*/
 
@@ -276,10 +292,10 @@ import java.util.List;
             outorder.put("outModifyTime",outindent.getOutModifyTime());//快递公司
 
             //售后订单特有状态
-            Returngoods returngoods = Returngoods.dao.findFirst("select rgReasons,rgState from Returngoods " +
+            Returngoods returngoods = Returngoods.dao.findFirst("select rgReasons,rgType from returngoods " +
                     "where rgOOId=?",outindent.getOutId());
             outorder.put("rcCatalog",Returncatalog.dao.findById(Returngoodreasons.dao.findById
-                    (returngoods.getRgType())).getRcCatalog());//退货catelog，退货或退款
+                    (returngoods.getRgType()).getRgrRCId()).getRcCatalog());//退货catelog，退货或退款
             outorder.put("rgState",returngoods.getRgState());//退货状态
 
             outOrderList.add(outorder);
@@ -298,7 +314,7 @@ import java.util.List;
     {
         JSONObject indentDetail = new JSONObject();
         Outindent outIndent = Outindent.dao.findFirst("select * from outindent " +
-                "where outSId=?",outId);
+                "where outId=?",outId);
         indentDetail.put("outId",outIndent.getOutId());//订单id
         indentDetail.put("outPlatform",outIndent.getOutId());//来源平台
         indentDetail.put("outCreateTime",outIndent.getOutCreateTime());//下单时间
@@ -326,11 +342,11 @@ import java.util.List;
 //                    "where pIdentifier=?",outindent.getOutPIdentifier());
         JSONObject myProduct = getProductFromOther(outIndent.getOutPIdentifier());//单品编号
         indentDetail.put("pId",myProduct.getBigInteger("pId"));//单品id
-        indentDetail.put("pAtr",myProduct.getJSONObject("format"));//单品规格
+        indentDetail.put("pAtr",myProduct.getString("format"));//单品规格
         indentDetail.put("outAcount",outIndent.getOutNumber());//单品个数
         /*与其他模块通信*/
 
-        Returngoods returngoods = Returngoods.dao.findFirst("select * from Returngoods " +
+        Returngoods returngoods = Returngoods.dao.findFirst("select * from returngoods " +
                 "where rgOOId=?",outIndent.getOutId());
         indentDetail.put("rgId",returngoods.getRgId());//退货ID
         indentDetail.put("rgrReasons",returngoods.getRgReasons());//退货详细原因
@@ -436,4 +452,6 @@ import java.util.List;
         billDetail.put("DrawbackInfo",DrawbackInfo);
         return billDetail;
     }
+
+
 }

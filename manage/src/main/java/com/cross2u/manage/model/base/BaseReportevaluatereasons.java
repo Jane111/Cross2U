@@ -25,11 +25,11 @@ public abstract class BaseReportevaluatereasons<M extends BaseReportevaluatereas
 		return get("rerContent");
 	}
 
-	public void setRerPunish(String rerPunish) {
+	public void setRerPunish(Integer rerPunish) {
 		set("rerPunish", rerPunish);
 	}
 
-	public String getRerPunish() {
+	public Integer getRerPunish() {
 		return get("rerPunish");
 	}
 

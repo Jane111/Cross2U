@@ -257,7 +257,7 @@ public class IndentControllerL {
     @RequestMapping("/showOutOders")
     public BaseResponse showOutOders(
             @RequestParam("sId") BigInteger sId,
-            @RequestParam("requestFlag") Integer requestFlag)
+            @RequestParam(value = "requestFlag",required = false) Integer requestFlag)
     {
         JSONArray result = indentServiceL.selectOutIndent(sId,requestFlag);
         if(!result.isEmpty())
@@ -268,7 +268,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
-        jr.setData(null);
+        jr.setData(result);
         return jr;
     }
     //发货,单发一件
@@ -298,8 +298,8 @@ public class IndentControllerL {
         return jr;
     }
     //发货，操作多件
-    @RequestMapping("/deliverMany")
-    public BaseResponse deliverMany(
+    @RequestMapping("/deliverManyOne")
+    public BaseResponse deliverManyOne(
             @RequestParam("outId") BigInteger[] outId,
             @RequestParam("outExpress") String outExpress,
             @RequestParam("outExpressCompany") String outExpressCompany)
@@ -377,7 +377,7 @@ public class IndentControllerL {
     {
         Returngoods returngoods = new Returngoods();
         returngoods.setRgId(rgId);//申请退货的Id
-        returngoods.setRgMId(rgRGMId);//退货模版
+        returngoods.setRgRGMId(rgRGMId);//退货模版
         //设置为M同意退货申请
         returngoods.setRgState(4);//修改状态
         boolean result = indentServiceL.updateReturnGoods(returngoods);
@@ -392,9 +392,9 @@ public class IndentControllerL {
         jr.setData(null);
         return jr;
     }
-    //13.M-C售后订单之浏览已同意订单
-    @RequestMapping("/showAgreeReturn")
-    public BaseResponse showAgreeReturn(
+    //15.15.M-C售后订单之已完成订单详情
+    @RequestMapping("/showReciveReturn")
+    public BaseResponse showReciveReturn(
             @RequestParam("outId") BigInteger outId)
     {
         JSONObject result = indentServiceL.selectReturnIndent(outId,true);
@@ -429,6 +429,23 @@ public class IndentControllerL {
         jr.setData(null);
         return jr;
     }
+    //13.M-C售后订单之浏览已同意订单
+    @RequestMapping("/showAgreeReturn")
+    public BaseResponse showAgreeReturn(
+            @RequestParam("outId") BigInteger outId)
+    {
+        JSONObject result = indentServiceL.selectReturnIndent(outId,true);
+        if(!result.isEmpty())
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
     //（七）我的收支明细
     @RequestMapping("/backstage/myBill")
     public BaseResponse myBill(@RequestParam("sId") BigInteger sId)
@@ -445,5 +462,6 @@ public class IndentControllerL {
         jr.setData(result);
         return jr;
     }
+
 
 }

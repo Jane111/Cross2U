@@ -65,11 +65,11 @@ public abstract class BaseWare<M extends BaseWare<M>> extends Model<M> implement
 		return get("wDescription");
 	}
 
-	public void setWDesScore(java.math.BigInteger wDesScore) {
+	public void setWDesScore(Integer wDesScore) {
 		set("wDesScore", wDesScore);
 	}
 
-	public java.math.BigInteger getWDesScore() {
+	public Integer getWDesScore() {
 		return get("wDesScore");
 	}
 

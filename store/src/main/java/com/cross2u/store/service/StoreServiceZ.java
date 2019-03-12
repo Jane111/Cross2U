@@ -365,7 +365,7 @@ public class StoreServiceZ {
 
     public boolean applyCoop(String bId, String sId) {
         Cooperation cooperation=new Cooperation();
-        cooperation.setCopBId(new Long(bId));
+        cooperation.setCopBId(new BigInteger(bId));
         cooperation.setCopSId(new BigInteger(sId));
         cooperation.setCopState(0);//
         return cooperation.save();

@@ -166,47 +166,6 @@ public class BusinessControllerL {
         jr.setData(null);
         return jr;
     }
-//加多个
-//    9、加入购物车
-    @RequestMapping("/addStock")
-    public JsonResult addStock(
-            @RequestParam("sPId") BigInteger[] sPId,
-            @RequestParam("sSId") BigInteger sSId,
-            @RequestParam("sBid") BigInteger sBid,
-            @RequestParam("sNumber") Integer[] sNumber,
-            @RequestParam("sSum") Float[] sSum,
-            @RequestParam("sSumUnit") Integer[] sSumUnit
-            )
-    {
-        boolean succeed = Db.tx(new IAtom(){
-            int index;
-            boolean result = true;
-            public boolean run() throws SQLException {
-                for(index=0;index<sPId.length;index++)
-                {
-                    Stock stock = new Stock();
-                    stock.setSPId(sPId[index]);
-                    stock.setSSId(sSId);
-                    stock.setSBid(sBid);
-                    stock.setSNumber(sNumber[index]);
-                    stock.setSSum(sSum[index]);
-                    stock.setSSumUnit(sSumUnit[index]);
-                    result = bs.insertStock(stock) & result;
-                }
-                return result;
-            }
-        });
-        if(succeed)
-        {
-            jr.setResult(ResultCodeEnum.SUCCESS);
-        }
-        else
-        {
-            jr.setResult(ResultCodeEnum.ADD_ERROR);
-        }
-        jr.setData(null);
-        return jr;
-    }
 
     //15、收藏商品
     @RequestMapping("/addCollectWare")
@@ -248,5 +207,6 @@ public class BusinessControllerL {
         jr.setData(result);
         return jr;
     }
+
 
 }

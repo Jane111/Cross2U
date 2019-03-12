@@ -16,6 +16,7 @@ import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 public class _MappingKit {
 
 	public static void mapping(ActiveRecordPlugin arp) {
+		arp.addMapping("abnormalminfo", "amiId", Abnormalminfo.class);
 		arp.addMapping("cooperation", "copId", Cooperation.class);
 		arp.addMapping("manufacturer", "mId", Manufacturer.class);
 		arp.addMapping("manukeyword", "mkId", Manukeyword.class);

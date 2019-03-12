@@ -474,4 +474,14 @@ public class AdminServiceZ {
         System.out.println(array);
         return array;
     }
+
+    public Mainmanufacturer getMainManufactureById(String mmId) {
+        Mainmanufacturer mainmanufacturer=Mainmanufacturer.dao.findById(mmId);
+        return mainmanufacturer;
+    }
+
+    public Business getBusinessById(String bId) {
+        Business business=Business.dao.findById(bId);
+        return business;
+    }
 }

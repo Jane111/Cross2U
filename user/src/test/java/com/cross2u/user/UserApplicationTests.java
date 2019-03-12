@@ -1,43 +1,55 @@
 package com.cross2u.user;
 
-import com.alibaba.fastjson.JSONObject;
-import com.cross2u.user.service.BusinessServiceZ;
-import com.cross2u.user.service.ManufactureServiceZ;
-import com.cross2u.user.util.BaseResponse;
-import com.jfinal.plugin.activerecord.Record;
+
+import com.cross2u.user.service.businessServiceL;
+import com.cross2u.user.util.MailUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.client.RestTemplate;
+import com.alibaba.fastjson.JSONObject;
 
 import java.math.BigInteger;
+import java.util.Calendar;
+import java.util.List;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class UserApplicationTests {
 
 	@Autowired
-	BusinessServiceZ bs;
-	@Autowired
-	RestTemplate restTemplate;
-	@Autowired
-	ManufactureServiceZ ms;
-
+	businessServiceL bs;
 	@Test
 	public void contextLoads() {
-//		bs.showStoreDetail("1","12121");
-		String sId="1";
-		JSONObject array = restTemplate.getForObject("http://localhost:8003/ware/getTopFourWare?sId="+sId,JSONObject.class);
-		System.out.println(array.get("data"));
+		MailUtil.passMSend("11111","wolverineaka@163.com");
+//		Visitor  vs=bs.selectByOpenId("12");
+//		if(vs==null){
+//			System.out.println("null");
+//		}
+//		else
+//		{
+//			String firt=vs.getVWeiXinIcon();
+//			String second=vs.getVWeiXinName();
+//			String last = vs.getVOpenId();
+//
+//		}
 
-	}
-
-	@Test
-	public void test() {
-		JSONObject result=ms.mainLogin("15827468606","123456");
-        System.out.println(result);
+//        JSONArray ja = bs.selectFirstClass();
+//        JSONObject FI = ja.getJSONObject(0);
+//        JSONObject FI2 = ja.getJSONObject(1);
+//		System.out.println(ja);
+		String str = "";
+		Calendar c = Calendar.getInstance();
+		str += c.get(Calendar.YEAR);
+		str += String.format("%02d", c.get(Calendar.MONTH));
+		str += String.format("%02d", c.get(Calendar.DATE));
+		str += String.format("%02d", c.get(Calendar.HOUR));
+		str += String.format("%02d", c.get(Calendar.MINUTE));
+		str += String.format("%02d", c.get(Calendar.SECOND));
+		System.out.println(str);
+		System.out.println(1%10000);
+		System.out.println(String.format("%04d", 345%10000));
 	}
 
 }

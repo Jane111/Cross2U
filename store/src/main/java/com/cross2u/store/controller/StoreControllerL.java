@@ -1,10 +1,8 @@
 package com.cross2u.store.controller;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.cross2u.store.model.Manufacturer;
-import com.cross2u.store.model.Returngoodmould;
-import com.cross2u.store.model.Store;
-import com.cross2u.store.model.Storebill;
+import com.cross2u.store.model.*;
 import com.cross2u.store.service.StoreServiceL;
 import com.cross2u.store.util.BaseResponse;
 import com.cross2u.store.util.ResultCodeEnum;
@@ -13,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigInteger;
 import java.util.List;
-
+@CrossOrigin
 @RestController
 @RequestMapping("/store")
 public class StoreControllerL {
@@ -124,6 +122,7 @@ public class StoreControllerL {
         returngoodmould.setRgmName(rgmName);
         returngoodmould.setRgmPhone(rgmPhone);
         returngoodmould.setRgmAddress(rgmAddress);
+        returngoodmould.setRgmIsDeleted(0);
         boolean result = storeServiceL.insertReturnGoodMould(returngoodmould);
         if(result)
         {
@@ -141,6 +140,7 @@ public class StoreControllerL {
     public BaseResponse deleteReturnMoulds(@RequestParam("rgmId") BigInteger rgmId)
     {
         Returngoodmould returngoodmould = new Returngoodmould();
+        returngoodmould.setRgmId(rgmId);
         returngoodmould.setRgmIsDeleted(1);//设置是否删除字段为删除
         boolean result = storeServiceL.updateReturnGoodMould(returngoodmould);
         if(result)
@@ -158,16 +158,25 @@ public class StoreControllerL {
     @RequestMapping("/changeReturnMould")
     public BaseResponse changeReturnMould(
             @RequestParam("rgmId") BigInteger rgmId,
-            @RequestParam("rgmName") String rgmName,
-            @RequestParam("rgmPhone") String rgmPhone,
-            @RequestParam("rgmAddress") String rgmAddress
+            @RequestParam(value = "rgmName",required = false) String rgmName,
+            @RequestParam(value = "rgmPhone",required = false) String rgmPhone,
+            @RequestParam(value = "rgmAddress",required = false) String rgmAddress
     )
     {
         Returngoodmould returngoodmould = new Returngoodmould();
         returngoodmould.setRgmId(rgmId);
-        returngoodmould.setRgmPhone(rgmPhone);
-        returngoodmould.setRgmName(rgmName);
-        returngoodmould.setRgmAddress(rgmAddress);
+        if(rgmName!=null)
+        {
+            returngoodmould.setRgmName(rgmName);
+        }
+        if(rgmPhone!=null)
+        {
+            returngoodmould.setRgmPhone(rgmPhone);
+        }
+        if(rgmAddress!=null)
+        {
+            returngoodmould.setRgmAddress(rgmAddress);
+        }
         boolean result = storeServiceL.updateReturnGoodMould(returngoodmould);
         if(result)
         {
@@ -184,9 +193,9 @@ public class StoreControllerL {
     //子账号管理
     //1、显示子账号列表
     @RequestMapping("/showSubAccounts")
-    public BaseResponse showSubAccounts(@RequestParam("mmId") BigInteger mmId)
+    public BaseResponse showSubAccounts(@RequestParam("sId") BigInteger sId)
     {
-        List<Manufacturer> result = storeServiceL.selectMSubAccounts(mmId);
+        List<Manufacturer> result = storeServiceL.selectMSubAccounts(sId);
         if(!result.isEmpty())
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
@@ -200,7 +209,7 @@ public class StoreControllerL {
     }
     //2、显示子账号详情
     @RequestMapping("/showSubAccount")
-    public BaseResponse showSubAccount(@RequestParam("mmId") BigInteger mId)
+    public BaseResponse showSubAccount(@RequestParam("mId") BigInteger mId)
     {
         Manufacturer result = storeServiceL.selectMSubAccount(mId);
         if(result!=null)
@@ -218,26 +227,50 @@ public class StoreControllerL {
     @RequestMapping("/editSubAccount")
     public BaseResponse editSubAccount(
             @RequestParam("mId") BigInteger mId,
-            @RequestParam("mPhone") String mPhone,
-            @RequestParam("mName") String mName,
-            @RequestParam("mPassword") String mPassword,
-            @RequestParam("mManageWare") Integer mManageWare,
-            @RequestParam("mManageIndent") Integer mManageIndent,
-            @RequestParam("mManageMessage") Integer mManageMessage,
-            @RequestParam("mManageClient") Integer mManageClient,
-            @RequestParam("mStatus") Integer mStatus
+            @RequestParam(value = "mPhone",required = false) String mPhone,
+            @RequestParam(value = "mName",required = false) String mName,
+            @RequestParam(value = "mPassword",required = false) String mPassword,
+            @RequestParam(value = "mManageWare",required = false) Integer mManageWare,
+            @RequestParam(value = "mManageIndent",required = false) Integer mManageIndent,
+            @RequestParam(value = "mManageMessage",required = false) Integer mManageMessage,
+            @RequestParam(value = "mManageClient",required = false) Integer mManageClient,
+            @RequestParam(value = "mStatus",required = false) Integer mStatus
     )
     {
         Manufacturer manufacturer = new Manufacturer();
         manufacturer.setMId(mId);
-        manufacturer.setMPhone(mPhone);
-        manufacturer.setMName(mName);
-        manufacturer.setMPassword(mPassword);
-        manufacturer.setMManageWare(mManageWare);
-        manufacturer.setMManageIndent(mManageIndent);
-        manufacturer.setMManageMessage(mManageMessage);
-        manufacturer.setMManageClient(mManageClient);
-        manufacturer.setMStatus(mStatus);
+        if(mPhone!=null)
+        {
+            manufacturer.setMPhone(mPhone);
+        }
+        if(mName!=null)
+        {
+            manufacturer.setMName(mName);
+        }
+        if(mPassword!=null)
+        {
+            manufacturer.setMPassword(mPassword);
+        }
+        if(mManageWare!=null)
+        {
+            manufacturer.setMManageWare(mManageWare);
+        }
+        if(mManageIndent!=null)
+        {
+            manufacturer.setMManageIndent(mManageIndent);
+        }
+        if(mManageMessage!=null)
+        {
+            manufacturer.setMManageMessage(mManageMessage);
+        }
+        if(mManageClient!=null)
+        {
+            manufacturer.setMManageClient(mManageClient);
+        }
+        if(mStatus!=null)
+        {
+            manufacturer.setMStatus(mStatus);
+        }
         boolean result = storeServiceL.updateMSubAccount(manufacturer);
         if(result)
         {
@@ -251,19 +284,20 @@ public class StoreControllerL {
         return jr;
     }
     //5、新建子账号
-    @PostMapping("/addSubAccount")
+    @RequestMapping("/addSubAccount")
     public BaseResponse addSubAccount(
+            @RequestParam("sId") BigInteger sId,
             @RequestParam("mPhone") String mPhone,
             @RequestParam("mName") String mName,
             @RequestParam("mPassword") String mPassword,
             @RequestParam("mManageWare") Integer mManageWare,
             @RequestParam("mManageIndent") Integer mManageIndent,
             @RequestParam("mManageMessage") Integer mManageMessage,
-            @RequestParam("mManageClient") Integer mManageClient,
-            @RequestParam("mStatus") Integer mStatus
+            @RequestParam("mManageClient") Integer mManageClient
     )
     {
         Manufacturer manufacturer = new Manufacturer();
+        manufacturer.setMStore(sId);
         manufacturer.setMPhone(mPhone);
         manufacturer.setMName(mName);
         manufacturer.setMPassword(mPassword);
@@ -271,7 +305,8 @@ public class StoreControllerL {
         manufacturer.setMManageIndent(mManageIndent);
         manufacturer.setMManageMessage(mManageMessage);
         manufacturer.setMManageClient(mManageClient);
-        manufacturer.setMStatus(mStatus);
+        manufacturer.setMRank(1);//设置为子账号
+        manufacturer.setMStatus(1);//设置子账号的状态为在用
         boolean result = storeServiceL.insertMSubAccount(manufacturer);
         if(result)
         {
@@ -307,16 +342,25 @@ public class StoreControllerL {
     @RequestMapping("/updateSets")
     public BaseResponse updateSets(
             @RequestParam("sId") BigInteger sId,
-            @RequestParam("setDirectMoney") Integer setDirectMoney,
-            @RequestParam("setReduceInventory") Integer setReduceInventory,
-            @RequestParam("setAgentDegree") Integer setAgentDegree
+            @RequestParam(value = "setDirectMoney",required = false) Integer setDirectMoney,
+            @RequestParam(value = "setReduceInventory",required = false) Integer setReduceInventory,
+            @RequestParam(value = "setAgentDegree",required = false) Integer setAgentDegree
     )
     {
         Store store = new Store();
         store.setSId(sId);
-        store.setSDirectMoney(setDirectMoney);
-        store.setSReduceInventory(setReduceInventory);
-        store.setSAgentDegree(setAgentDegree);
+        if(setDirectMoney!=null)
+        {
+            store.setSDirectMoney(setDirectMoney);
+        }
+        if(setReduceInventory!=null)
+        {
+            store.setSReduceInventory(setReduceInventory);
+        }
+        if(setAgentDegree!=null)
+        {
+            store.setSAgentDegree(setAgentDegree);
+        }
         boolean result = storeServiceL.updateSet(store);
         if(result)
         {
@@ -337,9 +381,10 @@ public class StoreControllerL {
     )
     {
         Storebill storeBill = new Storebill();
-        storeBill.setSbSId(sId);
-        storeBill.setSbMoney(select);
-        boolean result = storeServiceL.updateStoreBill(storeBill);
+        storeBill.setSbSId(sId);//店铺Id
+        storeBill.setSbMoney(select);//选择
+        //金额
+        boolean result = storeServiceL.insertStoreBill(storeBill);
         if(result)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
@@ -351,4 +396,72 @@ public class StoreControllerL {
         jr.setData(null);
         return jr;
     }
+    //50、申请代理
+    @RequestMapping("/addCooperation")
+    public BaseResponse addCooperation(
+            @RequestParam("copBId") BigInteger copBId,
+            @RequestParam("copSId") BigInteger copSId
+    )
+    {
+        Cooperation cooperation = new Cooperation();
+        cooperation.setCopBId(copBId);
+        cooperation.setCopSId(copSId);
+        cooperation.setCopState(0);//设置代理状态为正在审核，表示申请代理
+        boolean result = cooperation.save();
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.UPDATE_ERROR);
+        }
+        jr.setData(null);
+        return jr;
+    }
+    //A-21、显示举报店铺
+    @RequestMapping("/showBadStore")
+    public BaseResponse showBadStore(
+            @RequestParam("amiType") BigInteger amiType,
+            @RequestParam("amiResult") Integer amiResult
+    )
+    {
+        JSONArray result = storeServiceL.selectAbnormalM(amiType,amiResult);
+        if(!result.isEmpty())
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
+    //A-22、审核举报店铺
+    @RequestMapping("/checkBadStore")
+    public BaseResponse checkBadStore(
+            @RequestParam("amiId") BigInteger amiId,
+            @RequestParam("amiAId") BigInteger amiAId,
+            @RequestParam("amiResult") Integer amiResult
+    )
+    {
+        Abnormalminfo abNormalM = new Abnormalminfo();
+        abNormalM.setAmiId(amiId);
+        abNormalM.setAmiAId(amiAId);
+        abNormalM.setAmiResult(amiResult);
+        boolean result = abNormalM.update();
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.UPDATE_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
+
+
 }

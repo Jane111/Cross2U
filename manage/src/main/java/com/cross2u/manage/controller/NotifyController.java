@@ -1,4 +1,4 @@
-/*
+package com.cross2u.manage.controller;/*
 package com.cross2u.manage.controller;
 
 import org.springframework.stereotype.Controller;

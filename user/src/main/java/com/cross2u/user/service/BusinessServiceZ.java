@@ -491,19 +491,27 @@ public class BusinessServiceZ {
      */
 
     private Integer getCollectStore(BigInteger bId){
-        String sql="select count(cId) as count from collect where cOwner=? and cStore is not null";
+        String sql="select count(cId) as count " +
+                "from collect INNER JOIN store on cStore=sId " +
+                "where cOwner=? and cStore is not null";
         return Db.queryInt(sql,bId);
     }
     private Integer getCollectWare(BigInteger bId){
-        String sql="select count(cId) as count from collect where cOwner=? and cWare is not null";
+        String sql="select count(cId) as count  " +
+                "from collect INNER JOIN ware on cWare=wId " +
+                "where cOwner=? and cWare is not null";
         return Db.queryInt(sql,bId);
     }
     private Integer getBrowseWare(BigInteger bId){
-        String sql="select count(brId) as count from browserecord where brOwner=? ";
+        String sql="select count(brId) as count " +
+                "from browserecord INNER JOIN ware on browserecord.brWare=ware.wId " +
+                "where brOwner=? and browserecord.brIsDelete=0 ";
         return Db.queryInt(sql,bId);
     }
     private Integer getCooperation(BigInteger bId){
-        String sql="select count(copBId) as count from cooperation where copBId=? ";
+        String sql="select count(copBId) as count " +
+                "from cooperation INNER JOIN store on sId=copSId " +
+                "where copBId=?  ";
         return Db.queryInt(sql,bId);
     }
     public Business findById(String bId) {

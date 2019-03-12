@@ -13,16 +13,16 @@ public abstract class BaseManufacturer<M extends BaseManufacturer<M>> extends Mo
 		set("mId", mId);
 	}
 
-	public java.math.BigInteger getMStore() {
-		return get("mStore");
+	public java.math.BigInteger getMId() {
+		return get("mId");
 	}
 
 	public void setMStore(java.math.BigInteger mStore) {
-		set("mMainManu", mStore);
+		set("mStore", mStore);
 	}
 
-	public java.math.BigInteger getMMainManu() {
-		return get("mMainManu");
+	public java.math.BigInteger getMStore() {
+		return get("mStore");
 	}
 
 	public void setMStatus(Integer mStatus) {

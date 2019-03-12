@@ -1,5 +1,6 @@
 package com.cross2u.store.service;
 
+import com.alibaba.fastjson.JSONArray;
 import com.cross2u.store.model.*;
 import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSONObject;
@@ -17,7 +18,7 @@ public class StoreServiceL {
     {
         return Returngoodmould.dao.findById(rgmId);
     }
-    //2、根据Id，找Store的Detail
+    //2、根据Id，得到代理的相关信息
     public JSONObject selectStoreDetailCoop(BigInteger sId,BigInteger bId)
     {
         JSONObject storeDetail = new JSONObject();
@@ -62,7 +63,7 @@ public class StoreServiceL {
     public List<Returngoodmould> selectReturnGoodMould(BigInteger sId)
     {
         return Returngoodmould.dao.find("select rgmId,rgmName,rgmPhone,rgmAddress " +
-                "from Returngoodmould where rgSId=?",sId);
+                "from returngoodmould where rgSId=? and rgmIsDeleted!=1",sId);
     }
     //17.M增加退货地址模板
     public boolean insertReturnGoodMould(Returngoodmould returngoodmould)
@@ -76,10 +77,10 @@ public class StoreServiceL {
     }
 
     //展示子账号列表
-    public List<Manufacturer> selectMSubAccounts(BigInteger mmId)
+    public List<Manufacturer> selectMSubAccounts(BigInteger sId)
     {
         return Manufacturer.dao.find("select mId,mStatus,mPhone,mName,mManageWare,mManageIndent,mManageMessage,mManageClient " +
-                "from Manufacturer where mMainManu=? AND mRank=?",mmId,1);
+                "from manufacturer where mStore=? AND mRank=?",sId,1);
     }
 
     //展示子账号详情
@@ -120,6 +121,40 @@ public class StoreServiceL {
     public boolean updateStoreBill(Storebill storeBill)
     {
         return storeBill.update();
+    }
+    //新增交易资金担保的设置
+    public boolean insertStoreBill(Storebill storeBill)
+    {
+        return storeBill.save();
+    }
+
+    //A-18、显示举报商品
+    public JSONArray selectAbnormalM(BigInteger amiType, Integer amiResult)
+    {
+        JSONArray badStoreList = new JSONArray();
+        List<Abnormalminfo> abList;
+        if(amiType.equals(new BigInteger("0")))
+        {
+            abList = Abnormalminfo.dao.find("select * from abnormalminfo " +
+                    "where amiResult=?",amiResult);
+        }
+        else
+        {
+            abList = Abnormalminfo.dao.find("select * from abnormalminfo " +
+                    "where amiType=? and amiResult=?",amiType,amiResult);
+        }
+        for(Abnormalminfo ab:abList)
+        {
+            JSONObject badStore = new JSONObject();
+            badStore.put("amiId",ab.getAmiId());//异常店家信息ID
+            Store store = Store.dao.findById(ab.getAmiSId());
+            badStore.put("amiSName",store.getSName());//amiMId
+            badStore.put("amiType",ab.getAmiType());//举报类型
+            badStore.put("amiReasons",ab.getAmiReasons());//举报原因
+            badStore.put("amiImg",ab.getAmiImg());//举报凭证
+            badStoreList.add(badStore);
+        }
+        return badStoreList;
     }
 
 }

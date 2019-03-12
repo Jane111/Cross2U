@@ -3,14 +3,17 @@ package com.cross2u.user.controller;
 import com.alibaba.druid.sql.dialect.oracle.ast.clause.ModelClause;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.cross2u.user.model.Business;
 import com.cross2u.user.model.Mainmanufacturer;
 import com.cross2u.user.service.AdminServiceZ;
 import com.cross2u.user.util.BaseResponse;
+import com.cross2u.user.util.MailUtil;
 import com.cross2u.user.util.ResultCodeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import sun.applet.Main;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -101,7 +104,8 @@ public class AdminController {
     public BaseResponse UpdateMStatus(HttpServletRequest request){
         String mmId=request.getParameter("mmId");
         if (service.UpdateMStatus(mmId)){
-            //发短信 发邮件
+            Mainmanufacturer m=service.getMainManufactureById(mmId);
+            MailUtil.passMSend(m.getMmPhone(),m.getMmEmail());//发短信 发邮件
             response.setResult(ResultCodeEnum.SUCCESS);
         }
         else {
@@ -119,6 +123,8 @@ public class AdminController {
         String mmFialReasonSelect=request.getParameter("mmFialReasonSelect");
         String mmFailReasonText=request.getParameter("mmFailReasonText");
         if (service.UpdateMText(mmId,mmFialReasonSelect,mmFailReasonText)){
+            Mainmanufacturer m=service.getMainManufactureById(mmId);
+            MailUtil.refuseMSend(m.getMmPhone(),mmFialReasonSelect,mmFailReasonText,m.getMmEmail());//发短信 发邮件
             response.setResult(ResultCodeEnum.SUCCESS);
         }
         else {
@@ -241,6 +247,8 @@ public class AdminController {
     public BaseResponse UpdateBStatus(HttpServletRequest request){
         String bId=request.getParameter("bId");
         if (service.UpdateBStatus(bId)){
+            Business b=service.getBusinessById(bId);
+            MailUtil.passBSend(b.getBWeiXinName(),b.getBEmail());
             response.setResult(ResultCodeEnum.SUCCESS);
         }
         else {
@@ -258,6 +266,8 @@ public class AdminController {
         String bFialReasonSelect=request.getParameter("bFialReasonSelect");
         String  bFailReasonText=request.getParameter("bFailReasonText");
         if (service.UpdateBText(bId,bFialReasonSelect,bFailReasonText)){
+            Business b=service.getBusinessById(bId);
+            MailUtil.refuseBSend(b.getBWeiXinName(),bFialReasonSelect,bFailReasonText,b.getBEmail());
             response.setResult(ResultCodeEnum.SUCCESS);
         }
         else

@@ -11,7 +11,7 @@
 	<groupId>com.Cross2U</groupId>
 	<artifactId>pay</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>user</name>
+	<name>pay</name>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
