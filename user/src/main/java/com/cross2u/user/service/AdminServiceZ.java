@@ -134,8 +134,17 @@ public class AdminServiceZ {
         Mainmanufacturer mainmanufacturer=Mainmanufacturer.dao.findById(mmId);
         mainmanufacturer.setMmStatus(1);//1-在用
         mainmanufacturer.setMmAOpeateTime(now);
-        return mainmanufacturer.update();
+        BigInteger sId=getSIdByMId(mmId);
+        String sql="UPDATE `manufacturer` set mStatus=1 where mStore=1";
+        return mainmanufacturer.update()&&Db.update(sql)>=1;
     }
+
+    private BigInteger getSIdByMId(String mId){
+        String sql="select sId from store where sMmId=?";
+        String sId=Db.query(sql).toString();
+        return new BigInteger(sId);
+    }
+
 
     //退回M的申请
     public boolean UpdateMText(String mmId, String mmFialReasonSelect, String mmFailReasonText) {

@@ -25,11 +25,11 @@ public abstract class BaseStorebill<M extends BaseStorebill<M>> extends Model<M>
 		return get("sbSId");
 	}
 
-	public void setSbInfo(Integer sbInfo) {
+	public void setSbInfo(String sbInfo) {
 		set("sbInfo", sbInfo);
 	}
 
-	public Integer getSbInfo() {
+	public String getSbInfo() {
 		return get("sbInfo");
 	}
 

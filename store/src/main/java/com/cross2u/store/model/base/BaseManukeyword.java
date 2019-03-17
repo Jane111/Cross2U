@@ -41,6 +41,14 @@ public abstract class BaseManukeyword<M extends BaseManukeyword<M>> extends Mode
 		return get("mkManu");
 	}
 
+	public void setMkStore(Long mkStore) {
+		set("mkStore", mkStore);
+	}
+
+	public Long getMkStore() {
+		return get("mkStore");
+	}
+
 	public void setMkCreateTime(java.util.Date mkCreateTime) {
 		set("mkCreateTime", mkCreateTime);
 	}

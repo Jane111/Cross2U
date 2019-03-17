@@ -101,7 +101,20 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
-    </dependencies>
+
+		<!--web3j-->
+		<dependency>
+			<groupId>org.web3j</groupId>
+			<artifactId>core</artifactId>
+			<version>3.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.ipfs</groupId>
+			<artifactId>java-ipfs-http-client</artifactId>
+			<version>$LATEST_VERSION</version>
+		</dependency>
+
+	</dependencies>
 
 	<dependencyManagement>
 		<dependencies>
@@ -129,6 +142,11 @@
 			<id>spring-milestones</id>
 			<name>Spring Milestones</name>
 			<url>https://repo.spring.io/milestone</url>
+		</repository>
+
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
 		</repository>
 	</repositories>
 

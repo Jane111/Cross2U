@@ -12,10 +12,7 @@ import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -27,7 +24,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
+@CrossOrigin
 @RestController
 public class WareController  {
 
@@ -75,7 +72,6 @@ public class WareController  {
     @RequestMapping("/ware/showStoreWare")
     public BaseResponse showStoreWare(HttpServletRequest request){
         String wStore=request.getParameter("wStore");//店铺id
-        String bId=request.getParameter("bId");//bId 若为null
         JSONArray ware=wareServices.showStoreWare(wStore);
 
 
@@ -649,11 +645,26 @@ public class WareController  {
         String wIds=request.getParameter("wIds");
         String wsdId=request.getParameter("wsdId");
         String wfdId=request.getParameter("wfdId");
-        if(wareServices.batchSelectDispatchs(wIds,wfdId,wsdId)){
+        String [] wIdStrs=wIds.split(",");
+        String hasInDis="";
+        for (String wId:wIdStrs){
+            if (wareServices.dispatchIsIn(wfdId,wsdId,wId)){//已经存在
+                hasInDis=hasInDis+wareServices.getWareTitleById(wId)+"   ";
+                continue;
+            }
+            else {
+                if (wareServices.dispatchAddWare(wfdId,wsdId,wId)==null){//没有加进去
+                    hasInDis=hasInDis+wareServices.getWareTitleById(wId)+"   ";
+                    continue;
+                }
+            }
+        }
+        if(hasInDis.equals("")){
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
         else {
-            baseResponse.setResult(ResultCodeEnum.NetERROR);
+            baseResponse.setData(hasInDis);
+            baseResponse.setResult(ResultCodeEnum.ADD_ERROR);
         }
         return baseResponse;
     }
@@ -764,8 +775,8 @@ public class WareController  {
     @ResponseBody
     public BaseResponse batchUndercarriage(HttpServletRequest request ) {
         BaseResponse baseResponse = new BaseResponse();
-        String wIds=request.getParameter("wId");
-        String[] wIdStr=request.getParameterValues(",");
+        String wIds=request.getParameter("wIds");
+        String[] wIdStr=wIds.split(",");
         for (String wId:wIdStr){
             if(!wareServices.editUndercarriage(wId))
             {
@@ -784,26 +795,34 @@ public class WareController  {
     {
         String wfdId=request.getParameter("wfdId");
         String wsdId=request.getParameter("wsdId");
-        if (wfdId!=null && wsdId==null){
+        System.out.println("wfdId"+wfdId+"wsdId"+wsdId);
+        if (wfdId!=null && (wsdId==null||wsdId.equals(""))){
             JSONArray array=wareServices.getWFDWares(wfdId);
-            if(array!=null)
+            System.out.println("wfdId不是null"+array);
+            if(!array.isEmpty())
             {
                 baseResponse.setData(array);
                 baseResponse.setResult(ResultCodeEnum.SUCCESS);
             }
-            else baseResponse.setResult(ResultCodeEnum.NetERROR);
+            else {
+                baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+            }
         }
-        else if(wfdId==null && wsdId!=null)
+        else if((wfdId==null||wfdId.equals("")) && wsdId!=null)
         {
             JSONArray array=wareServices.getWSDWares(wsdId);
-            if(array!=null)
+            System.out.println("wsdId不是null"+array);
+            if(!array.isEmpty())
             {
                 baseResponse.setData(array);
                 baseResponse.setResult(ResultCodeEnum.SUCCESS);
             }
-            else baseResponse.setResult(ResultCodeEnum.NetERROR);
+            else {
+                baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+            }
         }
         else {
+            System.out.println("都是null");
             baseResponse.setResult(ResultCodeEnum.NetERROR);
         }
         return baseResponse;
@@ -849,10 +868,18 @@ public class WareController  {
         String wfdId=request.getParameter("wfdId");
         String wsdId=request.getParameter("wsdId");
         String wId=request.getParameter("wId");
-        if (wareServices.dispatchAddWare(wfdId,wsdId,wId)){
-            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        if (wareServices.dispatchIsIn(wfdId,wsdId,wId)){//在分类中已经有这个商品
+            baseResponse.setResult(ResultCodeEnum.DISPATCH_IS_IN);
         }
-        else baseResponse.setResult(ResultCodeEnum.ADD_FAILURE);
+        else {
+            Long wbId=wareServices.dispatchAddWare(wfdId,wsdId,wId);
+            if (wbId!=null){
+                baseResponse.setData(wbId);
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
+            }
+            else baseResponse.setResult(ResultCodeEnum.ADD_FAILURE);
+        }
+
         return baseResponse;
     }
 
@@ -873,9 +900,75 @@ public class WareController  {
     @ResponseBody
     public BaseResponse showGoodEval(HttpServletRequest request)
     {
+        System.out.println("--------------------good eval--------------");
+        BaseResponse baseResponse=new BaseResponse();
         String sId=request.getParameter("sId");
         JSONArray array=wareServices.showGoodEval(sId);
         if (!array.isEmpty()){
+            System.out.println("goodEval"+array);
+            baseResponse.setData(array);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        System.out.println("--------------------good eval--------------");
+        return baseResponse;
+    }
+
+    /**
+     * 显示中评价列表（3星）
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/showNormalEval")
+    public BaseResponse showNormalEval(HttpServletRequest request){
+        System.out.println("--------------------normal eval--------------");
+        BaseResponse baseResponse=new BaseResponse();
+        String sId=request.getParameter("sId");
+        JSONArray array=wareServices.showNormalEval(sId);
+        if (array==null||array.isEmpty()){
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        else {
+            System.out.println("normal"+array);
+            baseResponse.setData(array);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        System.out.println("--------------------normal eval--------------");
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/showBadEval")
+    public BaseResponse showBadEval(HttpServletRequest request){
+        System.out.println("--------------------bad eval--------------");
+        BaseResponse baseResponse=new BaseResponse();
+        String sId=request.getParameter("sId");
+        JSONArray array=wareServices.showBadEval(sId);
+        if (array==null||array.isEmpty()){
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        else {
+            System.out.println("bad"+array);
+            baseResponse.setData(array);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        System.out.println("--------------------bad eval--------------");
+        return baseResponse;
+    }
+
+
+    /**
+     * 显示已被举报的评论
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/showComEval")
+    public BaseResponse showComEval(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String sId=request.getParameter("sId");
+        JSONArray array=wareServices.showComEval(sId);
+        if(array!=null){
             baseResponse.setData(array);
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
@@ -886,36 +979,128 @@ public class WareController  {
     }
 
     /**
-     * 1、显示好评评价列表（4、5星）
+     * 显示评论详情
      * @param request
      * @return
      */
-    @RequestMapping("/ware/showNormalEval")
-    public BaseResponse showNormalEval(HttpServletRequest request){
+    @RequestMapping("/ware/showEvalInfo")
+    public BaseResponse showEvalInfo(HttpServletRequest request){
         String sId=request.getParameter("sId");
-        JSONArray array=wareServices.showNormalEval(sId);
-        if (array==null){
-            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        String ewId=request.getParameter("ewId");
+        JSONObject object=wareServices.showEvalInfo(sId,ewId);
+        if (object!=null){
+            baseResponse.setData(object);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
         else {
-            baseResponse.setData(array);
-            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
         }
         return baseResponse;
     }
 
-    @RequestMapping("/ware/showBadEval")
-    public BaseResponse showBadEval(HttpServletRequest request){
+    /**
+     * 店铺动态评分
+     * /ware/showStoreEval
+     */
+    @RequestMapping("/ware/showStoreEval")
+    public BaseResponse showStoreEval(HttpServletRequest request){
         String sId=request.getParameter("sId");
-        JSONArray array=wareServices.showBadEval(sId);
-        if (array==null){
-            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        JSONObject object=wareServices.showStoreEval(sId);
+        if (object!=null){
+            baseResponse.setData(object);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
         else {
-            baseResponse.setData(array);
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return baseResponse;
+    }
+    /**
+     * 店铺评分统计
+     */
+
+    @RequestMapping("/ware/showStaticEval")
+    public BaseResponse showStaticEval(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String sId=request.getParameter("sId");
+        JSONObject object=wareServices.showStaticEval(sId);
+        if (object!=null){
+            baseResponse.setData(object);
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
         }
         return baseResponse;
     }
 
+    /**
+     * 举报异常评价
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/reportStoreEval")
+    public BaseResponse reportStoreEval(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        String ewId=request.getParameter("ewId");
+        String aerType=request.getParameter("aerType");
+        String aerContent=request.getParameter("aerContent");
+
+        if (wareServices.reportStoreEval(sId,ewId,aerType,aerContent)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.ADD_FAILURE);
+        }
+        return baseResponse;
+    }
+
+    /**
+     * 显示已举报评论的详情
+     */
+
+    @RequestMapping("/ware/showComInfo")
+    public BaseResponse showComInfo(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        String ewId=request.getParameter("ewId");
+        JSONObject object=wareServices.showComInfo(sId,ewId);
+        if (object!=null){
+            baseResponse.setData(object);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return baseResponse;
+    }
+
+    /**
+     * 回复评论
+     */
+
+    @RequestMapping("/ware/replyEval")
+    public BaseResponse replyEval(HttpServletRequest request){
+        String ewId=request.getParameter("ewId");
+        String ewReply=request.getParameter("ewReply");
+        if (wareServices.replyEval(ewId,ewReply)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.UPDATE_ERROR);
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/showReportReasons")
+    public BaseResponse showReportReasons(HttpServletRequest request){
+        JSONArray array=wareServices.showReportReasons();
+        if (array!=null){
+            baseResponse.setData(array);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return baseResponse;
+    }
 }

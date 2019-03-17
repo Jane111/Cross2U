@@ -211,13 +211,12 @@ public class BusinessController {
     //获取店铺Top4商品
     private Object getTopFourWare(String sId) {
         System.out.println(sId+" "+(restTemplate==null));
-        JSONObject array = restTemplate.getForObject("http://localhost:8003/ware/getTopFourWare?sId="+sId,JSONObject.class);
+        JSONObject array = restTemplate.getForObject("http://Ware/ware/getTopFourWare?sId="+sId,JSONObject.class);
         return array.get("data");
         //return null;
     }
 
-    /*@RequestMapping("")
-    @ResponseBody*/
+
 
 
 
@@ -410,7 +409,6 @@ public class BusinessController {
         }
         return baseResponse;
     }
-
 
     @RequestMapping("/business/intoMine")
     public BaseResponse intoMine(HttpServletRequest request) {

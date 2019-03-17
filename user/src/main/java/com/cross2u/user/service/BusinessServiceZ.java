@@ -109,6 +109,7 @@ public class BusinessServiceZ {
         String collectSql="SELECT SUM(cOwner) as collectNumber FROM `collect` WHERE cStore=? and cWare is NULL;";
         Integer collect=Db.queryInt(collectSql,sId);
         jsonObject.put("collectNumber",collect);
+
         String bId=getBIdByOpenId(openId);
         if (bId!=null){
             System.out.println("bID"+bId);
@@ -529,6 +530,41 @@ public class BusinessServiceZ {
     public boolean cancelCop(String copId) {
         String sql="update cooperation set copState=4 where copId=?";
         return Db.update(sql,copId)==1;
+    }
+
+    public JSONObject MshowStoreDetail(String sId) {
+        JSONObject jsonObject=new JSONObject();
+        String sql="select sName,sPhoto,sDescribe,sScore,mmName,mmLogo " +
+                "from store INNER JOIN mainmanufacturer on store.sId=mainmanufacturer.mmStore " +
+                "where sId=? ";
+        Record record= Db.findFirst(sql,new BigInteger(sId));
+        jsonObject.put("sName",record.get("sName"));
+        String sPhoto=record.get("sPhoto");
+        String[] photos=sPhoto.split(",");
+        jsonObject.put("sPhoto",photos);
+        jsonObject.put("sDescribe",record.get("sDescribe"));
+        jsonObject.put("sScore",record.get("sScore"));
+        jsonObject.put("mmName",record.get("mmName"));
+        jsonObject.put("mmLogo",record.get("mmLogo"));
+        jsonObject.put("copBId",record.get("copBId"));
+
+        String countSql="SELECT count(copBId) as copNumber  " +
+                " FROM cooperation " +
+                " WHERE copSId=?";
+        Integer count=Db.queryInt(countSql,sId);
+        jsonObject.put("copNumber",count);
+        /**
+         * 收藏人数 collectNumber
+         * 是否收藏 isCollect
+         * 是否代理 isCooperation
+         * 前四个商品 sWares
+         */
+        String collectSql="SELECT SUM(cOwner) as collectNumber FROM `collect` WHERE cStore=? and cWare is NULL;";
+        Integer collect=Db.queryInt(collectSql,sId);
+        jsonObject.put("collectNumber",collect);
+
+        System.out.println(jsonObject);
+        return jsonObject;
     }
 }
 

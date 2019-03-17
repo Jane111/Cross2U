@@ -9,6 +9,7 @@ import com.cross2u.indent.util.Constant;
 import com.cross2u.indent.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+@CrossOrigin
 @RestController
 public class IndentController {
 
@@ -182,7 +184,7 @@ public class IndentController {
      * 该商品是否有正在进行的订单
      * @return
      */
-    @RequestMapping("indent/hasINGIndent")
+    @RequestMapping("/indent/hasINGIndent")
     @ResponseBody
     public Boolean hasINGIndent(HttpServletRequest request){
         String wId=request.getParameter("wId");

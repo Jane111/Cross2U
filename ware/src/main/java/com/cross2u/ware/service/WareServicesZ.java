@@ -13,6 +13,7 @@ import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.template.stat.ast.For;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -33,16 +34,17 @@ public class WareServicesZ {
     RestTemplate restTemplate;
 
 
-
     //根据id找ware
     public Ware getWareById(String wId) {
         return Ware.dao.findById(wId);
     }
-
+    public String getWareTitleById(String wId){
+        return Ware.dao.findById(wId).getWTitle();
+    }
     //下架商品
     public Boolean editUndercarriage(String wId) {
         Ware ware=getWareById(wId);
-        ware.setWStatus(1);
+        ware.setWStatus(1);//设置状态1-下架
         return ware.update();
     }
 
@@ -420,7 +422,6 @@ public class WareServicesZ {
          * wareAtr id name option:{id name}
          * format id name option{id name}
          * product {fid fo} pMoney pImg pIdentifier pStorage pMoneyUnit
-         *
          */
         JSONObject object=new JSONObject();
         String waresql="SELECT wStore,wMainImage,wImage1,wImage2,wImage3,wImage4,wTitle,wIdentifier,wDeliverArea,wStartNum,wHighNum,wDescription,wIsEnsure,wIsEnsureQuality,wDeliverHour,wIsReceipt,wReplaceDays " +
@@ -429,6 +430,7 @@ public class WareServicesZ {
         Ware ware=Ware.dao.findFirst(waresql,wId);
         object.put("ware",ware);
 
+        //---自定义类别
         String wbelongSql="SELECT wbId,wbWFDId,wfdName,wbWSDId,wsdName " +
                 " FROM (warebelong INNER JOIN warefdispatch on wfdId=wbWFDId ) INNER JOIN waresdispatch on wsdId=wbWSDId " +
                 " WHERE wbWId=?";
@@ -439,51 +441,64 @@ public class WareServicesZ {
         object.put("wbWSDId",wareBelong.get("wbWSDId"));
         object.put("wsdName",wareBelong.get("wsdName"));
 
+        //--系统内部类别
         String caSql="SELECT c.ctId as caFirst,c.ctName as caFName, a.ctId as caSecond," +
                 "a.ctName as caSName,b.ctId as caThird,b.ctName as caTName " +
                 "FROM ((category a INNER JOIN category b on a.ctId=b.ctParentId) INNER JOIN ware on b.ctId=wClass) INNER JOIN category c on c.ctId=a.ctParentId " +
                 "WHERE wId=? ";
         Record category=Db.findFirst(caSql,wId);//父子id
-        object.put("caFirst",wareBelong.get("caFirst"));
-        object.put("caFName",wareBelong.get("caFName"));
-        object.put("caSecond",wareBelong.get("caSecond"));
-        object.put("caSName",wareBelong.get("caSName"));
-        object.put("caThird",wareBelong.get("caThird"));
-        object.put("caTName",wareBelong.get("caTName"));
+        object.put("caFirst",category.get("caFirst"));
+        object.put("caFName",category.get("caFName"));
+        object.put("caSecond",category.get("caSecond"));
+        object.put("caSName",category.get("caSName"));
+        object.put("caThird",category.get("caThird"));
+        object.put("caTName",category.get("caTName"));
 
         JSONArray atrNames=getAtr(category.getStr("caSecond"),category.getStr("caThird"));//属性名称
-
         for (int i=0;i<atrNames.size();i++)
         {
             JSONObject atrName=atrNames.getJSONObject(i);
             String atrOptionSql="SELECT aoId,aoName " +
                     "FROM attributeoption INNER JOIN wareattribute on aoId=waAttributeOption " +
-                    "WHERE aoAttribute=？";//属性的选项 未选则为空
-            Record atrOption=Db.findFirst(atrOptionSql,atrName.get("atId"));
+                    "WHERE aoAttribute=? and waWare=? ";//属性的选项 未选则为空
+            Record atrOption=Db.findFirst(atrOptionSql,atrName.get("atId"),wId);
             atrName.put("aoId",atrOption.get("aoId"));
             atrName.put("aoName",atrOption.get("aoName"));
-
         }
+        object.put("attribute",atrNames);
+
         //----规格
         JSONArray foNames=getFor(category.getStr("caSecond"),category.getStr("caThird"));//规格名称
-        for (int i=0;i<foNames.size();i++){
+       for (int i=0;i<foNames.size();i++){
             JSONObject foName=foNames.getJSONObject(i);
 
-            JSONArray foOptions=editFoOptions(wId,foName.get("fId"));
-            JSONArray defineOption=editDifineOption(foName.get("fId"),wId);
+            JSONArray foOptions=editFoOptions(wId,foName.get("fId"));//选项
+            JSONArray defineOption=editDifineOption(foName.get("fId"),wId);//自定义的选项
             foOptions.add(defineOption);
 
-            foName.put("foOptions",foOptions);
+            foName.put("fOption",foOptions);
         }
+        object.put("format",foNames);
         //----单品
-        String productSql="SELECT pId,pMoney,pImage,pIdentifier,pStorage,pMoneyUnit" +
-                "from product" +
-                "WHERE pWare=?";
+        String productSql="SELECT pId,pMoney,pImage,pIdentifier,pStorage,pMoneyUnit  " +
+                "from product  " +
+                "WHERE pWare=? ";
         List<Record> products=Db.find(productSql,wId);
+        JSONArray productArray=new JSONArray();
         for (Record product:products){
-            JSONArray  productFormat=getProductFormat(product.get("pId"));
-            product.set("productFormat",productFormat);
+            JSONObject p=new JSONObject();
+            JSONArray  productFormat=getProductFormat(product.getBigInteger("pId"));
+            p.put("pId",product.getBigInteger("pId"));
+            p.put("pMoney",product.get("pMoney"));
+            p.put("pImage",product.get("pImage"));
+            p.put("pIdentifier",product.get("pIdentifier"));
+            p.put("pStorage",product.get("pStorage"));
+            p.put("pMoneyUnit",product.get("pMoneyUnit"));
+            p.put("productFormat",productFormat);
+
+            productArray.add(p);
         }
+        object.put("products",productArray);
 
         /*ware.setColumns(wareBelong);
         ware.set("category",category);//商品类别
@@ -495,9 +510,9 @@ public class WareServicesZ {
 
     private JSONArray editDifineOption(Object fId, String wId) {
         JSONArray array=new JSONArray();
-        String defineOptionSql="SELECT 0 as foId ,pfDefineOption as foName,'1' as isSelect" +
+        String defineOptionSql="SELECT 0 as foId ,pfDefineOption as foName,'1' as isSelect  " +
                 "from productformat inner join product on pfProduct=product.pId " +
-                "where pfFormat=? and pWare=? and pfDefineOption is not NULL";
+                "where pfFormat=? and pWare=? and pfDefineOption is not NULL ";
 
         List<Record> defineOptions=Db.find(defineOptionSql,fId,wId);//自定义选项
         for (Record defineOption:defineOptions){
@@ -505,6 +520,7 @@ public class WareServicesZ {
             object.put("foId",defineOption.get("foId"));
             object.put("pfDefineOption",defineOption.get("pfDefineOption"));
             object.put("isSelect",defineOption.get("isSelect"));
+            object.put("isDefine","isDefine");
             array.add(object);
         }
         return array;
@@ -516,7 +532,7 @@ public class WareServicesZ {
                 " CASE" +
                 "  WHEN foId IN (SELECT pfFormatOption from productformat INNER JOIN product on pfProduct=pId WHERE pWare like '"+wId+"')  " +
                 "  THEN 1 " +
-                "  WHEN foId not IN (SELECT pfFormatOption from productformat INNER JOIN product on pfProduct=pId WHERE pWarelike '"+wId+"')  " +
+                "  WHEN foId not IN (SELECT pfFormatOption from productformat INNER JOIN product on pfProduct=pId WHERE pWare like '"+wId+"')  " +
                 "  THEN 0 " +
                 " END isSelect " +
                 " from (format INNER JOIN formatoption on foFormat=fId)  " +
@@ -527,17 +543,17 @@ public class WareServicesZ {
             object.put("foId",record.get("foId"));
             object.put("foName",record.get("foName"));
             object.put("isSelect",record.get("isSelect"));
-
+            object.put("isDefine","notDefine");
             array.add(object);
         }
         return array;
     }
 
-    private JSONArray  getProductFormat(Object pId) {
+    private JSONArray  getProductFormat(BigInteger pId) {
         JSONArray array=new JSONArray();
         String formatSql="SELECT fId,fName  " +
                 "FROM productformat INNER JOIN format on pfFormat=fId  " +
-                "WHERE pfProduct=?";
+                "WHERE pfProduct=?  ";
         List<Record> formats=Db.find(formatSql,pId);
         for (Record format: formats){
             JSONObject object=new JSONObject();
@@ -546,10 +562,10 @@ public class WareServicesZ {
 
             String productfosql="SELECT foId,foName  " +
                     "from (productformat INNER JOIN format on fId=pfFormat) INNER JOIN formatoption on foId=pfFormatOption " +
-                    "WHERE pfProduct=? and fId=?";
+                    "WHERE pfProduct=? and fId=?  ";
             Record option=Db.findFirst(productfosql,pId,format.get("fId"));
 
-            String defineSql="SELECT '0' as foId ,pfDefineOption as foName" +
+            String defineSql="SELECT '0' as foId ,pfDefineOption as foName  " +
                     "from productformat INNER JOIN format on fId=pfFormat " +
                     "WHERE pfProduct=? and fId=? and pfDefineOption is not NULL";
             Record define=Db.findFirst(defineSql,pId,format.get("fId"));//自定义
@@ -585,17 +601,17 @@ public class WareServicesZ {
 
     public boolean editDelete(String wId) {
         Ware ware=Ware.dao.findById(wId);
-        ware.setWStatus(0);
+        ware.setWStatus(0);//状态设置为0-删除
         return ware.update();
     }
 
     public boolean editupcarriage(String wId) {
         Ware ware=Ware.dao.findById(wId);
-        ware.setWStatus(2);
+        ware.setWStatus(2);//设置状态2-上架在售
         return ware.update();
     }
 
-    public boolean batchSelectDispatchs(String wIds, String wfdId,String wsdId) {
+    /*public boolean batchSelectDispatchs(String wIds, String wfdId,String wsdId) {
         String[] widStr=wIds.split(",");
         for (String wId:widStr){
             if(!addOneWareBelong(wfdId, wsdId,new BigInteger (wId)))
@@ -604,7 +620,7 @@ public class WareServicesZ {
             }
         }
         return true;
-    }
+    }*/
 
     public boolean batchChangeMoney(String wIds, String money, String unit) {
         String[] wIdstr=wIds.split(",");
@@ -823,7 +839,7 @@ public class WareServicesZ {
         JSONArray array=new JSONArray();
         String sql="select wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit " +
                 "from ware INNER JOIN warebelong on ware.wId=warebelong.wbWId  " +
-                "where warebelong.wbWFDId=?";
+                "where warebelong.wbWFDId=? ";
         List<Record> fWares=Db.find(sql,new BigInteger(wbWFDId));
         for (Record ware:fWares){
             JSONObject object=new JSONObject();
@@ -891,7 +907,7 @@ public class WareServicesZ {
     public JSONArray getWFDWares(String wfdId) {
         JSONArray array= new JSONArray();
         String getWId="SELECT wbWId from warebelong where wbWFDId=? ";
-        List<Record> wIds=Db.find(getWId);
+        List<Record> wIds=Db.find(getWId,wfdId);
         for (int i=0;i<wIds.size();i++){
             Record record=wIds.get(i);
             BigInteger wId=record.getBigInteger("wbWId");
@@ -905,7 +921,7 @@ public class WareServicesZ {
     public JSONArray getWSDWares(String wsdId) {
         JSONArray array= new JSONArray();
         String getWId="SELECT wbWId from warebelong where wbWSDId=? ";
-        List<Record> wIds=Db.find(getWId);
+        List<Record> wIds=Db.find(getWId,wsdId);
         for (int i=0;i<wIds.size();i++){
             Record record=wIds.get(i);
             BigInteger wId=record.getBigInteger("wbWId");
@@ -1021,16 +1037,43 @@ public class WareServicesZ {
         return  array;
     }
 
-    public boolean dispatchAddWare(String wfdId, String wsdId, String wId) {
-        if (wfdId!=null&&!wfdId.equals("")){
-            String sql="INSERT INTO warebelong SET wbWId=?,wbWFDId=? ";
-            return Db.update(sql,wId,wfdId)==1;
+    public boolean dispatchIsIn(String wfdId, String wsdId, String wId){
+        String sql="select wbWId from warebelong where wbWFDId=?";
+        List<Record> wIds=null;
+        if (!(wsdId==null||wsdId.equals(""))){
+            sql=sql+" and wbWSDId=? ";
+            wIds=Db.find(sql,wfdId,wsdId);
         }
-        else if (wsdId!=null&&!wsdId.equals("")){
-            String sql="INSERT INTO warebelong SET wbWId=?,wbWSDId=? ";
-            return Db.update(sql,wId,wsdId)==1;
+        else {//没有子类
+            wIds=Db.find(sql,wfdId);
+        }
+        for (Record ware:wIds){
+            System.out.println("ware-wId"+ware.get("wbWId"));
+            if (ware.get("wbWId").toString().equals(wId)){
+                return true;
+            }
         }
         return false;
+    }
+
+    public Long dispatchAddWare(String wfdId, String wsdId, String wId) {
+        Long wbId=null;
+        if (!(wsdId==null||wsdId.equals(""))){//有子类
+            String sql="INSERT INTO warebelong SET wbWId=?,wbWFDId=?,wbWSDId=? ";
+            if (Db.update(sql,wId,wfdId,wsdId)==1){
+                String findSql="select wbId from warebelong where wbWId=? and wbWFDId=? and wbWSDId=?";
+                wbId=Db.queryLong(findSql,wId,wfdId,wsdId);
+            }
+            //return Db.update(sql,wId,wfdId,wsdId)==1;
+        }
+        else if (!(wfdId==null||wfdId.equals(""))){//没子类
+            String sql="INSERT INTO warebelong SET wbWId=?,wbWFDId=? ";
+            if(Db.update(sql,wId,wfdId)==1){
+                String findSql="select wbId from warebelong where wbWId=? and wbWFDId=? ";
+                wbId=Db.queryLong(findSql,wId,wfdId);
+            }
+        }
+        return wbId;
     }
     public boolean dispatchDeleteWare(String wbId){
         String sql="delete from warebelong where wbId=?";
@@ -1040,7 +1083,8 @@ public class WareServicesZ {
     public JSONArray showGoodEval(String sId){
         String sql="select ewId,ewCotent,ewRank,ewCommentator,ewInId,ewWId " +
                 "from evalware " +
-                "where  ewRank =3 and  ewInId in (SELECT inId from indent where inStore=?)";
+                "where  ewRank in(4,5) and  ewInId in (SELECT inId from indent where inStore=?) " +
+                "and ewId not in (SELECT aerEWId from abevalreport) ";
         List<Record> records=Db.find(sql,sId);
         JSONArray array=getEvalArray(records);
         return array;
@@ -1049,7 +1093,8 @@ public class WareServicesZ {
     public JSONArray showBadEval(String sId){
         String sql="select ewId,ewCotent,ewRank,ewCommentator,ewInId,ewWId " +
                 "from evalware " +
-                "where  ewRank IN (1,2) and  ewInId in (SELECT inId from indent where inStore=?)";
+                "where  ewRank IN (1,2) and  ewInId in (SELECT inId from indent where inStore=?) " +
+                "and ewId not in (SELECT aerEWId from abevalreport) ";
         List<Record> records=Db.find(sql,sId);
         JSONArray array=getEvalArray(records);
         return array;
@@ -1058,7 +1103,8 @@ public class WareServicesZ {
     public JSONArray showNormalEval(String sId){
         String sql="select ewId,ewCotent,ewRank,ewCommentator,ewInId,ewWId " +
                 "from evalware " +
-                "where  ewRank in(4,5) and  ewInId in (SELECT inId from indent where inStore=?)";
+                "where  ewRank =3 and  ewInId in (SELECT inId from indent where inStore= ?) " +
+                "and ewId not in (SELECT aerEWId from abevalreport) ";
         List<Record> records=Db.find(sql,sId);
         JSONArray array=getEvalArray(records);
         return array;
@@ -1092,5 +1138,348 @@ public class WareServicesZ {
         }
         return array;
     }
+
+    //显示已举报的评论
+    public JSONArray showComEval(String sId) {
+        String sql="select ewId,ewCotent,ewRank,ewCommentator,ewInId,ewWId " +
+                "from evalware INNER JOIN abevalreport on ewId=aerEWId " +
+                "where  ewInId in (SELECT inId from indent where inStore= ? )";
+        List<Record> records=Db.find(sql,sId);
+        JSONArray array=getEvalArray(records);
+        for (int i=0;i<array.size();i++){
+            JSONObject object=array.getJSONObject(i);
+            BigInteger ewId=object.getBigInteger("ewId");
+            String aerStateSql="select aerState from abevalreport where aerEWId=?";
+            Integer aerState=Db.queryInt(aerStateSql,ewId);
+            object.put("aerState",aerState);//是否被审核
+        }
+        return array;
+    }
+
+
+    //显示评论详情
+    public JSONObject showEvalInfo(String sId, String ewId) {
+        String sql="SELECT ewId,ewCotent,ewRank,ewIsAnymous,wTitle,inProductNum,ewImg,ewImg2,ewImg3,inNum,ewReply,ewCommentator,ewPId  " +
+                "from (evalware INNER JOIN indent on inId=ewInId) INNER JOIN ware on inWare=wId  " +
+                "WHERE ewId=? ";
+        Record record=Db.findFirst(sql,ewId);
+        JSONObject object=new JSONObject();
+        BigInteger bId=record.getBigInteger("ewCommentator");
+        String getBWeiXinSql="select bWeiXinName from business where bId=? ";
+        String bName=Db.queryStr(getBWeiXinSql,bId);
+        object.put("bWeiXinName",bName);
+        BigInteger pId=record.getBigInteger("ewPId");
+        JSONArray pfDefineOption=getProductAtr(pId.toString());
+        object.put("pfDefineOption",pfDefineOption );
+        object.put("ewId",record.get("ewId"));
+        object.put("ewCotent",record.get("ewCotent"));
+        object.put("ewRank",record.get("ewRank"));
+        object.put("ewIsAnymous",record.get("ewIsAnymous"));
+        object.put("wTitle",record.get("wTitle"));
+        object.put("inProductNum",record.get("inProductNum"));
+        object.put("ewImg",record.get("ewImg"));
+        object.put("ewImg2",record.get("ewImg2"));
+        object.put("ewImg3",record.get("ewImg3"));
+        object.put("inNum",record.get("inNum"));
+        object.put("ewReply",record.get("ewReply"));
+
+        return object;
+    }
+
+    private JSONArray getProductAtr(String pId){
+        JSONArray array=new JSONArray();
+        String sql="SELECT fName ,foName " +
+                " from (productformat INNER JOIN format on pfFormat=fId) INNER JOIN formatoption on pfFormatOption=foId " +
+                " WHERE pfProduct=? ";
+        List<Record> records=Db.find(sql,pId);
+        for (Record record:records){
+            JSONObject object=new JSONObject();
+            object.put("fName",record.get("fName"));
+            object.put("foName",record.get("foName"));
+            array.add(object);
+        }
+        return array;
+    }
+
+    //显示店铺动态评价
+    public JSONObject showStaticEval(String sId) {
+        JSONObject object=new JSONObject();
+        JSONObject  oneWeek=getOneWeek(sId);//最近一周的评论情况
+        JSONObject oneMouth=getOneMouth(sId);//最近一月的评论情况
+        JSONObject sixMouth=getSixMouth(sId);//最近6个月的评论情况
+        JSONObject beforSixMou=getBeforSixMou(sId);//6个月前的评论情况
+        JSONObject total=getTota(sId);//所有的评论情况
+        object.put("oneWeek",oneWeek);
+        object.put("oneMouth",oneMouth);
+        object.put("sixMouth",sixMouth);
+        object.put("beforSixMou",beforSixMou);
+        object.put("total",total);
+
+        return object;
+    }
+
+    //所有的评价情况
+    private JSONObject getTota(String sId) {
+        JSONObject object=new JSONObject();
+        String selectSql="SELECT COUNT(*) " +
+                "from evalware " +
+                "WHERE  ewInId in (SELECT inId from indent where inStore= ? ) ";
+        String goodSql=selectSql+" and ewRank in(4,5)  ";
+        Integer goodNum=Db.queryInt(goodSql,sId);
+        object.put("good",goodNum);
+        String normalSql=selectSql+" and  ewRank=3 ";
+        Integer normalNum=Db.queryInt(normalSql,sId);
+        object.put("normal",normalNum);
+        String badSql=selectSql+" and  ewRank in (1,2)";
+        Integer badNum=Db.queryInt(badSql,sId);
+        object.put("bad",badNum);
+        Integer total=Db.queryInt(selectSql,sId);
+        object.put("total",total);
+        return object;
+    }
+
+    //6个月前的评价情况
+    private JSONObject getBeforSixMou(String sId) {
+        JSONObject object=new JSONObject();
+        String selectSql="SELECT COUNT(*) " +
+                "from evalware " +
+                "WHERE  ewInId in (SELECT inId from indent where inStore= ? ) " +
+                "and DATE_SUB(CURDATE(), INTERVAL 180 DAY) > date(ewCreateTime)  ";
+        String goodSql=selectSql+" and ewRank in(4,5)  ";
+        Integer goodNum=Db.queryInt(goodSql,sId);
+        object.put("good",goodNum);
+        String normalSql=selectSql+" and  ewRank=3 ";
+        Integer normalNum=Db.queryInt(normalSql,sId);
+        object.put("normal",normalNum);
+        String badSql=selectSql+" and  ewRank in (1,2)";
+        Integer badNum=Db.queryInt(badSql,sId);
+        object.put("bad",badNum);
+        Integer total=Db.queryInt(selectSql,sId);
+        object.put("total",total);
+        return object;
+    }
+
+    //最近6个月的评价情况
+    private JSONObject getSixMouth(String sId) {
+        JSONObject object=new JSONObject();
+        String selectSql="SELECT COUNT(*) " +
+                "from evalware " +
+                "WHERE  ewInId in (SELECT inId from indent where inStore= ? ) " +
+                "and DATE_SUB(CURDATE(), INTERVAL 180 DAY) <= date(ewCreateTime)  and DATE_SUB(CURDATE(), INTERVAL 30 DAY) > date(ewCreateTime) ";
+        String goodSql=selectSql+" and ewRank in(4,5)  ";
+        Integer goodNum=Db.queryInt(goodSql,sId);
+        object.put("good",goodNum);
+        String normalSql=selectSql+" and  ewRank=3 ";
+        Integer normalNum=Db.queryInt(normalSql,sId);
+        object.put("normal",normalNum);
+        String badSql=selectSql+" and  ewRank in (1,2)";
+        Integer badNum=Db.queryInt(badSql,sId);
+        object.put("bad",badNum);
+        Integer total=Db.queryInt(selectSql,sId);
+        object.put("total",total);
+        return object;
+    }
+
+    //一个月的评价详情
+    private JSONObject getOneMouth(String sId) {
+        JSONObject object=new JSONObject();
+        String selectSql="SELECT COUNT(*) " +
+                "from evalware " +
+                "WHERE  ewInId in (SELECT inId from indent where inStore= ? ) " +
+                "and DATE_SUB(CURDATE(), INTERVAL 30 DAY) <= date(ewCreateTime) and  DATE_SUB(CURDATE(), INTERVAL 7 DAY) > date(ewCreateTime)";
+        String goodSql=selectSql+" and ewRank in(4,5)  ";
+        Integer goodNum=Db.queryInt(goodSql,sId);
+        object.put("good",goodNum);
+        String normalSql=selectSql+" and  ewRank=3 ";
+        Integer normalNum=Db.queryInt(normalSql,sId);
+        object.put("normal",normalNum);
+        String badSql=selectSql+" and  ewRank in (1,2)";
+        Integer badNum=Db.queryInt(badSql,sId);
+        object.put("bad",badNum);
+        Integer total=Db.queryInt(selectSql,sId);
+        object.put("total",total);
+        return object;
+    }
+
+    //一周的评论情况
+    public JSONObject getOneWeek(String sId) {
+        JSONObject object=new JSONObject();
+        String selectSql="SELECT COUNT(*) " +
+                "from evalware " +
+                "WHERE  ewInId in (SELECT inId from indent where inStore= ? ) " +
+                "and DATE_SUB(CURDATE(), INTERVAL 7 DAY) <= date(ewCreateTime)  ";
+        String goodSql=selectSql+" and ewRank in(4,5)  ";
+        Integer goodNum=Db.queryInt(goodSql,sId);
+        object.put("good",goodNum);
+        String normalSql=selectSql+" and  ewRank=3 ";
+        Integer normalNum=Db.queryInt(normalSql,sId);
+        object.put("normal",normalNum);
+        String badSql=selectSql+" and  ewRank in (1,2)";
+        Integer badNum=Db.queryInt(badSql,sId);
+        object.put("bad",badNum);
+        Integer total=Db.queryInt(selectSql,sId);
+        object.put("total",total);
+        return object;
+    }
+
+
+    public boolean reportStoreEval(String sId, String ewId, String aerType, String aerContent) {
+        Abevalreport abevalreport=new Abevalreport();
+        BigInteger mId=getMIdBySId(sId);
+        abevalreport.setAerFReportId(mId);
+        abevalreport.setAerEWId(new BigInteger(ewId));
+        abevalreport.setAerType(new BigInteger(aerType));
+        abevalreport.setAerContent(aerContent);
+        abevalreport.setAerState(0);//未审核状态
+
+        /*String aerId=abevalreport.getAerId().toString();
+        Evalware evalware=Evalware.dao.findById(ewId);
+        evalware.setEwAERId(new Long(aerId));*/
+        return abevalreport.save();
+    }
+
+    //根绝sid获得mId
+    private BigInteger getMIdBySId(String sId) {
+        String sql="select mmId from mainmanufacturer where mmStore=? ";
+        String mId=Db.queryLong(sql,sId).toString();
+        return new BigInteger(mId);
+    }
+
+    //显示已举报订单的详情
+    public JSONObject showComInfo(String sId, String ewId) {
+        Evalware evalware=Evalware.dao.findById(ewId);
+        JSONObject object=new JSONObject();
+        BigInteger bId=evalware.getEwCommentator();//bid
+        String getBWeiXinNameSql="select bWeiXinName from business where bId=? ";
+        String bWeiXinName=Db.queryStr(getBWeiXinNameSql,bId);
+        object.put("bWeiXinName",bWeiXinName);
+        BigInteger wId=evalware.getEwWId();//wId
+        String getWTitle="select wTitle from ware where wId=?";
+        String wTitle=Db.queryStr(getWTitle,wId);
+        object.put("wTitle",wTitle);
+        BigInteger pId=evalware.getEwPId();//单品id
+        JSONArray pAtr=getProductFormat(pId);
+        object.put("pAtr",pAtr);
+        BigInteger inId=evalware.getEwInId();//订单id
+        String getInProductNumSql="select inNum,inProductNum from indent where inId=?";
+        Record indent=Db.findFirst(getInProductNumSql,inId);
+        object.put("inNum",indent.get("inNum"));
+        object.put("inProductNum",indent.get("inProductNum"));
+
+        String getAbSql="select * from abevalreport where aerEWId=?";
+        Abevalreport abevalreport=Abevalreport.dao.findFirst(getAbSql,ewId);
+        object.put("aerType",abevalreport.getAerType());
+        String rerContentSql="SELECT  rerContent " +
+                "from reportevaluatereasons  " +
+                "where rerId=? ";
+        String rerContent=Db.queryStr(rerContentSql,abevalreport.getAerType());
+        object.put("rerContent",rerContent);//举报类型
+        object.put("aerAId",abevalreport.getAerAId());
+        BigInteger aId=abevalreport.getAerAId();//管理员id
+        if (aId!=null){
+            String aAccountSql="select aAccount  from administrator where aId =?";
+            String aAccount=Db.queryStr(aAccountSql,aId);
+            object.put("aAccount",aAccount);
+        }
+        else {
+            object.put("aAccount",null);
+        }
+        object.put("aerContent",abevalreport.getAerContent());
+        object.put("aerState",abevalreport.getAerState());
+
+        object.put("ewId",evalware.getEwId());
+        object.put("ewCotent",evalware.getEwCotent());
+        object.put("ewRank",evalware.getEwRank());
+        object.put("ewIsAnymous",evalware.getEwIsAnymous());
+        object.put("ewImg",evalware.getEwImg());
+        object.put("ewImg2",evalware.getEwImg2());
+        object.put("ewImg3",evalware.getEwImg3());
+        object.put("ewReply",evalware.getEwReply());
+        return object;
+    }
+
+    //回复评论
+    public boolean replyEval(String ewId, String ewReply) {
+        Evalware evalware=Evalware.dao.findById(ewId);
+        evalware.setEwReply(ewReply);
+        return evalware.update();
+    }
+
+    public JSONArray showReportReasons() {
+        String sql="SELECT * FROM `reportevaluatereasons`;";
+        List<Record> records=Db.find(sql);
+        JSONArray array=new JSONArray();
+        for (Record record:records){
+            JSONObject object=new JSONObject();
+            object.put("rerContent",record.get("rerContent"));
+            object.put("rerId",record.get("rerId"));
+
+            array.add(object);
+        }
+        return array;
+    }
+
+    public JSONObject showStoreEval(String sId) {
+        String wareRank=getWareRank(sId);
+        String indentRank=getIndentRank(sId);
+        Integer storeRank=getStoreRank(sId);
+        Integer storeScore=getStoreScore(sId);
+        JSONObject object=new JSONObject();
+
+        object.put("wareRank",wareRank);
+        object.put("indentRank",indentRank);
+        object.put("storeRank",storeRank);
+        object.put("storeScore",storeScore);
+
+        return object;
+    }
+
+    //店铺积分
+    private Integer getStoreScore(String sId) {
+        String sql="SELECT sScore from store WHERE sId=?";
+        Integer sScore=Db.queryInt(sql,sId);
+        return sScore;
+    }
+
+    //店铺信用等级
+    private Integer getStoreRank(String sId) {
+        String sql="SELECT sScore from store WHERE sId=? ";
+        Integer sScore=Db.queryInt(sql,sId);
+        return sScore%100+1;
+    }
+
+    //计算订单评分平均分
+    private String getIndentRank(String sId) {
+        String sql="SELECT sum(inBtoM) FROM `indent` WHERE inStore=?";
+        Integer sum=Db.queryInt(sql,sId);
+        if (sum==null){
+            sum=0;
+        }
+        Float sumFloat=sum+0.0f;
+        String countSql="select count(*) from indent where inStore=?";
+        Integer count=Db.queryInt(countSql,sId);
+        DecimalFormat  mFormat = new DecimalFormat(".00");
+        String formatNum = mFormat .format(sumFloat/count);
+        if (sumFloat/count<1.0f){
+            formatNum="0"+formatNum;
+        }
+        return formatNum;
+    }
+
+    //商品分数平均分
+    private String getWareRank(String sId) {
+        String sql="SELECT sum(ewRank) as sumNum FROM evalware WHERE ewInId in (SELECT inId from indent WHERE inStore=?);";
+        Integer sum=Db.queryInt(sql,sId);
+        Float sumFloat=sum+0.0f;
+        String countSql="SELECT COUNT(*) FROM evalware WHERE ewInId in (SELECT inId from indent WHERE inStore=?) ";
+        Integer count=Db.queryInt(countSql,sId);
+        DecimalFormat  mFormat = new DecimalFormat(".00");
+        String formatNum = mFormat .format(sumFloat/count);
+        if (sumFloat/count<1.0f){
+            formatNum="0"+formatNum;
+        }
+        return formatNum;
+    }
+
 
 }

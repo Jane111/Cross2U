@@ -2,6 +2,7 @@
 package com.cross2u.user.controller;
 
 import com.cross2u.user.model.Mainmanufacturer;
+import com.cross2u.user.service.BusinessServiceZ;
 import com.cross2u.user.service.ManufactureServiceZ;
 import com.cross2u.user.util.BaseResponse;
 import com.cross2u.user.util.Constant;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 import sun.applet.Main;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,7 +37,8 @@ public class ManufactureController {
     @Autowired
     BaseResponse baseResponse;
 
-
+    @Autowired
+    RestTemplate restTemplate;
     /**
      * 获取cos临时密钥
      */
@@ -93,10 +96,11 @@ public class ManufactureController {
 
 
 
-    //验证手机是否已经被注册
+    /*//验证手机是否已经被注册
     @RequestMapping("/register/phoneHasBeenRegister")
     public BaseResponse phoneHasBeenRegister(HttpServletRequest request){
-        String mmPhone=request.getParameter("mmphone");
+        String mmPhone=request.getParameter("mmPhone").trim();
+        System.out.println("mmphone"+mmPhone);
         if (service.havePhone(mmPhone)){//重复检测
             baseResponse.setResult(ResultCodeEnum.EXIST_USER_PHONE);//存在已注册联系方式
         }
@@ -109,7 +113,8 @@ public class ManufactureController {
     //验证邮箱是否已经被注册
     @RequestMapping("/register/emailHasBeenRegister")
     public BaseResponse emailHasBeenRegister(HttpServletRequest request){
-        String mmEmail=request.getParameter("mmEmail");
+        String mmEmail=request.getParameter("mmEmail").trim();
+        System.out.println("email"+mmEmail);
         if (service.haveEmail(mmEmail)){
             baseResponse.setResult(ResultCodeEnum.EXIST_USER_EMAIL);//存在已注册邮箱
         }
@@ -117,7 +122,7 @@ public class ManufactureController {
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
         return baseResponse;
-    }
+    }*/
 
 
     @RequestMapping("/register/first")
@@ -125,12 +130,19 @@ public class ManufactureController {
     //注册第一步
      public BaseResponse first(HttpServletRequest request) {
 
-        String mmName=request.getParameter("mmName");//m昵称
          String mmEmail=request.getParameter("mmEmail");//m邮箱
          String mmPhone=request.getParameter("mmPhone");//m联系方式
          String mmPassword=request.getParameter("mmPassword");
 
-         BigInteger mmId=service.first(mmName,mmEmail,mmPhone,mmPassword);
+        if (service.haveEmail(mmEmail)){
+            baseResponse.setResult(ResultCodeEnum.EXIST_USER_EMAIL);//存在已注册邮箱
+            return baseResponse;
+        }
+        if (service.havePhone(mmPhone)){//重复检测
+            baseResponse.setResult(ResultCodeEnum.EXIST_USER_PHONE);//存在已注册联系方式
+            return baseResponse;
+        }
+         BigInteger mmId=service.first(mmEmail,mmPhone,mmPassword);
          if(mmId!=BigInteger.valueOf(0L)){
              JSONObject json=new JSONObject();
              try {
@@ -153,8 +165,6 @@ public class ManufactureController {
      @RequestMapping("/register/second")
      @ResponseBody()
      public BaseResponse second(HttpServletRequest request){
-
-
          String mmId=request.getParameter("mmId");
          Mainmanufacturer mainmanufacturer=service.findById(mmId);
          if (mainmanufacturer==null){
@@ -239,10 +249,11 @@ public class ManufactureController {
 
          String mmId = request.getParameter("mmId");
          String sName = request.getParameter("sName");//店铺名称
+         String mmName=sName;//m昵称
          String mmLogo = request.getParameter("mmLogo");//店铺logo
          String mmMajorBusiness = request.getParameter("mmMajorBusiness");//主营行业
          String mmFixedNum = request.getParameter("mmFixedNum");//服务电话
-         if (manufactureService.third(mmId,sName,mmLogo,mmMajorBusiness,mmFixedNum))
+         if (manufactureService.third(mmId,sName,mmLogo,mmMajorBusiness,mmFixedNum,mmName))
          {
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
          }
@@ -254,15 +265,30 @@ public class ManufactureController {
 
 
      //主账号登录
-      @RequestMapping("/login/mainLogin")
+      @RequestMapping("/login/loginIn")
      @ResponseBody()
-     public BaseResponse mainLogin(HttpServletRequest request) {
+     public BaseResponse loginIn(HttpServletRequest request) {
          ManufactureServiceZ manufactureService = new ManufactureServiceZ();
          BaseResponse baseResponse = new BaseResponse();
 
-         String mmPhone=request.getParameter("mmPhone");//手机号码登录
-         String mmPassword=request.getParameter("mmPassword");//密码
-         JSONObject login=manufactureService.mainLogin(mmPhone,mmPassword);
+         String mPhone=request.getParameter("mPhone");//手机号码登录
+         String mPassword=request.getParameter("mPassword");//密码
+          Integer isForbiden=manufactureService.isForbiden(mPhone);
+          switch (isForbiden){
+              case 0://没有该账号
+                  baseResponse.setResult(ResultCodeEnum.NOT_REGISTER);
+                  return baseResponse;
+              case 1://主账号且被禁用
+                  baseResponse.setResult(ResultCodeEnum.MAIN_FORBIDDEN);
+                  return baseResponse;
+              case 2://子账号被禁用
+                  baseResponse.setResult(ResultCodeEnum.SUB_FORBIDDEN);
+                  return baseResponse;
+              case 3://没有被禁用且有账号
+
+                  default:
+          }
+         JSONObject login=manufactureService.loginIn(mPhone,mPassword);
          if(login!=null)
          {
              baseResponse.setData(login);
@@ -274,9 +300,40 @@ public class ManufactureController {
          return baseResponse;
      }
 
+    /**
+     * 在M显示店铺界面店面
+     */
+    @RequestMapping("/manufacturer/MshowStoreDetail")
+    public BaseResponse MshowStoreDetail(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        BusinessServiceZ businessService=new BusinessServiceZ();
+        String sId=request.getParameter("sId");//店铺id
+        JSONObject store =businessService.MshowStoreDetail(sId);
+
+        if (store!=null)
+        {
+            Object array=getTopFourWare(sId);
+            store.put("sWares",array);
+            baseResponse.setData(store);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return baseResponse;
+    }
+
+    //获取店铺Top4商品
+    private Object getTopFourWare(String sId) {
+        System.out.println(sId+" "+(restTemplate==null));
+        JSONObject array = restTemplate.getForObject("http://Ware/ware/getTopFourWare?sId="+sId,JSONObject.class);
+        return array.get("data");
+        //return null;
+    }
 
      //子账号登录
-     @RequestMapping("/login/subLogin")
+    /* @RequestMapping("/login/subLogin")
      @ResponseBody()
      public BaseResponse subLogin(HttpServletRequest request) {
          ManufactureServiceZ manufactureService = new ManufactureServiceZ();
@@ -294,6 +351,6 @@ public class ManufactureController {
             baseResponse.setResult(ResultCodeEnum.ERROR_ACCOUNT_OR_PASSWORD);//账号或密码错误
          }
          return baseResponse;
-     }
+     }*/
  }
 

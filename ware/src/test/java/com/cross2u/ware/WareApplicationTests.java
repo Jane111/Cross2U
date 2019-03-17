@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.cross2u.ware.model.Stock;
 import com.cross2u.ware.service.WareServiceL;
+import com.cross2u.ware.service.WareServicesZ;
 import com.cross2u.ware.util.BaseUserRecommender;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,6 +22,8 @@ public class WareApplicationTests {
 
     @Autowired
     RestTemplate restTemplate;
+    @Autowired
+    WareServicesZ wsZ;
 	@Autowired
     WareServiceL ws;
     @Autowired
@@ -30,8 +33,8 @@ public class WareApplicationTests {
 //        ws.selectWareInStock(new BigInteger("1"));
 //        List<BigInteger> list = ur.recommendBaseUser(new BigInteger("1"));
 //        System.out.println(list);
-        JSONArray list = ws.selectAllWare(new BigInteger("1"),1,2);
-        System.out.println(list);
+        JSONArray array = wsZ.showComEval("1");
+        System.out.println(array);
 	}
 
 }

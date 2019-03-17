@@ -1,5 +1,6 @@
 package com.cross2u.store.service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.cross2u.store.model.*;
@@ -9,6 +10,9 @@ import com.jfinal.plugin.activerecord.Record;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -282,7 +286,7 @@ public class StoreServiceZ {
     public JSONArray showApproving(String sId, String bRank) {
         JSONArray array=new JSONArray();
         String copSql="select copId, copBId,copCreateTime from cooperation where copSId=? and copState=0";
-
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         List<Cooperation> cops=Cooperation.dao.find(copSql,sId);
         for (Cooperation cop:cops){
             BigInteger bId=cop.getCopBId();
@@ -291,6 +295,9 @@ public class StoreServiceZ {
             if (object==null) break;
             object.put("copId",cop.getCopId());
             object.put("copBId",cop.getCopBId());
+            Date copCreateTime=cop.getCopCreateTime();
+            String time=sdf.format(copCreateTime);
+            object.put("copCreateTime",time);
             array.add(object);
         }
         return array;
@@ -324,11 +331,11 @@ public class StoreServiceZ {
         return object;
     }
 
-    public JSONArray showApproved(String sId, String bRank) {
+    public JSONArray showApproved(String sId, String bRank,String status) {
         JSONArray array=new JSONArray();
-        String copSql="select copId, copBId,copCreateTime from cooperation where copSId=? and copState=1";
-
-        List<Cooperation> cops=Cooperation.dao.find(copSql,sId);
+        String copSql="select copId, copBId,copCreateTime,copModifyTime from cooperation where copSId=? and copState=?";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        List<Cooperation> cops=Cooperation.dao.find(copSql,sId,status);
         for (Cooperation cop:cops){
             BigInteger bId=cop.getCopBId();
             System.out.println("bId"+bId);
@@ -336,6 +343,12 @@ public class StoreServiceZ {
             if (object==null) break;
             object.put("copId",cop.getCopId());
             object.put("copBId",cop.getCopBId());
+            Date createTime=cop.getCopCreateTime();
+            String copCreateTime=sdf.format(createTime);
+            object.put("copCreateTime",copCreateTime);
+            Date modifyTime=cop.getCopModifyTime();
+            String copHandleTime=sdf.format(modifyTime);
+            object.put("copHandleTime",copHandleTime);
             array.add(object);
         }
         return array;
@@ -343,8 +356,9 @@ public class StoreServiceZ {
 
     public JSONArray showFinishApproved(String sId, String bRank) {
         JSONArray array=new JSONArray();
-        String copSql="select copId, copBId,copCreateTime,copState from cooperation where copSId=? and copState=2 or copState=3";
-        //2-终止合作 3-拒绝合作
+        String copSql="select copId, copBId,copCreateTime,copState,copModifyTime from cooperation where copSId=? and copState=2";
+        //2-终止合作
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         List<Cooperation> cops=Cooperation.dao.find(copSql,sId);
         for (Cooperation cop:cops){
             BigInteger bId=cop.getCopBId();
@@ -352,14 +366,21 @@ public class StoreServiceZ {
             if (object==null) break;
             object.put("copId",cop.getCopId());
             object.put("copBId",cop.getCopBId());
+            Date createTime=cop.getCopCreateTime();
+            String copCreateTime=sdf.format(createTime);
+            object.put("copCreateTime",copCreateTime);
+            Date copModifyTime=cop.getCopModifyTime();
+            String copHandleTime=sdf.format(copModifyTime);
+            object.put("copHandleTime",copHandleTime);
+
             array.add(object);
         }
         return array;
     }
 
     public boolean operateCooperation(String copId, String operate) {
+        System.out.println("copId=="+copId+"operate=="+operate);
         String sql="UPDATE cooperation SET copState=? WHERE copId=? ";
-        operate=operate.equals("2")?"3":"1";
         return Db.update(sql,operate,copId)==1;
     }
 
@@ -383,4 +404,28 @@ public class StoreServiceZ {
         store.setSReduceInventory(Constant.REDUCE_GET);//拍下减库存 默认
         return store.save();
     }
+
+    public boolean updateSPhoto(String sId, String sPhoto) {
+        Store store=Store.dao.findById(sId);
+        store.setSPhoto(sPhoto);
+        return store.update();
+    }
+
+    public String [] showSPhoto(String sId) {
+        Store store=Store.dao.findById(sId);
+        String sPhotos=store.getSPhoto();
+        String []photo=sPhotos.split(",");
+        return photo;
+    }
+
+    //显示关键词设置列表
+    public  List<Manukeyword> showManuKeyWorld(String sId) {
+        String sql="SELECT mkId,mkText,mkReply,mkCreateTime " +
+                "from manukeyword " +
+                "where mkStore=? ";
+        List<Manukeyword> manukeywords=Manukeyword.dao.find(sql,sId);
+        return manukeywords;
+    }
+
+    //
 }

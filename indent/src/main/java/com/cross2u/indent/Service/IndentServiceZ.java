@@ -4,23 +4,26 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.cross2u.indent.model.Drawbackinfo;
 import com.cross2u.indent.model.Indent;
+import com.cross2u.indent.model.Outindent;
 import com.cross2u.indent.model.Returngoods;
 import com.cross2u.indent.util.Constant;
+import com.cross2u.indent.util.CreateCInfo;
 import com.cross2u.indent.util.TimeUtil;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import jnr.ffi.annotations.In;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import javax.management.ObjectName;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class IndentServiceZ {
@@ -571,4 +574,158 @@ public class IndentServiceZ {
         }
         return false;//在包退
     }*/
+
+    //定时任务 每周24点 检测是否有满足待评价订单
+    /**
+     * 秒 分 时 日 月 周几
+     */
+    @Scheduled(cron = "0 0 24 * * ?")
+    public void updateIndentMtoB(){
+        String sql="SELECT inId,inMtoB " +
+                "from indent " +
+                "WHERE DATE_SUB(CURDATE(), INTERVAL 7 DAY) >= date(inCreateTime) and inMtoB is NULL ";
+        List<Indent> indents= Indent.dao.find(sql);
+        for (Indent indent:indents){
+            indent.setInMtoB(5);
+            indent.update();
+        }
+    }
+
+    //默认对B评价
+    @Scheduled(cron = "0 0 24 * * ?")
+    public void updateIndentBtoM(){
+        String sql="SELECT inId,inBtoM " +
+                "from indent " +
+                "WHERE DATE_SUB(CURDATE(), INTERVAL 7 DAY) >= date(inCreateTime) and inBtoM is NULL ";
+        List<Indent> indents= Indent.dao.find(sql);
+        for (Indent indent:indents){
+            indent.setInBtoM(5);//默认好评
+            indent.update();
+        }
+    }
+
+    //创建外拉订单
+    @Scheduled(cron = "0 0/10 * * * ?")
+    public void createOutIndent(){
+        String sql="SELECT * " +
+                "from indent " +
+                "WHERE inStatus=1";
+        List<Indent> indents=Indent.dao.find(sql);
+        String getProductSql="select * from product where pId=?";
+        for (Indent indent:indents){
+            Outindent outindent=new Outindent();
+            Integer inLeftNum=indent.getInLeftNum();
+            BigInteger inId=indent.getInId();//订单id
+            BigInteger pId=indent.getInProduct();//单品id
+            BigInteger wId=indent.getInWare();//商品id
+            BigInteger sId=indent.getInStore();//店铺id
+            BigInteger bId=indent.getInBusiness();//借卖方id
+
+            //确定订单编号
+            String str = "out";
+            Calendar c = Calendar.getInstance();
+            str += c.get(Calendar.YEAR);//四位
+            str += String.format("%02d", c.get(Calendar.MONTH));//两位
+            str += String.format("%02d", c.get(Calendar.DATE));//两位
+            str += String.format("%02d", c.get(Calendar.HOUR));//两位
+            str += String.format("%02d", c.get(Calendar.MINUTE));//两位
+            str += String.format("%02d", c.get(Calendar.SECOND));//两位
+            str += String.format("%02d", c.get(Calendar.SECOND));//两位
+            str += String.format("%04d", inId.mod(new BigInteger("10000")));//bId最后四位
+            String outNumber=str;
+            outindent.setOutNumber(outNumber);//订单编号
+
+            //bId
+            outindent.setOutBusiness(bId);
+            //sId
+            outindent.setOutSId(sId);
+            //ware的identifier
+            String wareSql="select * from ware where wId=?";
+            Record ware=Db.findFirst(wareSql,wId);
+            String wIdentifier=ware.getStr("wIdentifier");
+            outindent.setOutWIdentifier(wIdentifier);
+
+            //C购买数量
+            Integer outAmount=(int)(Math.random()*inLeftNum);
+            outindent.setOutAmount(outAmount);
+
+            //订单money 单品identifier 价格单位
+            Record product=Db.findFirst(getProductSql,pId);
+            Float pMoney=product.getFloat("pMoney");
+            String outPIdentifier=product.getStr("pIdentifier");
+            outindent.setOutPrice(pMoney*1.2f);
+            outindent.setOutPIdentifier(outPIdentifier);
+            Integer outUnit=Integer.parseInt(String.valueOf(Math.round(Math.random())+1));//随机生成1或2的数 四舍五入取整
+            outindent.setOutUnit(outUnit);
+
+            //平台id
+            Integer outPlatform=Integer.parseInt(String.valueOf(Math.round(Math.random())*2+1));//随机生成1或2的数 四舍五入取整
+            outindent.setOutPlatform(outPlatform);
+
+            //平台的店铺名称
+            String outStore=getStringRandom(4)+"的店";
+            outindent.setOutStore(outStore);
+
+            //发货人的信息
+            JSONObject outCInfo= CreateCInfo.getAddress();
+            String outCPhone=outCInfo.getString("tel");
+            String outCName=outCInfo.getString("name");
+            String outCAddress=outCInfo.getString("road");
+            String cLi="https://cross2u-1258618180.cos.ap-chengdu.myqcloud.com/cInfo/b_license_before.jpg,https://cross2u-1258618180.cos.ap-chengdu.myqcloud.com/cInfo/b_license_down.jpg";
+            outindent.setOutCPhone(outCPhone);
+            outindent.setOutCName(outCName);
+            outindent.setOutCAddress(outCAddress);
+            outindent.setOutCInfo(cLi);
+
+            outindent.setOutStatus(1);//未发货的订单
+
+            outindent.save();
+        }
+    }
+
+    //自动生成名字（中文）
+    public static String getRandomJianHan(int len) {
+        String ret = "";
+        for (int i = 0; i < len; i++) {
+            String str = null;
+            int hightPos, lowPos; // 定义高低位
+            Random random = new Random();
+            hightPos = (176 + Math.abs(random.nextInt(39))); // 获取高位值
+            lowPos = (161 + Math.abs(random.nextInt(93))); // 获取低位值
+            byte[] b = new byte[2];
+            b[0] = (new Integer(hightPos).byteValue());
+            b[1] = (new Integer(lowPos).byteValue());
+            try {
+                str = new String(b, "GBK"); // 转成中文
+            } catch (UnsupportedEncodingException ex) {
+                ex.printStackTrace();
+            }
+            ret += str;
+        }
+        return ret;
+    }
+
+    //生成随机用户名，数字和字母组成,
+    public String getStringRandom(int length) {
+
+        String val = "";
+        Random random = new Random();
+
+        //参数length，表示生成几位随机数
+        for(int i = 0; i < length; i++) {
+
+            String charOrNum = random.nextInt(2) % 2 == 0 ? "char" : "num";
+            //输出字母还是数字
+            if( "char".equalsIgnoreCase(charOrNum) ) {
+                //输出是大写字母还是小写字母
+                int temp = random.nextInt(2) % 2 == 0 ? 65 : 97;
+                val += (char)(random.nextInt(26) + temp);
+            } else if( "num".equalsIgnoreCase(charOrNum) ) {
+                val += String.valueOf(random.nextInt(10));
+            }
+        }
+        return val;
+    }
+
+
 }

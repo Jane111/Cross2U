@@ -8,16 +8,14 @@ import com.cross2u.store.util.Constant;
 import com.cross2u.store.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigInteger;
 import java.util.List;
 
+@CrossOrigin//解决跨域问题
 @RestController
 public class StoreController {
     @Autowired
@@ -348,7 +346,8 @@ public class StoreController {
     {
         String sId=request.getParameter("sId");
         String bRank=request.getParameter("bRank");
-        JSONArray array=service.showApproved(sId,bRank);
+        String status=request.getParameter("status");
+        JSONArray array=service.showApproved(sId,bRank,status);
         if (array!=null){
             response.setData(array);
             response.setResult(ResultCodeEnum.SUCCESS);
@@ -415,5 +414,66 @@ public class StoreController {
         return response;
     }
 
+    /**
+     * 显示店铺宣传图
+     */
+    @RequestMapping("/store/showSPhoto")
+    @ResponseBody
+    public BaseResponse showSPhoto(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        String [] array=service.showSPhoto(sId);
+        if (array!=null){
+            response.setData(array);
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return response;
+    }
 
+    /**
+     * 上传店铺宣传图
+     */
+    @RequestMapping("/store/updateSPhoto")
+    @ResponseBody
+    public BaseResponse updateSPhoto(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        String sPhoto=request.getParameter("sPhoto");
+        if (service.updateSPhoto(sId,sPhoto)){
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.UPDATE_FAILURE);//20005修改失败
+        }
+        return response;
+    }
+
+    /**
+     * 显示关键词设置情况
+     */
+
+    @RequestMapping("/store/showManuKeyWorld")
+    @ResponseBody
+    public BaseResponse showManuKeyWorld(HttpServletRequest request){
+        response=new BaseResponse();
+        String sId=request.getParameter("sId");
+        List<Manukeyword> array=service.showManuKeyWorld(sId);
+        if (array!=null){
+            response.setData(array);
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return response;
+    }
+
+
+    @RequestMapping("/store/updateManuKeyWorld")
+    public BaseResponse updateManuKeyWorld(
+            @RequestParam("mkId") BigInteger mkId,
+            @RequestParam("bId") BigInteger bId){
+        return response;
+    }
 }
