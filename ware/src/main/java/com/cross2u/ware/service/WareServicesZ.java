@@ -131,11 +131,11 @@ public class WareServicesZ {
         return Db.findFirst(sql,wId);
     }
 
-    public JSONArray showWares(String sId, String operation) {
-        String selectSql="SELECT wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit,  " +
+    public JSONArray showWares(String sId,String operation) {
+        String selectSql="SELECT wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit," +
                 "wStatus,wCreateTime  " +
                 "from ware  " +
-                "WHERE wStore=? ";
+                "WHERE wStore=?  and wStatus !=0";
         String andSql="";
         switch (operation)
         {
@@ -152,6 +152,7 @@ public class WareServicesZ {
                 break;
                 default: return null;
         }
+
         String sql=selectSql+andSql;
         List<Ware> wares=Ware.dao.find(sql,sId);
         JSONArray array=new JSONArray();
@@ -367,11 +368,15 @@ public class WareServicesZ {
         return (response.getResultCode()).equals("10000");
     }
 
-    public boolean addOneProductFormat(String fId, String fo,BigInteger pId) {
+    public boolean addOneProductFormat(String fId, String fo,String foname,BigInteger pId) {
         Productformat productformat=new Productformat();
         productformat.setPfFormat(new BigInteger(fId));
         productformat.setPfProduct(pId);
-        if(isNumeric("fo"))//是数字
+        if (foname==null||fo==null){
+            System.out.println("addOneProductFormat foname null fo null");
+            return false;
+        }
+        if(!(foname.equals(fo)))//如果相等 是自定义
         {
             productformat.setPfFormatOption(new BigInteger(fo));
         }
@@ -474,7 +479,7 @@ public class WareServicesZ {
 
             JSONArray foOptions=editFoOptions(wId,foName.get("fId"));//选项
             JSONArray defineOption=editDifineOption(foName.get("fId"),wId);//自定义的选项
-            foOptions.add(defineOption);
+           foOptions.addAll(defineOption);
 
             foName.put("fOption",foOptions);
         }
@@ -485,6 +490,7 @@ public class WareServicesZ {
                 "WHERE pWare=? ";
         List<Record> products=Db.find(productSql,wId);
         JSONArray productArray=new JSONArray();
+
         for (Record product:products){
             JSONObject p=new JSONObject();
             JSONArray  productFormat=getProductFormat(product.getBigInteger("pId"));
@@ -493,12 +499,17 @@ public class WareServicesZ {
             p.put("pImage",product.get("pImage"));
             p.put("pIdentifier",product.get("pIdentifier"));
             p.put("pStorage",product.get("pStorage"));
-            p.put("pMoneyUnit",product.get("pMoneyUnit"));
             p.put("productFormat",productFormat);
-
             productArray.add(p);
         }
         object.put("products",productArray);
+        if (products.size()>=1){
+            Record oneproduct=products.get(0);
+            object.put("pMoneyUnit",oneproduct.get("pMoneyUnit"));
+        }
+        else {
+            object.put("pMoneyUnit","");
+        }
 
         /*ware.setColumns(wareBelong);
         ware.set("category",category);//商品类别
@@ -518,7 +529,7 @@ public class WareServicesZ {
         for (Record defineOption:defineOptions){
             JSONObject object=new JSONObject();
             object.put("foId",defineOption.get("foId"));
-            object.put("pfDefineOption",defineOption.get("pfDefineOption"));
+            object.put("foName",defineOption.get("foName"));
             object.put("isSelect",defineOption.get("isSelect"));
             object.put("isDefine","isDefine");
             array.add(object);
@@ -906,12 +917,14 @@ public class WareServicesZ {
 
     public JSONArray getWFDWares(String wfdId) {
         JSONArray array= new JSONArray();
-        String getWId="SELECT wbWId from warebelong where wbWFDId=? ";
+        String getWId="SELECT wbId,wbWId from warebelong where wbWFDId=? ";
         List<Record> wIds=Db.find(getWId,wfdId);
         for (int i=0;i<wIds.size();i++){
             Record record=wIds.get(i);
+            BigInteger wbId=record.getBigInteger("wbId");
             BigInteger wId=record.getBigInteger("wbWId");
             JSONObject ware=getDispatchWareById(wId);
+            ware.put("wbId",wbId);
 
             array.add(ware);
         }
@@ -920,12 +933,14 @@ public class WareServicesZ {
 
     public JSONArray getWSDWares(String wsdId) {
         JSONArray array= new JSONArray();
-        String getWId="SELECT wbWId from warebelong where wbWSDId=? ";
+        String getWId="SELECT wbId,wbWId from warebelong where wbWSDId=? ";
         List<Record> wIds=Db.find(getWId,wsdId);
         for (int i=0;i<wIds.size();i++){
             Record record=wIds.get(i);
+            BigInteger wbId=record.getBigInteger("wbId");
             BigInteger wId=record.getBigInteger("wbWId");
             JSONObject ware=getDispatchWareById(wId);
+            ware.put("wbId",wbId);
 
             array.add(ware);
         }
@@ -1077,7 +1092,7 @@ public class WareServicesZ {
     }
     public boolean dispatchDeleteWare(String wbId){
         String sql="delete from warebelong where wbId=?";
-        return Db.update(sql,wbId)==1;
+        return Db.delete(sql,wbId)==1;
     }
 
     public JSONArray showGoodEval(String sId){
@@ -1481,5 +1496,16 @@ public class WareServicesZ {
         return formatNum;
     }
 
-
+    //检测是否存在敏感词
+    public boolean hasSensi(String wTitle) {
+        String sql="select senText FROM sensi";
+        List<Record> records=Db.find(sql);
+        for (Record record:records){
+            String sensi=record.getStr("senText");
+            if (wTitle.contains(sensi)){
+                return true;
+            }
+        }
+        return false;
+    }
 }

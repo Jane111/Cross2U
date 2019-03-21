@@ -10,17 +10,22 @@ import com.cross2u.user.util.CosStsClient;
 import com.cross2u.user.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;
 import com.alibaba.fastjson.*;
+import com.qcloud.cos.COSClient;
+import com.qcloud.cos.ClientConfig;
+import com.qcloud.cos.auth.BasicCOSCredentials;
+import com.qcloud.cos.auth.COSCredentials;
+import com.qcloud.cos.region.Region;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpRequest;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import sun.applet.Main;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -57,9 +62,9 @@ public class ManufactureController {
             config.put("durationSeconds", 1800);
 
             // 换成您的 bucket
-            config.put("bucket", "examplebucket-appid");
+            config.put("bucket", " cross2u-1258618180");
             // 换成 bucket 所在地区
-            config.put("region", "ap-guangzhou");
+            config.put("region", "ap-chengdu");
 
             // 这里改成允许的路径前缀，可以根据自己网站的用户登录态判断允许上传的目录，例子：* 或者 a/* 或者 a.jpg
             config.put("allowPrefix", "*");
@@ -93,6 +98,98 @@ public class ManufactureController {
         }*/
         return credential.toString();
     }
+
+    /**
+     *  后端上传图片
+     * @return
+     */
+    /*@RequestMapping(value = "/tengxun",method = RequestMethod.POST)
+    @ResponseBody
+    public Object Upload(@RequestParam(value = "file") MultipartFile file, HttpSession session){
+        if(file == null){
+            return new UploadMsg(0,"文件为空",null);
+        }
+        String oldFileName = file.getOriginalFilename();
+        String eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        String newFileName = UUID.randomUUID()+eName;
+        Calendar cal = Calendar.getInstance();
+        int year = cal.get(Calendar.YEAR);
+        int month=cal.get(Calendar.MONTH);
+        int day=cal.get(Calendar.DATE);
+        // 1 初始化用户身份信息(secretId, secretKey)
+        COSCredentials cred = new BasicCOSCredentials(accessKey, secretKey);
+        // 2 设置bucket的区域, COS地域的简称请参照 https://cloud.tencent.com/document/product/436/6224
+        ClientConfig clientConfig = new ClientConfig(new Region(bucket));
+        // 3 生成cos客户端
+        COSClient cosclient = new COSClient(cred, clientConfig);
+        // bucket的命名规则为{name}-{appid} ，此处填写的存储桶名称必须为此格式
+        String bucketName = this.bucketName;
+
+        // 简单文件上传, 最大支持 5 GB, 适用于小文件上传, 建议 20 M 以下的文件使用该接口
+        // 大文件上传请参照 API 文档高级 API 上传
+        File localFile = null;
+        try {
+            localFile = File.createTempFile("temp",null);
+            file.transferTo(localFile);
+            // 指定要上传到 COS 上的路径
+            String key = "/"+this.qianzui+"/"+year+"/"+month+"/"+day+"/"+newFileName;
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, key, localFile);
+            PutObjectResult putObjectResult = cosclient.putObject(putObjectRequest);
+            return new UploadMsg(1,"上传成功",this.path + putObjectRequest.getKey());
+        } catch (IOException e) {
+            return new UploadMsg(-1,e.getMessage(),null);
+        }finally {
+            // 关闭客户端(关闭后台线程)
+            cosclient.shutdown();
+        }
+    }*/
+
+
+    /*@RequestMapping("/util/uploadImg")
+    public BaseResponse uploadImg(
+            @RequestParam("test") MultipartFile file
+    ){
+        // 1 初始化用户身份信息（secretId, secretKey）。
+        COSCredentials cred = new BasicCOSCredentials("AKID0jJtXvZOlMn7RVnncuQtJn1zgOyIHFWK", "FzUgdXUmobAwSsIWtQG8l8HI3cy3A4jC");
+        // 2 设置bucket的区域, COS地域的简称请参照 https://cloud.tencent.com/document/product/436/6224
+        // clientConfig中包含了设置 region, https(默认 http), 超时, 代理等 set 方法, 使用可参见源码或者接口文档 FAQ 中说明。
+        ClientConfig clientConfig = new ClientConfig(new Region("ap-chengdu"));
+        // 3 生成 cos 客户端。
+        COSClient cosClient = new COSClient(cred, clientConfig);
+        // bucket的命名规则为{name}-{appid} ，此处填写的存储桶名称必须为此格式
+        String bucketName = "cross2u-1258618180";
+
+
+        if (file.isEmpty()) {
+            baseResponse.setResult(ResultCodeEnum.EMPTY_FILE);
+        }
+        // 获取文件名
+        String fileName = file.getOriginalFilename();
+        System.out.println("上传的文件名为：" + fileName);
+        // 获取文件的后缀名
+        String suffixName = fileName.substring(fileName.lastIndexOf("."));
+        System.out.println("上传的后缀名为：" + suffixName);
+        // 文件上传后的路径
+        String filePath = "E://test//";
+        // 解决中文问题，liunx下中文路径，图片显示问题
+        // fileName = UUID.randomUUID() + suffixName;
+        File dest = new File(filePath + fileName);
+        // 检测是否存在目录
+        if (!dest.getParentFile().exists()) {
+            dest.getParentFile().mkdirs();
+        }
+        try {
+            file.transferTo(dest);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        return baseResponse;
+    }*/
 
 
 
@@ -195,7 +292,7 @@ public class ManufactureController {
          try {
              String validityStart=request.getParameter("validityStart");
              String validityEnd=request.getParameter("validityEnd");
-             SimpleDateFormat sdf=new SimpleDateFormat("yyyy-mm-dd");
+             SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd");
              Date validityS=sdf.parse(validityStart);
              Date validityE=sdf.parse(validityEnd);
              mainmanufacturer.setMmValidityS(validityS);

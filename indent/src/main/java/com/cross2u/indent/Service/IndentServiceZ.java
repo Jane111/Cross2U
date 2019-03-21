@@ -16,14 +16,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.web3j.crypto.CipherException;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.WalletUtils;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.utils.Convert;
 
 import javax.management.ObjectName;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static org.web3j.tx.ManagedTransaction.GAS_PRICE;
 
 @Service
 public class IndentServiceZ {
@@ -578,8 +590,8 @@ public class IndentServiceZ {
     //定时任务 每周24点 检测是否有满足待评价订单
     /**
      * 秒 分 时 日 月 周几
-     */
-    @Scheduled(cron = "0 0 24 * * ?")
+    */
+    @Scheduled(cron = "59 59 23 * * ?")
     public void updateIndentMtoB(){
         String sql="SELECT inId,inMtoB " +
                 "from indent " +
@@ -592,7 +604,7 @@ public class IndentServiceZ {
     }
 
     //默认对B评价
-    @Scheduled(cron = "0 0 24 * * ?")
+    @Scheduled(cron = "59 59 23 * * ?")
     public void updateIndentBtoM(){
         String sql="SELECT inId,inBtoM " +
                 "from indent " +
@@ -727,5 +739,62 @@ public class IndentServiceZ {
         return val;
     }
 
+    /*public void createContract(String _mId, String _wId, String _indentNum, String _time) throws Exception {
+        // 创建一个 web3j 的连接
+        Web3j web3j = Web3j.build(new HttpService("http://10.169.102.247:8989/"));//http://10.169.102.247:8989/
+
+        // 部署的时候需要用到该账户的 gas，务必保证该账户余额充足
+        Credentials credentials = WalletUtils.loadCredentials(
+                "",
+                "E:/AtomWorkSpace/testzy/data1/keystore/UTC--2019-03-18T06-38-13.471704100Z--d95dabd97705df625d00d808fa2b427bdf81b5f4");
+
+        // 部署合约
+        Smart5_6_sol_Indent compute_sol_compute
+                = Smart5_6_sol_Indent.deploy(web3j, credentials, BigInteger.valueOf(1), BigInteger.valueOf(200000)).send();
+
+        String transactionReceipt = compute_sol_compute.CreateIndent(_mId, _wId,_indentNum,_time).send();
+
+        System.out.println("transactionReceipt"+transactionReceipt);
+
+        // 部署完成后打印合约地址
+        //System.out.println(compute_sol_compute.getContractAddress());//0x287bb6e3223ed016ff5ccefe68c894f2b06bb8f2
+    }
+
+    public void setBlock(String _mId, String _wId, String _indentNum, String _time){
+
+
+    }
+
+    public void getContractInfo(String address) throws Exception {
+        Web3j web3j = Web3j.build(new HttpService("http://10.169.102.247:8989/"));
+        //String address = "0xa6fd2ebac389773f5bd34d0738bc5fdbd1bea01b";
+
+        EthGetBalance ethGetBalance = web3j.ethGetBalance(address, DefaultBlockParameterName.LATEST).send();
+
+        if (ethGetBalance != null) {
+        // 打印账户余额
+            System.out.println(ethGetBalance.getBalance());
+        // 将单位转为以太，方便查看
+            System.out.println(Convert.fromWei(ethGetBalance.getBalance().toString(), Convert.Unit.ETHER));
+        }
+    }
+
+    public void createBlockChainAddr() throws Exception {
+        Web3j web3j = Web3j.build(new HttpService("http://localhost:8989/"));  // defaults to http://localhost:8545/
+        Credentials credentials = WalletUtils.loadCredentials("123",
+                "E:/AtomWorkSpace/testzy/data1/keystore/UTC--2019-03-18T06-50-32.630015500Z--96eed7fc306f562c7b44bfc02376d9fc8eda8bfb");
+        Smart5_6_sol_Indent contract = Smart5_6_sol_Indent.deploy(web3j,credentials, GAS_PRICE, BigInteger.valueOf(200000)).send();
+
+
+    }
+
+    public Smart5_6_sol_Indent getBlockChainAddr(String addr)throws Exception{
+        Web3j web3j = Web3j.build(new HttpService("http://localhost:8989/"));  // defaults to http://localhost:8545/
+        Credentials credentials = WalletUtils.loadCredentials("123",
+                "E:/AtomWorkSpace/testzy/data1/keystore/UTC--2019-03-18T06-50-32.630015500Z--96eed7fc306f562c7b44bfc02376d9fc8eda8bfb");
+        Smart5_6_sol_Indent contract = Smart5_6_sol_Indent.load(
+                "0x<address>|<ensName>", web3j,credentials,GAS_PRICE, BigInteger.valueOf(200000));
+        return contract;
+    }*/
 
 }

@@ -44,26 +44,30 @@ public class ManufactureServiceZ {
         Mainmanufacturer mainmanufacturer=Mainmanufacturer.dao.findById(new BigInteger(mmId));
         mainmanufacturer.setMmLogo(mmLogo);
         mainmanufacturer.setMmName(mmName);
+        System.out.println("mmName"+mmName);
         BigInteger sId=saveStore(mainmanufacturer.getMmId(),sName,mmLogo);
         if (sId!=null){
             mainmanufacturer.setMmStore(sId);//更新对应的店铺id
         }
         mainmanufacturer.setMmFixedNum(mmFixedNum);
         mainmanufacturer.setMmMajorBusiness(new Long(mmMajorBusiness));
+        mainmanufacturer.update();
 
-        String sql="Insert into manufacturer set mStore=? , mStatus=0, mRank=1, mPhone=?,mName=?,mPassword=?," +
+        String sql="Insert into manufacturer set mStore=? , mStatus=0, mRank=0, mPhone=?,mName=?,mPassword=?," +
                 "mManageWare=1,mManageIndent=1,mManageMessage=1,mManageClient=1";//0是禁用
         Db.update(sql,sId,mainmanufacturer.getMmPhone(),mainmanufacturer.getMmName(),mainmanufacturer.getMmPassword());
-        return sId!=null&&mainmanufacturer.update();
+        return sId!=null;
     }
 
     public BigInteger saveStore(BigInteger mmId,String sName,String mmLogo){
-        String sql="insert into store set sStatus=0,sScore=0,sDirectMoney=1,sReduceInventory=0,sMmId=?,sName=? ,sAgentDegree=1";
-        if(Db.update(sql,mmId,sName,mmLogo)==1)
+        String sql="insert into store set sStatus=0,sScore=0,sDirectMoney=1,sReduceInventory=0,sMmId=?,sName=? ,sAgentDegree=1 ";
+        if(Db.update(sql,mmId,sName)==1)
         {
             String selectSql="select sId from store where sMmId=?";
-            BigInteger id=new BigInteger(Db.query(selectSql,mmId).toString());
-            return id;
+            String sIdStr=Db.queryStr(selectSql,mmId);
+            System.out.println("sIdStr"+sIdStr);
+            BigInteger sId=new BigInteger(sIdStr);
+            return sId;
         }
         return null;
     }

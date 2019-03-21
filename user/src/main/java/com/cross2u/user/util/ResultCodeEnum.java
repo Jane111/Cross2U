@@ -29,7 +29,8 @@ public enum ResultCodeEnum
 	NOT_REGISTER("20013","未注册"),
 	HAS_BEEN_REGISTER("20014","已经被注册"),
 	MAIN_FORBIDDEN("20015","已被禁用或还未审核通过"),
-	SUB_FORBIDDEN("20016","已被禁用");
+	SUB_FORBIDDEN("20016","已被禁用"),
+	EMPTY_FILE("20017","文件为空");
 
     private String code;
     private String desc;

@@ -10,6 +10,7 @@ import com.cross2u.user.util.Constant;
 import com.cross2u.user.util.CosStsClient;
 import com.cross2u.user.util.ResultCodeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -83,10 +84,10 @@ public class BusinessController {
         business.setBPhone(bPhone);
         business.setBEmail(bEmail);
 
-        Visitor visitor=businessService.getVisitorByOpenId(bOpenId);//是否已经授权
+        JSONObject visitor=businessService.getVisitorByOpenId(bOpenId);//是否已经授权
         if (visitor!=null){
-            String bWeiXinIcon=visitor.getVWeiXinIcon();
-            String bWeiXinName=visitor.getVWeiXinName();
+            String bWeiXinIcon=visitor.getString("bWeiXinIcon");
+            String bWeiXinName=visitor.getString("bWeiXinName");
             business.setBWeiXinIcon(bWeiXinIcon);
             business.setBWeiXinName(bWeiXinName);
         }
@@ -423,8 +424,7 @@ public class BusinessController {
         JSONObject mine=service.intoMine(openId);
 
         if (mine==null){
-            Visitor visitor=service.getVisitorByOpenId(openId);
-            baseResponse.setData(visitor);
+            JSONObject visitor=service.getVisitorByOpenId(openId);
             baseResponse.setData(visitor);
             baseResponse.setResult(ResultCodeEnum.NOT_REGISTER);//未注册 已授权
         }
@@ -467,9 +467,9 @@ public class BusinessController {
             config.put("durationSeconds", 1800);
 
             // 换成您的 bucket
-            config.put("bucket", "examplebucket-appid");
+            config.put("bucket", " cross2u-1258618180");
             // 换成 bucket 所在地区
-            config.put("region", "ap-guangzhou");
+            config.put("region", "ap-chengdu");
 
             // 这里改成允许的路径前缀，可以根据自己网站的用户登录态判断允许上传的目录，例子：* 或者 a/* 或者 a.jpg
             config.put("allowPrefix", "*");
@@ -543,7 +543,7 @@ public class BusinessController {
 
     *//**
      * 显示与C的订单
-     * @param request
+     * @param
      * @return
      *//*
     @RequestMapping("/business/showCIndent")
@@ -653,7 +653,6 @@ public class BusinessController {
         }
         return baseResponse;
     }*/
-
 
 
 

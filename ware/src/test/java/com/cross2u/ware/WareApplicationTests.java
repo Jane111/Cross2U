@@ -33,7 +33,7 @@ public class WareApplicationTests {
 //        ws.selectWareInStock(new BigInteger("1"));
 //        List<BigInteger> list = ur.recommendBaseUser(new BigInteger("1"));
 //        System.out.println(list);
-        JSONArray array = wsZ.showComEval("1");
+        Boolean array = wsZ.hasSensi("快h乐h水");
         System.out.println(array);
 	}
 

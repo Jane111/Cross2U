@@ -95,11 +95,11 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-        <dependency>
-            <groupId>com.Cross2U</groupId>
-            <artifactId>user</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
+		<dependency>
+			<groupId>com.Cross2U</groupId>
+			<artifactId>user</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 
 
 		<!--web3j-->
@@ -108,11 +108,13 @@
 			<artifactId>core</artifactId>
 			<version>3.2.0</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.github.ipfs/java-ipfs-api -->
 		<dependency>
 			<groupId>com.github.ipfs</groupId>
-			<artifactId>java-ipfs-http-client</artifactId>
-			<version>$LATEST_VERSION</version>
+			<artifactId>java-ipfs-api</artifactId>
+			<version>v1.2.2</version>
 		</dependency>
+
 
 	</dependencies>
 

@@ -25,7 +25,8 @@ public enum ResultCodeEnum
 	WARE_CLASS_FAILURE("20012","商品分类失败"),
 	DISPATCH_IS_IN("20013","已经加入该分类中"),
 	HAS_ING_INDENT("20005","存在正在执行的订单"),
-	FIND_FAILURE("20004","查询失败");
+	FIND_FAILURE("20004","查询失败"),
+	HAS_SENSI("200014","存在敏感词");
     private String code;
     private String desc;
 

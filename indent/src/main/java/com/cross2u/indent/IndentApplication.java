@@ -25,7 +25,7 @@ public class IndentApplication {
 	@Bean
 	public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder)
 	{
-		return restTemplateBuilder.setConnectTimeout(100000000).build();
+		return restTemplateBuilder.setConnectTimeout(100000).build();
 	}
 }
 

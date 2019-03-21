@@ -7,6 +7,7 @@ import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
@@ -426,14 +427,17 @@ public class BusinessServiceZ {
         }
         return true;
     }
-    public Visitor getVisitorByOpenId(String openId)
+    public JSONObject getVisitorByOpenId(String openId)
     {
-        String sql="select vWeiXinIcon as bWeiXinIcon,vWeiXinName as bWeiXinName from visitor where vOpenId like '"+openId+"'";
+        String sql="select vWeiXinIcon,vWeiXinName  from visitor where vOpenId like '"+openId+"'";
         Visitor visitor=Visitor.dao.findFirst(sql);
         if (visitor.getVWeiXinIcon()==null||visitor.getVWeiXinIcon().equals("")) {
             return null;
         }
-        return visitor;
+        JSONObject object=new JSONObject();
+        object.put("bWeiXinIcon",visitor.getVWeiXinIcon());
+        object.put("bWeiXinName",visitor.getVWeiXinName());
+        return object;
     }
     public JSONObject intoMine(String openId) {
         String updateS="select * from business where bOpenId=?";
@@ -444,10 +448,13 @@ public class BusinessServiceZ {
         System.out.println("--------------update:"+updateR);
         BigInteger bId=updateR.getBId();
         updatBRank(updateR);
-        String sql="select bWeiXinIcon ,bWeiXinName,bScore,bRank from business where bId=?";
+        String sql="select bWeiXinIcon,bWeiXinName,bScore,bRank from business where bId=?";
         Business record=Business.dao.findFirst(sql,bId);
         JSONObject object=new JSONObject();
-        object.put("business",record);
+        object.put("bWeiXinIcon",record.getBWeiXinIcon());
+        object.put("bWeiXinName",record.getBWeiXinName());
+        object.put("bScore",record.getBScore());
+        object.put("bRank",record.getBRank());
         object.put("collectStore",getCollectStore(bId));
         object.put("collectWare",getCollectWare(bId));
         object.put("browseWare",getBrowseWare(bId));
@@ -566,5 +573,20 @@ public class BusinessServiceZ {
         System.out.println(jsonObject);
         return jsonObject;
     }
+
+
+    @Scheduled(cron = "59 59 23 * * ?")
+    //每天23:59:59更新B的等级
+    public void updateBRank(){
+        List<Business> list=Business.dao.find("select * from business");
+        for (Business business:list){
+            Integer score=business.getBScore();
+            Integer rank=score/100+1;
+            business.setBRank(rank);
+            business.update();
+        }
+    }
+
+
 }
 

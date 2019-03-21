@@ -328,14 +328,13 @@ public class WareController  {
      * @param request
      * @return
      */
-    @RequestMapping("/ware/showWares")
+    @RequestMapping("/ware/showAllWares")
     @ResponseBody
-    public BaseResponse showWares(HttpServletRequest request){
+    public BaseResponse showAllWares(HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
         String sId=request.getParameter("sId");
-        String operation=request.getParameter("operation");
 
-        JSONArray wares=wareServices.showWares(sId,operation);
+        JSONArray wares=wareServices.showWares(sId,"-1");
         if (wares!=null){
             baseResponse.setData(wares);
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
@@ -346,6 +345,56 @@ public class WareController  {
         return baseResponse;
     }
 
+    @RequestMapping("/ware/showWaitUpWares")
+    @ResponseBody
+    public BaseResponse showWaitUpWares(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String sId=request.getParameter("sId");
+
+        JSONArray wares=wareServices.showWares(sId,"1");
+        if (wares!=null){
+            baseResponse.setData(wares);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/showSaleWares")
+    @ResponseBody
+    public BaseResponse showSaleWares(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String sId=request.getParameter("sId");
+
+        JSONArray wares=wareServices.showWares(sId,"2");
+        if (wares!=null){
+            baseResponse.setData(wares);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/showSaleOutWares")
+    @ResponseBody
+    public BaseResponse showSaleOutWares(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String sId=request.getParameter("sId");
+
+        JSONArray wares=wareServices.showWares(sId,"3");
+        if (wares!=null){
+            baseResponse.setData(wares);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return baseResponse;
+    }
 
     @RequestMapping("/ware/addGetFirstCata")
     @ResponseBody
@@ -394,16 +443,31 @@ public class WareController  {
     public BaseResponse addSecondStep(HttpServletRequest request)
     {
         BaseResponse baseResponse=new BaseResponse();
-
+        if (wareServices.hasSensi(request.getParameter("wTitle"))){
+            baseResponse.setResult(ResultCodeEnum.HAS_SENSI);
+            return baseResponse;
+        }
         Ware ware=new Ware();
         ware.setWClass(new BigInteger(request.getParameter("ctId")));//类别id
         ware.setWStore(new BigInteger(request.getParameter("sId")));//商品所属店铺
         ware.setWTitle(request.getParameter("wTitle"));
         ware.setWMainImage(request.getParameter("wMainImage"));//主照片
-        ware.setWImage1(request.getParameter("wImage1"));
-        ware.setWImage2(request.getParameter("wImage2"));
-        ware.setWImage3(request.getParameter("wImage3"));
-        ware.setWImage4(request.getParameter("wImage4"));
+        String img1=request.getParameter("wImage1");
+        if (!(img1==null||img1.equals(""))){
+            ware.setWImage1(img1);
+        }
+        String img2=request.getParameter("wImage2");
+        if (!(img2==null||img2.equals(""))){
+            ware.setWImage1(img2);
+        }
+        String img3=request.getParameter("wImage3");
+        if (!(img3==null||img3.equals(""))){
+            ware.setWImage1(img3);
+        }
+        String img4=request.getParameter("wImage4");
+        if (!(img4==null||img4.equals(""))){
+            ware.setWImage1(img4);
+        }
         ware.setWDescription(request.getParameter("wDescription"));
         ware.setWStartNum(new Integer(request.getParameter("wStartNum")));
         ware.setWHighNum(new Integer(request.getParameter("wHighNum")));
@@ -424,7 +488,9 @@ public class WareController  {
         }
 
         String attribute=request.getParameter("attribute");
-        JSONArray attriArray=JSONArray.parseArray(attribute);
+        JSONObject attrObject=JSONObject.parseObject(attribute);
+        System.out.println(attribute);
+        JSONArray attriArray=attrObject.getJSONArray("attribute");//JSONArray.parseArray();
         for (int m=0;m<attriArray.size();m++){
             JSONObject oneAtr=attriArray.getJSONObject(m);
             Wareattribute wareattribute=new Wareattribute();
@@ -465,10 +531,14 @@ public class WareController  {
     {
         Float wareStartPrice= 0.0f;
         Float wareHighPrice= 0.0f;
-        JSONArray productArray=JSONObject.parseArray(products);
+        System.out.println("saveWareProduct"+products);
+        JSONObject object=JSONObject.parseObject(products);
+
+        JSONArray productArray=object.getJSONArray("products");
         for (int i=0;i<productArray.size();i++){
             JSONObject oneProduct=productArray.getJSONObject(i);
             Product product=new Product();
+            product.setPWare(wId);//设置对应的wid
             product.setPImage(oneProduct.getString("pImage"));
             Float pMoney=new Float(oneProduct.getString("pMoney"));
             product.setPMoney(pMoney);
@@ -486,7 +556,7 @@ public class WareController  {
 
             //---单品规格
             JSONArray format=oneProduct.getJSONArray("format");
-            if(saveProductFormat(format,pId)){
+            if(!saveProductFormat(format,pId)){
                 System.out.println("productformat 创建失败");
                 return false;
             }
@@ -497,9 +567,10 @@ public class WareController  {
     private boolean saveProductFormat(JSONArray formats,BigInteger pId){
         for (int i=0;i<formats.size();i++){
             JSONObject format=formats.getJSONObject(i);
-            String fId=format.getString("fId");
-            String fo=format.getString("fo");
-            if(!wareServices.addOneProductFormat(fId,fo,pId))
+            String fId=format.getString("fid");
+            String fo=format.getString("foid");
+            String foName=format.getString("foname");
+            if(!wareServices.addOneProductFormat(fId,fo,foName,pId))
             {
                 return false;
             }

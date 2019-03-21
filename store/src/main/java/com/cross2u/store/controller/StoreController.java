@@ -190,11 +190,7 @@ public class StoreController {
     {
         String sId=request.getParameter("sId");
         String wfdName=request.getParameter("wfdName");
-        String wfdSort=request.getParameter("wfdSort");
-        if (wfdSort==null||wfdSort.equals(""))
-        {
-            wfdSort="0";
-        }
+        String wfdSort=service.getWFDSort(sId);
         BigInteger wfdId=service.dispatchAddFDispatchs(sId,wfdName,wfdSort);
         if(wfdId!=null){
             response.setData(wfdId);
@@ -214,15 +210,16 @@ public class StoreController {
         String wfdId=request.getParameter("wfdId");
         String wsdName=request.getParameter("wsdName");
         String wsdImg=request.getParameter("wsdImg");
-        String wsdSort=request.getParameter("wsdSort");
-        if (wsdSort==null||wsdSort.equals(""))
-        {
-            wsdSort="0";
-        }
+        String wsdSort=service.getWSDSort(wfdId);
+
         BigInteger wsdId=service.dispatchAddSDispatchs(sId,wfdId,wsdName,wsdImg,new Integer(wsdSort));
+
         if(wsdId!=null)
         {
             response.setData(wsdId);
+            if (wsdSort.equals("1")){//如果是第一个子类
+                service.setFirstWSDWare(wfdId,wsdId);
+            }
             response.setResult(ResultCodeEnum.SUCCESS);
         }
         else {
@@ -403,14 +400,20 @@ public class StoreController {
     public BaseResponse applyCoop(HttpServletRequest request){
         String bId=request.getParameter("bId");
         String sId=request.getParameter("sId");
-        
-        if (service.applyCoop(bId,sId))
-        {
-            response.setResult(ResultCodeEnum.SUCCESS);
+
+        if (service.hasRight(bId,sId)){
+            response.setResult(ResultCodeEnum.DO_NOT_HAVE_RIGHT);
         }
         else {
-            response.setResult(ResultCodeEnum.ADD_FAILURE);
+            if (service.applyCoop(bId,sId))
+            {
+                response.setResult(ResultCodeEnum.SUCCESS);
+            }
+            else {
+                response.setResult(ResultCodeEnum.ADD_FAILURE);
+            }
         }
+
         return response;
     }
 
@@ -473,7 +476,65 @@ public class StoreController {
     @RequestMapping("/store/updateManuKeyWorld")
     public BaseResponse updateManuKeyWorld(
             @RequestParam("mkId") BigInteger mkId,
-            @RequestParam("bId") BigInteger bId){
+            @RequestParam("mkText") String mkText,
+            @RequestParam("mkReply") String mkReply){
+
+        if(service.updateManuKeyWorld(mkId,mkText,mkReply)){
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.UPDATE_FAILURE);
+        }
+        return response;
+    }
+
+    @RequestMapping("/store/deleteManuKeyWorld")
+    public BaseResponse deleteManuKeyWorld(
+            @RequestParam("mkId") BigInteger mkId){
+        if (service.deleteManuKeyWorld(mkId)){
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.DELETE_FAILURE);
+        }
+        return  response;
+    }
+
+
+    @RequestMapping("/store/addManuKeyWorld")
+    public BaseResponse addManuKeyWorld(
+            @RequestParam("sId") Long sId,
+            @RequestParam("mkText") String mkText,
+            @RequestParam("mkReply") String mkReply
+    ){
+        response=new BaseResponse();
+        BigInteger mkId=service.addManuKeyWorld(sId,mkText,mkReply);
+        if (!(mkId==null||mkId.equals(""))){
+            response.setData(mkId);
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.ADD_FAILURE);
+        }
+        return response;
+    }
+
+    /**
+     * 显示A的关键词
+     */
+
+    @RequestMapping("/store/getAKW")
+    public BaseResponse getAKW(HttpServletRequest request,HttpServletResponse responce){
+        responce.setHeader("Access-Control-Allow-Origin","*");
+
+        JSONArray array=service.getAKW();
+        if (array!=null){
+            response.setData(array);
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
         return response;
     }
 }
