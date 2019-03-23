@@ -414,7 +414,7 @@ public class AdminServiceZ {
         Integer degree=new Integer(degreeStr);
         Integer score=degree*100;
         if (!degreeStr.equals("0")){
-            sql=sql+" where sScore>="+(score-100)+" and sScore<="+score;
+            sql=sql+" where bScore>="+(score-100)+" and bScore<="+score;
         }
         List<Business> list=Business.dao.find(sql);
         JSONArray array=new JSONArray();

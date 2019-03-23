@@ -27,7 +27,7 @@ public class ManageController {
     ManageServiceZ service;
     /**
      * 看系统通知
-     */
+
     @RequestMapping("/manage/showPublicInfo")
     @ResponseBody
     public BaseResponse showPublicInfo(HttpServletRequest request){
@@ -36,7 +36,7 @@ public class ManageController {
         baseResponse.setData(publicinfos);
         baseResponse.setResult(ResultCodeEnum.SUCCESS);
         return baseResponse;
-    }
+    }*/
 
 
 
@@ -52,6 +52,7 @@ public class ManageController {
     @RequestMapping("/manage/showCount")
     @ResponseBody
     public BaseResponse showCount(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
         JSONObject jsonObject=new JSONObject();
         Integer countManu=service.countM();//待审核M的申请注册
         Integer countBus=service.countB();//待审核B的申请注册

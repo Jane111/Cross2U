@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 @CrossOrigin
@@ -31,8 +32,6 @@ public class WareController  {
     @Autowired
     private WareServicesZ wareServices;
 
-    @Autowired
-    private BaseResponse baseResponse;
 
     @RequestMapping("/ware/demo")
     @ResponseBody
@@ -49,6 +48,7 @@ public class WareController  {
      */
     @RequestMapping("/ware/getTopFourWare")
     public JSONObject  getTopFourWare(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
         String sId=request.getParameter("sId");
         JSONObject object=new JSONObject();
         JSONArray array=wareServices.getTopFourWare(sId);
@@ -71,6 +71,7 @@ public class WareController  {
      */
     @RequestMapping("/ware/showStoreWare")
     public BaseResponse showStoreWare(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
         String wStore=request.getParameter("wStore");//店铺id
         JSONArray ware=wareServices.showStoreWare(wStore);
 
@@ -158,7 +159,7 @@ public class WareController  {
         return baseResponse;
     }
 
-    @RequestMapping("/ware/outputExcels")
+    @RequestMapping(value="/ware/outputExcels",produces="application/json; charset= UTF-8")
     @ResponseBody
     public BaseResponse outputExcels(HttpServletResponse response,HttpServletRequest request){
         BaseResponse baseResponse=new BaseResponse();
@@ -228,6 +229,7 @@ public class WareController  {
             buildExcelDocument(fileName,workbook,response);
             //删除本地文件
             deleteExcelFile(fileName);
+
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println(e);
@@ -235,8 +237,7 @@ public class WareController  {
             return baseResponse;
         }
 
-        baseResponse.setResult(ResultCodeEnum.SUCCESS);
-        return baseResponse;
+        return null;
     }
     //创建表头
     //序号 商品名称 商品起批量 商品最高批量 商品最低价格 商品最高价格
@@ -301,6 +302,7 @@ public class WareController  {
         // 如果文件路径所对应的文件存在，并且是一个文件，则直接删除
         if (file.exists() && file.isFile()) {
             if (file.delete()) {
+
                 System.out.println("删除单个文件" + fileName + "成功！");
                 return true;
             } else {
@@ -472,6 +474,9 @@ public class WareController  {
         ware.setWStartNum(new Integer(request.getParameter("wStartNum")));
         ware.setWHighNum(new Integer(request.getParameter("wHighNum")));
         ware.setWStatus(new Integer(request.getParameter("wStatus")));
+        if(request.getParameter("wStatus").equals("2")){//如果是立即上架
+            ware.setWOnSaleTime(new Date());//上架时间
+        }
         ware.setWIsReceipt(new Integer(request.getParameter("wIsReceipt")));
         ware.setWIsEnsure(new Integer(request.getParameter("wIsEnsure")));
         ware.setWIsEnsureQuality(new Integer(request.getParameter("wIsEnsureQuality")));
@@ -479,6 +484,7 @@ public class WareController  {
         ware.setWDeliverHour(new Integer(request.getParameter("wDeliverHour")));
         ware.setWDeliverArea(request.getParameter("wDeliverArea"));
         ware.setWPriceUnit(Integer.valueOf(request.getParameter("pMoneyUnit")));//价格单位
+        ware.setWDesScore(5);//默认描述为5
 
         BigInteger wId=wareServices.addOneWare(ware);//保存一件商品
         if(wId==null)
@@ -486,6 +492,7 @@ public class WareController  {
             baseResponse.setResult(ResultCodeEnum.ADD_WARE_FAILURE);//商品添加失败
             return baseResponse;
         }
+        System.out.println("addSecond"+wId);
 
         String attribute=request.getParameter("attribute");
         JSONObject attrObject=JSONObject.parseObject(attribute);
@@ -500,6 +507,8 @@ public class WareController  {
             if(!wareServices.saveOneAtr(wareattribute))
             {
                 System.out.println("商品属性添加失败");
+                wareServices.deleteAttrByWId(wId);//删除属性
+                wareServices.deleteWareByWId(wId);//删除商品
                 //22删除以保存商品信息 删除之前商品属性信息
                 baseResponse.setResult(ResultCodeEnum.ADD_WARE_FAILURE);//商品添加失败
                 return baseResponse;
@@ -511,6 +520,9 @@ public class WareController  {
         String pMoneyUnit=request.getParameter("pMoneyUnit");
         if(!saveWareProduct(products,pMoneyUnit,wId))
         {
+            wareServices.deleteAttrByWId(wId);//删除属性
+            wareServices.deleteWareByWId(wId);//删除商品
+            wareServices.deleteProductByWId(wId);//删除单品及其规格
             baseResponse.setResult(ResultCodeEnum.ADD_PRODUCT_FAILURE);//单品添加失败
             return baseResponse;
         }
@@ -519,6 +531,10 @@ public class WareController  {
         String wbWSDId=request.getParameter("wbWSDId");
         if(!wareServices.addOneWareBelong(wbWFDId,wbWSDId,wId))
         {
+            wareServices.deleteAttrByWId(wId);//删除属性
+            wareServices.deleteWareByWId(wId);//删除商品
+            wareServices.deleteProductByWId(wId);//删除单品及其规格
+            wareServices.deleteWareBelongByWId(wId);//删除商品belong
             baseResponse.setResult(ResultCodeEnum.WARE_CLASS_FAILURE);//商品分类错误
             return baseResponse;
         }
@@ -565,6 +581,7 @@ public class WareController  {
         return true;
     }
     private boolean saveProductFormat(JSONArray formats,BigInteger pId){
+
         for (int i=0;i<formats.size();i++){
             JSONObject format=formats.getJSONObject(i);
             String fId=format.getString("fid");
@@ -590,6 +607,7 @@ public class WareController  {
         String wId=request.getParameter("wId");//商品id
         String mId=request.getParameter("mId");//店铺id
         JSONObject ware=wareServices.editShow(wId,mId);
+        System.out.println("editShow ware"+ware);
         if (ware!=null)
         {
             if (wareServices.hasINGIndent(wId))
@@ -612,6 +630,7 @@ public class WareController  {
         BaseResponse baseResponse = new BaseResponse();
 
         String wIdOld=request.getParameter("wId");
+        System.out.println(wIdOld);
         Boolean undercarriage = wareServices.editUndercarriage(wIdOld);//下架原来的商品
 
         baseResponse=addSecondStep(request);//创建一个新的
@@ -743,27 +762,29 @@ public class WareController  {
 
     @RequestMapping("/ware/batchChangeMoney")
     @ResponseBody
-    public BaseResponse batchChangeMoney(HttpServletRequest request )
+    public BaseResponse batchChangeMoney(HttpServletRequest request)
     {
         BaseResponse baseResponse=new BaseResponse();
         String wIds=request.getParameter("wIds");
-
+        String money=request.getParameter("money");
+        String unit=request.getParameter("unit");
+        System.out.println("================wids"+wIds+"money"+money+"unit"+"unit");
         String[] wIdStr=wIds.split(",");//判断是否有正在执行的订单
         for (String wId:wIdStr){
+            System.out.println("wids"+wIds);
             if(wareServices.hasINGIndent(wId)){
+                System.out.println("wids 有订单？？？？"+wIds);
                 baseResponse.setResult(ResultCodeEnum.HAS_ING_INDENT);
                 return baseResponse;
             }
         }
 
-        String money=request.getParameter("money");
-        String unit=request.getParameter("unit");
         if(wareServices.batchChangeMoney(wIds,money,unit))
         {
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
         else {
-            baseResponse.setResult(ResultCodeEnum.NetERROR);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
         }
         return baseResponse;
     }
@@ -841,6 +862,28 @@ public class WareController  {
         return baseResponse;
     }
 
+    /**
+     * 批量上架
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/batchUpcarriage")
+    @ResponseBody
+    public BaseResponse batchUpcarriage(HttpServletRequest request ) {
+        BaseResponse baseResponse = new BaseResponse();
+        String wIds=request.getParameter("wIds");
+        String[] wIdStr=wIds.split(",");
+        for (String wId:wIdStr){
+            if(!wareServices.editupcarriage(wId))
+            {
+                baseResponse.setResult(ResultCodeEnum.NetERROR);
+                baseResponse.setData(wId);
+                return baseResponse;
+            }
+        }
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }
 
     @RequestMapping("/ware/batchUndercarriage")
     @ResponseBody
@@ -864,6 +907,7 @@ public class WareController  {
     @ResponseBody
     public BaseResponse dispatchShowWares(HttpServletRequest request)
     {
+        BaseResponse baseResponse=new BaseResponse();
         String wfdId=request.getParameter("wfdId");
         String wsdId=request.getParameter("wsdId");
         System.out.println("wfdId"+wfdId+"wsdId"+wsdId);
@@ -905,6 +949,7 @@ public class WareController  {
     @RequestMapping("/ware/showStoreWareRank")
     @ResponseBody
     public BaseResponse showStoreWareRank(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
         String wStore=request.getParameter("wStore");
         String operation=request.getParameter("operation");
         String rank=request.getParameter("rank");
@@ -936,6 +981,7 @@ public class WareController  {
     @ResponseBody
     public BaseResponse dispatchAddWare(HttpServletRequest request)
     {
+        BaseResponse baseResponse=new BaseResponse();
         String wfdId=request.getParameter("wfdId");
         String wsdId=request.getParameter("wsdId");
         String wId=request.getParameter("wId");
@@ -958,6 +1004,7 @@ public class WareController  {
     @ResponseBody
     public BaseResponse dispatchDeleteWare(HttpServletRequest request)
     {
+        BaseResponse baseResponse=new BaseResponse();
         String wbId=request.getParameter("wbId");
         if (wareServices.dispatchDeleteWare(wbId)){
             baseResponse.setResult(ResultCodeEnum.SUCCESS);
@@ -971,6 +1018,7 @@ public class WareController  {
     @ResponseBody
     public BaseResponse showGoodEval(HttpServletRequest request)
     {
+
         System.out.println("--------------------good eval--------------");
         BaseResponse baseResponse=new BaseResponse();
         String sId=request.getParameter("sId");
@@ -1056,6 +1104,7 @@ public class WareController  {
      */
     @RequestMapping("/ware/showEvalInfo")
     public BaseResponse showEvalInfo(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
         String sId=request.getParameter("sId");
         String ewId=request.getParameter("ewId");
         JSONObject object=wareServices.showEvalInfo(sId,ewId);
@@ -1075,6 +1124,7 @@ public class WareController  {
      */
     @RequestMapping("/ware/showStoreEval")
     public BaseResponse showStoreEval(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
         String sId=request.getParameter("sId");
         JSONObject object=wareServices.showStoreEval(sId);
         if (object!=null){
@@ -1112,6 +1162,7 @@ public class WareController  {
      */
     @RequestMapping("/ware/reportStoreEval")
     public BaseResponse reportStoreEval(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
         String sId=request.getParameter("sId");
         String ewId=request.getParameter("ewId");
         String aerType=request.getParameter("aerType");
@@ -1132,6 +1183,7 @@ public class WareController  {
 
     @RequestMapping("/ware/showComInfo")
     public BaseResponse showComInfo(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
         String sId=request.getParameter("sId");
         String ewId=request.getParameter("ewId");
         JSONObject object=wareServices.showComInfo(sId,ewId);
@@ -1151,6 +1203,7 @@ public class WareController  {
 
     @RequestMapping("/ware/replyEval")
     public BaseResponse replyEval(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
         String ewId=request.getParameter("ewId");
         String ewReply=request.getParameter("ewReply");
         if (wareServices.replyEval(ewId,ewReply)){
@@ -1164,6 +1217,7 @@ public class WareController  {
 
     @RequestMapping("/ware/showReportReasons")
     public BaseResponse showReportReasons(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
         JSONArray array=wareServices.showReportReasons();
         if (array!=null){
             baseResponse.setData(array);

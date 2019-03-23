@@ -53,7 +53,7 @@ public class IndentServiceZ {
         else if(outStatus.equals("3"))sql=sql+"= 3 ORDER BY outCreateTime DESC ";
         else if(outStatus.equals("4"))sql=sql+"= 4 ORDER BY outCreateTime DESC ";
         List<Record> outindents= Db.find(sql,bId);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         for (Record outindent: outindents){
             JSONObject object=new JSONObject();
             object.put("outId",outindent.get("outId"));
@@ -144,7 +144,7 @@ public class IndentServiceZ {
                 " from ((outindent INNER JOIN  product on outindent.outPIdentifier = product.pIdentifier) INNER JOIN ware on wId=pWare)INNER JOIN store on ware.wStore=store.sId " +
                 " WHERE outindent.outStatus=? and outId=? ORDER BY outCreateTime DESC ";
         Record record= Db.findFirst(sql,outStatus,outId);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         String outCreateTime=sdf.format(record.getDate("outCreateTime"));
         String outModifyTime=sdf.format(record.getDate("outModifyTime"));
         JSONObject object=new JSONObject();
@@ -208,7 +208,7 @@ public class IndentServiceZ {
             object.put("rgmAddress","");
             object.put("rgmPhone","");
         }
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         if (record.getDate("rgiTrakTime")!=null){
             Date rgiTrakTime=record.getDate("rgiTrakTime");
             String rgiTrakTimeStr=sdf.format(rgiTrakTime);
@@ -231,7 +231,7 @@ public class IndentServiceZ {
                 " FROM ((indent INNER JOIN product ON inProduct=pId )INNER JOIN ware ON pWare=wId)INNER JOIN store ON wStore=sId " +
                 " WHERE indent.inBusiness=? and indent.inStatus=? ";
         List<Record> mIndentsO=Db.find(sql,bId,inStatus);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         for (Record mIndent :mIndentsO){
             JSONObject object=new JSONObject();
             object.put("inId",mIndent.get("inId"));
@@ -271,7 +271,7 @@ public class IndentServiceZ {
         else sql=sql+"and indent.inStatus in (3,5,6,7,9)";//已完成 3已完成订单 5B关闭 6M关闭 7商品异常 9M待评价
 
         List<Record> mIndentsO=Db.find(sql,bId);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         for (Record mIndent :mIndentsO){
             JSONObject object=new JSONObject();
             object.put("inId",mIndent.get("inId"));
@@ -311,7 +311,7 @@ public class IndentServiceZ {
                 " FROM ((indent INNER JOIN product ON inProduct=pId )INNER JOIN ware ON pWare=wId)INNER JOIN store ON wStore=sId " +
                 " WHERE indent.inBusiness=? and indent.inStatus=?";
         List<Record> mIndents1=Db.find(sql,bId,inStatus);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         for (Record mIndent :mIndents1){
             JSONObject object=new JSONObject();
             object.put("inId",mIndent.get("inId"));object.put("inNum",mIndent.get("inNum"));
@@ -360,7 +360,7 @@ public class IndentServiceZ {
         Record baserecord=Db.findFirst(basesql,inId);
         JSONArray pAtr=getProductAtr(baserecord.get("pId").toString());
         JSONObject object=new JSONObject();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         object.put("inId",baserecord.get("inId"));object.put("inNum",baserecord.get("inNum"));
         object.put("inStore",baserecord.get("inStore"));object.put("sName",baserecord.get("sName"));
         object.put("inWare",baserecord.get("inWare"));object.put("wTitle",baserecord.get("wTitle"));
@@ -404,7 +404,7 @@ public class IndentServiceZ {
                 " FROM ((indent INNER JOIN product ON inProduct=pId )INNER JOIN ware ON pWare=wId)INNER JOIN store ON wStore=sId " +
                 " WHERE inId=?";
         Record baserecord=Db.findFirst(basesql,inId);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         String inCreateTime=sdf.format(baserecord.get("inCreateTime"));
         String inModifyTime=sdf.format(baserecord.get("inModifyTime"));
 
@@ -489,7 +489,7 @@ public class IndentServiceZ {
         int date=Db.queryInt(dateSql,inId);//包退换的天数
         System.out.println("包退换的天数：" + date);
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             Indent indent=Indent.dao.findById(inId);
             String payStr=sdf.format(indent.getInPayTime());
             String nowStr=sdf.format(new Date()); System.out.println("nowStr"+nowStr);
@@ -577,7 +577,7 @@ public class IndentServiceZ {
         Indent indent=Indent.dao.findById(inId);
         Date payTime=indent.getInPayTime();//付款时间
         Ware ware=Ware.dao.findById(indent.getInWare());
-        String payTimeStr= TimeUtil.toOnlyDateString(payTime);//yyyy-mm-dd
+        String payTimeStr= TimeUtil.toOnlyDateString(payTime);//yyyy-MM-dd
         Integer promiseDay=ware.getWReplaceDays();//包退天数
         Date lastDay=new Date(TimeUtil.dateAddNDay(payTimeStr,promiseDay));
         if (!payTime.before(lastDay))//在包退日期之后
@@ -592,10 +592,10 @@ public class IndentServiceZ {
      * 秒 分 时 日 月 周几
     */
     @Scheduled(cron = "59 59 23 * * ?")
-    public void updateIndentMtoB(){
+    public void updateIndentMtoB(){//5天默认好评
         String sql="SELECT inId,inMtoB " +
                 "from indent " +
-                "WHERE DATE_SUB(CURDATE(), INTERVAL 7 DAY) >= date(inCreateTime) and inMtoB is NULL ";
+                "WHERE DATE_SUB(CURDATE(), INTERVAL 5 DAY) >= date(inCreateTime) and inMtoB is NULL ";
         List<Indent> indents= Indent.dao.find(sql);
         for (Indent indent:indents){
             indent.setInMtoB(5);
@@ -605,7 +605,7 @@ public class IndentServiceZ {
 
     //默认对B评价
     @Scheduled(cron = "59 59 23 * * ?")
-    public void updateIndentBtoM(){
+    public void updateIndentBtoM(){//默认好评
         String sql="SELECT inId,inBtoM " +
                 "from indent " +
                 "WHERE DATE_SUB(CURDATE(), INTERVAL 7 DAY) >= date(inCreateTime) and inBtoM is NULL ";
@@ -613,6 +613,16 @@ public class IndentServiceZ {
         for (Indent indent:indents){
             indent.setInBtoM(5);//默认好评
             indent.update();
+        }
+    }
+
+    //清除24小时内不付款的订单
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void clearWaitPayIndent(){
+        String sql="SELECT * FROM indent where inStatus=0 and inPayTime is NULL and DATE_SUB(CURDATE(), INTERVAL 1 DAY) >= date(inCreateTime) ";
+        List<Indent> list=Indent.dao.find(sql);
+        for (Indent indent:list){
+            indent.delete();//删除
         }
     }
 

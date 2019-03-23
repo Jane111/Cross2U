@@ -99,17 +99,23 @@ public class WareServicesZ {
         for (int i=0;i<wares.size();i++)
         {
             Record ware=wares.get(i);
-            Record wSale=getSale(ware.get("wId").toString());
-            ware.setColumns(wSale);
+            Integer wSale=getSale(ware.get("wId").toString());
+            ware.set("wSale",wSale);
         }
+        System.out.println("outputAll"+wares);
         return wares;
     }
-    private Record getSale(String wId)
+    private Integer getSale(String wId)
     {
         String sql="SELECT sum(inProductNum) as wSale " +
                 " from indent " +
                 " WHERE inWare=?";
-        return Db.findFirst(sql,wId);
+        Integer sale=Db.queryInt(sql,wId);
+        System.out.println("sale"+sale);
+        if(sale==null){
+            sale=0;
+        }
+        return sale;
     }
 
     public List<Record> outputExcel(String sId, String wIds) {
@@ -117,9 +123,9 @@ public class WareServicesZ {
         String[] wId=wIds.split(",");
         for (String id :wId){
             Record base=getOneWare(id);
-            Record sale=getSale(id);
-            Record one=base.setColumns(sale);
-            records.add(one);
+            Integer sale=getSale(id);
+            base.set("wSale",sale);
+            records.add(base);
         }
         return records;
     }
@@ -171,7 +177,7 @@ public class WareServicesZ {
             object.put("wStorage",wStorage);
             object.put("wStatus",ware.getWStatus());
             object.put("wCreateTime",ware.get("wCreateTime"));
-            JSONObject belong=getWBelong(ware.get("wId").toString());
+            JSONArray belong=getWBelongAll(ware.get("wId").toString());
 
             object.put("belong",belong);
 
@@ -179,6 +185,37 @@ public class WareServicesZ {
         }
         return array;
     }
+
+    private JSONArray getWBelongAll(String wId)
+    {
+        String sql="SELECT wbId,wbWFDId,wfdName,wbWSDId " +
+                "FROM warebelong INNER JOIN warefdispatch on wbWFDId=wfdId " +
+                " WHERE wbWId=? ";
+        List<Record> list=Db.find(sql,wId);
+        if (list==null){
+            return null;
+        }
+        JSONArray array=new JSONArray();
+        for (Record record:list){
+            JSONObject object=new JSONObject();
+            object.put("wbWFDId",record.get("wbWFDId"));
+            object.put("wfdName",record.get("wfdName"));
+            if (record.get("wbWSDId")==null||record.get("wbWSDId").equals("")){
+                object.put("wbWSDId","");
+                object.put("wsdName","");
+            }
+            else {
+                String wsdSql="select wsdName from waresdispatch where wsdId=?";
+                Record wsdrecord=Db.findFirst(wsdSql,record.getBigInteger("wbWSDId"));
+                object.put("wbWSDId",record.get("wbWSDId"));
+                object.put("wsdName",wsdrecord.get("wsdName"));
+            }
+
+            array.add(object);
+        }
+        return array;
+    }
+
     //获取库存
     private Integer getwStorage(BigInteger wId) {
         String sql="SELECT sum(pStorage) as wStorage " +
@@ -196,11 +233,13 @@ public class WareServicesZ {
         return wSale;
     }
 
-    private JSONObject getWBelong(String wId)
+
+
+    /*private JSONObject getWBelongByFirst(String wId)
     {
-        String sql="SELECT wbId,wbWFDId,wfdName,wbWSDId,wsdName " +
-                " FROM (warebelong INNER JOIN warefdispatch on wbWFDId=wfdId) INNER JOIN waresdispatch on wbWSDId=wsdId " +
-                " WHERE wbWId=?";
+        String sql="SELECT wbId,wbWFDId,wfdName,wbWSDId " +
+                "FROM warebelong INNER JOIN warefdispatch on wbWFDId=wfdId " +
+                " WHERE wbWId=? ";
         Record record=Db.findFirst(sql,wId);
         if (record==null){
             return null;
@@ -208,10 +247,19 @@ public class WareServicesZ {
         JSONObject object=new JSONObject();
         object.put("wbWFDId",record.get("wbWFDId"));
         object.put("wfdName",record.get("wfdName"));
-        object.put("wbWSDId",record.get("wbWSDId"));
-        object.put("wsdName",record.get("wsdName"));
+        if (record.get("wbWSDId")==null||record.get("wbWSDId").equals("")){
+            object.put("wbWSDId","");
+            object.put("wsdName","");
+        }
+        else {
+            String wsdSql="select wsdName from waresdispatch where wsdId=?";
+            Record wsdrecord=Db.findFirst(wsdSql,record.getBigInteger("wbWSDId"));
+            object.put("wbWSDId",record.get("wbWSDId"));
+            object.put("wsdName",wsdrecord.get("wsdName"));
+        }
+
         return object;
-    }
+    }*/
 
     public List<Category> addGetCata(String ctParantId) {
         String sql="select ctId,ctName from category WHERE ctParentId=?";
@@ -280,11 +328,12 @@ public class WareServicesZ {
         JSONArray array=new JSONArray();
         for (Record allOne:allFor){
             JSONObject object=new JSONObject();
-            object.put("fId",allOne.get("fId"));
-            object.put("fName",allOne.get("fName"));
-            List<Formatoption> options=getFroOptions(allOne.get("fId").toString());
+            object.put("fid",allOne.get("fId"));
+            object.put("fname",allOne.get("fName"));
+            JSONArray options=getFroOptions(allOne.get("fId").toString());
             object.put("fOption",options);
 
+            System.out.println("getFor object1"+object);
             array.add(object);
         }
 
@@ -295,11 +344,12 @@ public class WareServicesZ {
         List<Record> sFor=Db.find(sHaveFor,ctSId);
         for (Record sOne:sFor){
             JSONObject object=new JSONObject();
-            object.put("fId",sOne.get("fId"));
-            object.put("fName",sOne.get("fName"));
-            List<Formatoption> options=getFroOptions(sOne.get("fId").toString());
+            object.put("fid",sOne.get("fId"));
+            object.put("fname",sOne.get("fName"));
+            JSONArray options=getFroOptions(sOne.get("fId").toString());
             object.put("fOption",options);
 
+            System.out.println("getFor object2"+object);
             array.add(object);
         }
 
@@ -310,14 +360,15 @@ public class WareServicesZ {
         List<Record> tFor=Db.find(tHaveFor,ctTId);
         for (Record tOne:tFor){
             JSONObject object=new JSONObject();
-            object.put("fId",tOne.get("fId"));
-            object.put("fName",tOne.get("fName"));
-            List<Formatoption> options=getFroOptions(tOne.get("fId").toString());
+            object.put("fid",tOne.get("fId"));
+            object.put("fname",tOne.get("fName"));
+            JSONArray options=getFroOptions(tOne.get("fId").toString());
             object.put("fOption",options);
 
+            System.out.println("getFor object3"+object);
             array.add(object);
         }
-
+        System.out.println("getFor"+array);
         return  array;
     }
     public JSONObject addFirstStep(String ctSId, String ctTId) {
@@ -330,11 +381,21 @@ public class WareServicesZ {
         return atrAndFor;
     }
 
-    private List<Formatoption> getFroOptions(String fId) {
+    private JSONArray getFroOptions(String fId) {
         String sql="SELECT foId,foName " +
                 " from formatoption  " +
                 " WHERE foFormat=?";
-        return Formatoption.dao.find(sql,fId);
+        List<Formatoption> list=Formatoption.dao.find(sql,fId);
+        JSONArray array=new JSONArray();
+        for (Formatoption fo:list){
+            JSONObject object=new JSONObject();
+            object.put("foid",fo.getFoId());
+            object.put("foname",fo.getFoName());
+
+            array.add(object);
+        }
+        System.out.println("getFroOptions"+array);
+        return array;
     }
 
     private List<Attributeoption> getAtrOptions(String atId)
@@ -436,15 +497,26 @@ public class WareServicesZ {
         object.put("ware",ware);
 
         //---自定义类别
-        String wbelongSql="SELECT wbId,wbWFDId,wfdName,wbWSDId,wsdName " +
-                " FROM (warebelong INNER JOIN warefdispatch on wfdId=wbWFDId ) INNER JOIN waresdispatch on wsdId=wbWSDId " +
-                " WHERE wbWId=?";
+        String wbelongSql="SELECT wbId,wbWFDId,wfdName,wbWSDId  " +
+                "FROM  warebelong INNER JOIN warefdispatch on wfdId=wbWFDId " +
+                "WHERE wbWId=? ";
         Record wareBelong=Db.findFirst(wbelongSql,wId);
         object.put("wbId",wareBelong.get("wbId"));
         object.put("wbWFDId",wareBelong.get("wbWFDId"));
         object.put("wfdName",wareBelong.get("wfdName"));
-        object.put("wbWSDId",wareBelong.get("wbWSDId"));
-        object.put("wsdName",wareBelong.get("wsdName"));
+        System.out.println("wareBelong.get(\"wbWSDId\")"+wareBelong.getBigInteger("wbWSDId"));
+        if (wareBelong.getBigInteger("wbWSDId")==null||wareBelong.getBigInteger("wbWSDId").equals("")){
+            object.put("wbWSDId","");
+            object.put("wsdName","");
+        }
+        else {
+            String sql="SELECT *" +
+                    "from waresdispatch " +
+                    "WHERE wsdId=? ";
+            Record record=Db.findFirst(sql,wareBelong.getBigInteger("wbWSDId"));
+            object.put("wbWSDId",record.getBigInteger("wsdId"));
+            object.put("wsdName",record.getStr("wsdName"));
+        }
 
         //--系统内部类别
         String caSql="SELECT c.ctId as caFirst,c.ctName as caFName, a.ctId as caSecond," +
@@ -469,6 +541,7 @@ public class WareServicesZ {
             Record atrOption=Db.findFirst(atrOptionSql,atrName.get("atId"),wId);
             atrName.put("aoId",atrOption.get("aoId"));
             atrName.put("aoName",atrOption.get("aoName"));
+
         }
         object.put("attribute",atrNames);
 
@@ -477,10 +550,10 @@ public class WareServicesZ {
        for (int i=0;i<foNames.size();i++){
             JSONObject foName=foNames.getJSONObject(i);
 
-            JSONArray foOptions=editFoOptions(wId,foName.get("fId"));//选项
-            JSONArray defineOption=editDifineOption(foName.get("fId"),wId);//自定义的选项
-           foOptions.addAll(defineOption);
-
+            JSONArray foOptions=editFoOptions(wId,foName.get("fid"));//选项
+            JSONArray defineOption=editDifineOption(foName.get("fid"),wId);//自定义的选项
+            foOptions.addAll(defineOption);
+            System.out.println("foOp"+foOptions+"/n defin"+defineOption+"/n foOpeion"+foOptions);
             foName.put("fOption",foOptions);
         }
         object.put("format",foNames);
@@ -490,7 +563,6 @@ public class WareServicesZ {
                 "WHERE pWare=? ";
         List<Record> products=Db.find(productSql,wId);
         JSONArray productArray=new JSONArray();
-
         for (Record product:products){
             JSONObject p=new JSONObject();
             JSONArray  productFormat=getProductFormat(product.getBigInteger("pId"));
@@ -499,7 +571,7 @@ public class WareServicesZ {
             p.put("pImage",product.get("pImage"));
             p.put("pIdentifier",product.get("pIdentifier"));
             p.put("pStorage",product.get("pStorage"));
-            p.put("productFormat",productFormat);
+            p.put("format",productFormat);
             productArray.add(p);
         }
         object.put("products",productArray);
@@ -521,42 +593,47 @@ public class WareServicesZ {
 
     private JSONArray editDifineOption(Object fId, String wId) {
         JSONArray array=new JSONArray();
-        String defineOptionSql="SELECT 0 as foId ,pfDefineOption as foName,'1' as isSelect  " +
+        String defineOptionSql="SELECT pfId, pfDefineOption as foName,'1' as isSelect  " +
                 "from productformat inner join product on pfProduct=product.pId " +
                 "where pfFormat=? and pWare=? and pfDefineOption is not NULL ";
 
         List<Record> defineOptions=Db.find(defineOptionSql,fId,wId);//自定义选项
         for (Record defineOption:defineOptions){
             JSONObject object=new JSONObject();
-            object.put("foId",defineOption.get("foId"));
-            object.put("foName",defineOption.get("foName"));
+            object.put("foid","define"+defineOption.get("pfId"));
+            object.put("foname",defineOption.get("foName"));
             object.put("isSelect",defineOption.get("isSelect"));
             object.put("isDefine","isDefine");
             array.add(object);
         }
+        System.out.println("editDifineOption"+array+"fId"+fId);
         return array;
     }
 
     private JSONArray editFoOptions(String wId, Object fId) {
         JSONArray array=new JSONArray();
-        String  foOptionsSql="SELECT foId,foName, " +
-                " CASE" +
-                "  WHEN foId IN (SELECT pfFormatOption from productformat INNER JOIN product on pfProduct=pId WHERE pWare like '"+wId+"')  " +
-                "  THEN 1 " +
-                "  WHEN foId not IN (SELECT pfFormatOption from productformat INNER JOIN product on pfProduct=pId WHERE pWare like '"+wId+"')  " +
-                "  THEN 0 " +
-                " END isSelect " +
+        String  foOptionsSql="SELECT foId,foName "+
                 " from (format INNER JOIN formatoption on foFormat=fId)  " +
                 " WHERE fId=? ";
         List<Record> records=Db.find(foOptionsSql,fId);
+        String sql="SELECT pfFormatOption from productformat where  pfFormat=? and pfProduct in (select pId from product where pWare=?)";
+        List<Record> pfOptions=Db.find(sql,fId,wId);
         for (Record record:records){
             JSONObject object=new JSONObject();
-            object.put("foId",record.get("foId"));
-            object.put("foName",record.get("foName"));
-            object.put("isSelect",record.get("isSelect"));
+            object.put("foid",record.get("foId"));
+            object.put("foname",record.get("foName"));
+            object.put("isSelect","0");//起初设置为0 未选
+            for (Record selectOption:pfOptions){//判断是否选择
+                if (selectOption.get("pfFormatOption")!=null&&selectOption.get("pfFormatOption").equals(record.get("foId"))){
+                    object.put("isSelect","1");//选择了则为1
+                    break;
+                }
+            }
             object.put("isDefine","notDefine");
+
             array.add(object);
         }
+        System.out.println("editFoOptions"+array+"fId"+fId);
         return array;
     }
 
@@ -568,26 +645,28 @@ public class WareServicesZ {
         List<Record> formats=Db.find(formatSql,pId);
         for (Record format: formats){
             JSONObject object=new JSONObject();
-            object.put("fId",format.get("fId"));
-            object.put("fName",format.get("fName"));
+            object.put("fid",format.get("fId"));
+            object.put("fname",format.get("fName"));
 
             String productfosql="SELECT foId,foName  " +
                     "from (productformat INNER JOIN format on fId=pfFormat) INNER JOIN formatoption on foId=pfFormatOption " +
                     "WHERE pfProduct=? and fId=?  ";
             Record option=Db.findFirst(productfosql,pId,format.get("fId"));
 
-            String defineSql="SELECT '0' as foId ,pfDefineOption as foName  " +
+            String defineSql="SELECT pfId,pfDefineOption as foName  " +
                     "from productformat INNER JOIN format on fId=pfFormat " +
                     "WHERE pfProduct=? and fId=? and pfDefineOption is not NULL";
             Record define=Db.findFirst(defineSql,pId,format.get("fId"));//自定义
-            if (define==null)
+            if (define==null)//自定义为空
             {
-                object.put("foId",option.get("foId"));
-                object.put("foName",option.get("foName"));
+                object.put("foid",option.get("foId"));
+                object.put("foname",option.get("foName"));
+                object.put("isSelect","1");
             }
             else {
-                object.put("foId",define.get("foId"));
-                object.put("foName",define.get("foName"));
+                object.put("foid","define"+define.get("pfId"));
+                object.put("foname",define.get("foName"));
+                object.put("isSelect","1");
             }
             array.add(object);
         }
@@ -923,7 +1002,7 @@ public class WareServicesZ {
             Record record=wIds.get(i);
             BigInteger wbId=record.getBigInteger("wbId");
             BigInteger wId=record.getBigInteger("wbWId");
-            JSONObject ware=getDispatchWareById(wId);
+            JSONObject ware=getDispatchWareById(wId,wbId);
             ware.put("wbId",wbId);
 
             array.add(ware);
@@ -939,7 +1018,7 @@ public class WareServicesZ {
             Record record=wIds.get(i);
             BigInteger wbId=record.getBigInteger("wbId");
             BigInteger wId=record.getBigInteger("wbWId");
-            JSONObject ware=getDispatchWareById(wId);
+            JSONObject ware=getDispatchWareById(wId,wbId);
             ware.put("wbId",wbId);
 
             array.add(ware);
@@ -947,7 +1026,7 @@ public class WareServicesZ {
         return array;
     }
 
-    public JSONObject getDispatchWareById(BigInteger wId)
+    public JSONObject getDispatchWareById(BigInteger wId,BigInteger wbId)
     {
         String selectSql="SELECT wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit," +
                 "sum(inProductNum) as wSale,sum(pStorage) as wStorage,wStatus,wCreateTime " +
@@ -965,9 +1044,34 @@ public class WareServicesZ {
         object.put("wStorage",ware.get("wStorage"));
         object.put("wStatus",ware.get("wStatus"));
         object.put("wCreateTime",ware.get("wCreateTime"));
-        JSONObject belong=getWBelong(wId.toString());
+        JSONObject belong=getWBelongByWbId(wbId);
 
         object.put("belong",belong);
+        return object;
+    }
+
+    private JSONObject getWBelongByWbId(BigInteger wbId) {
+        String sql="SELECT wbId,wbWFDId,wfdName,wbWSDId " +
+                "FROM warebelong INNER JOIN warefdispatch on wbWFDId=wfdId " +
+                " WHERE wbId=? ";
+        Record record=Db.findFirst(sql,wbId);
+        if (record==null){
+            return null;
+        }
+        JSONObject object=new JSONObject();
+        object.put("wbWFDId",record.get("wbWFDId"));
+        object.put("wfdName",record.get("wfdName"));
+        if (record.get("wbWSDId")==null||record.get("wbWSDId").equals("")){
+            object.put("wbWSDId","");
+            object.put("wsdName","");
+        }
+        else {
+            String wsdSql="select wsdName from waresdispatch where wsdId=?";
+            Record wsdrecord=Db.findFirst(wsdSql,record.getBigInteger("wbWSDId"));
+            object.put("wbWSDId",record.get("wbWSDId"));
+            object.put("wsdName",wsdrecord.get("wsdName"));
+        }
+
         return object;
     }
 
@@ -1507,5 +1611,42 @@ public class WareServicesZ {
             }
         }
         return false;
+    }
+
+    //根据wid删除属性
+    public void deleteAttrByWId(BigInteger wId) {
+        List<Wareattribute> list=Wareattribute.dao.find("select * from wareAttribute where waWare=?");
+        for (Wareattribute wa:list){
+            wa.delete();
+        }
+    }
+
+    //根据wid删除ware
+    public void deleteWareByWId(BigInteger wId) {
+        Ware ware=Ware.dao.findById(wId);
+        ware.delete();
+    }
+    //根据wId删除单品数据
+    public void deleteProductByWId(BigInteger wId) {
+        String sql="select * from product where pWare=?";
+        List<Product> list=Product.dao.find(sql,wId);
+        for (Product p:list){
+            String getPfSql="select * from productformat where pfProduct=?";
+            List<Productformat> pflist=Productformat.dao.find(getPfSql,p.getPId());
+            for (Productformat pf:pflist){
+                pf.delete();
+            }
+            p.delete();
+        }
+    }
+
+    //根据wid删除属于
+    public void deleteWareBelongByWId(BigInteger wId) {
+        String sql="select * from warebelong where wbWId=?";
+        String deleteSql="delete from warebelong where wbId=?";
+        List<Record> list=Db.find(sql,wId);
+        for (Record record:list){
+            Db.delete(deleteSql,record.getBigInteger("wbId"));
+        }
     }
 }

@@ -13,6 +13,9 @@ eureka:
 
 jfinal:
   debug: true
-  jdbcUrl: jdbc:mysql://120.79.79.141:3306/cross2u?characterEncoding=utf8&serverTimezone=UTC
+  #jdbcUrl: jdbc:mysql://120.79.79.141:3306/cross2u?characterEncoding=utf8&serverTimezone=UTC
+  #dbUser: root
+  #dbPwd: 123456
+  jdbcUrl: jdbc:mysql://localhost:3306/cross2u?characterEncoding=utf8&serverTimezone=UTC
   dbUser: root
-  dbPwd: 123456
+  dbPwd: '!yue980122M!'

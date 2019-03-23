@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.IAtom;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ import java.util.Calendar;
 import java.util.List;
 
 @RestController
+@CrossOrigin
 @RequestMapping("/indent")
 public class IndentControllerL {
     @Autowired
@@ -166,12 +168,13 @@ public class IndentControllerL {
         if(!result.isEmpty())
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
+            jr.setData(result);
         }
         else
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
+            jr.setData(null);
         }
-        jr.setData(null);
         return jr;
     }
 

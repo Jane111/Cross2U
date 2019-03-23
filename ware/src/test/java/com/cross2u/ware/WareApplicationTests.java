@@ -33,9 +33,14 @@ public class WareApplicationTests {
 //        ws.selectWareInStock(new BigInteger("1"));
 //        List<BigInteger> list = ur.recommendBaseUser(new BigInteger("1"));
 //        System.out.println(list);
-        Boolean array = wsZ.hasSensi("快h乐h水");
+        JSONObject array = wsZ.editShow("32","1");
         System.out.println(array);
 	}
+
+	@Test
+    public void test(){
+	    //Boolean signal
+    }
 
 }
 

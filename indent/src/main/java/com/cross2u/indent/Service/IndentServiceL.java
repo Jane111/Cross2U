@@ -285,18 +285,23 @@ import java.util.List;
             /*与其他模块通信*/
 
             //已经发货订单特有字段
-            outorder.put("outExpress",outindent.getOutExpress());//快递单号
-            outorder.put("outExpressCompany",outindent.getOutExpressCompany());//快递公司
-
+            if (requestFlag.equals("2")){
+                outorder.put("outExpress",outindent.getOutExpress());//快递单号
+                outorder.put("outExpressCompany",outindent.getOutExpressCompany());//快递公司
+            }
             //已经收货订单特有字段
-            outorder.put("outModifyTime",outindent.getOutModifyTime());//快递公司
+            if (requestFlag.equals("3")){
+                outorder.put("outModifyTime",outindent.getOutModifyTime());//快递公司
+            }
 
             //售后订单特有状态
-            Returngoods returngoods = Returngoods.dao.findFirst("select rgReasons,rgType from returngoods " +
-                    "where rgOOId=?",outindent.getOutId());
-            outorder.put("rcCatalog",Returncatalog.dao.findById(Returngoodreasons.dao.findById
-                    (returngoods.getRgType()).getRgrRCId()).getRcCatalog());//退货catelog，退货或退款
-            outorder.put("rgState",returngoods.getRgState());//退货状态
+            if (requestFlag.equals("4")){
+                Returngoods returngoods = Returngoods.dao.findFirst("select rgReasons,rgType from returngoods " +
+                        "where rgOOId=?",outindent.getOutId());
+                outorder.put("rcCatalog",Returncatalog.dao.findById(Returngoodreasons.dao.findById
+                        (returngoods.getRgType()).getRgrRCId()).getRcCatalog());//退货catelog，退货或退款
+                outorder.put("rgState",returngoods.getRgState());//退货状态
+            }
 
             outOrderList.add(outorder);
         }
