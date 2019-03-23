@@ -1031,7 +1031,7 @@ public class WareServicesZ {
         String selectSql="SELECT wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit," +
                 "sum(inProductNum) as wSale,sum(pStorage) as wStorage,wStatus,wCreateTime " +
                 " from (ware INNER JOIN indent on inWare=wId)INNER JOIN product on wId=pWare " +
-                " WHERE wId=? and inStatus!=0 and inStatus!=5 and inStatus!=6 ";
+                " WHERE wId=? and inStatus!=0 and inStatus!=5 and inStatus!=6 and wStatus!=0";
         Record ware=Db.findFirst(selectSql,wId);
         JSONObject object=new JSONObject();
         object.put("wId",ware.getBigInteger("wId"));
@@ -1615,7 +1615,7 @@ public class WareServicesZ {
 
     //根据wid删除属性
     public void deleteAttrByWId(BigInteger wId) {
-        List<Wareattribute> list=Wareattribute.dao.find("select * from wareAttribute where waWare=?");
+        List<Wareattribute> list=Wareattribute.dao.find("select * from wareAttribute where waWare=?",wId);
         for (Wareattribute wa:list){
             wa.delete();
         }
@@ -1648,5 +1648,22 @@ public class WareServicesZ {
         for (Record record:list){
             Db.delete(deleteSql,record.getBigInteger("wbId"));
         }
+    }
+
+    //子类是否在父类里面3-23
+    public boolean wsdIsInWF(String wfdId, String wsdId) {
+        if (wsdId==null){//如果没有子类
+            return true;
+        }
+        else {
+            String sql="select wsdId from waresdispatch where wsdWFDId=?";
+            List<Record> wsList=Db.find(sql,wfdId);
+            for (Record ws:wsList){
+                if (ws.getStr("wsdId").equals(wsdId)){//在父类里
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

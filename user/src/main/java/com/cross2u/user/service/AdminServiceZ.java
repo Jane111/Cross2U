@@ -63,9 +63,15 @@ public class AdminServiceZ {
             object.put("mmCompany",mainmanufacturer.getMmCompany());
             object.put("mmOwner",mainmanufacturer.getMmOwner());
             object.put("mmIdNumber",mainmanufacturer.getMmIdNumber());
-            String mainMajorId=mainmanufacturer.getMmMajorBusiness().toString();
-            String mainMajor=getMainBusiness(new BigInteger(mainMajorId));
-            object.put("mmMajorBusiness",mainMajor);
+            if(mainmanufacturer.getMmMajorBusiness()!=null&&!mainmanufacturer.getMmMajorBusiness().equals("")){
+                String mainMajorId=mainmanufacturer.getMmMajorBusiness().toString();
+                String mainMajor=getMainBusiness(new BigInteger(mainMajorId));
+                object.put("mmMajorBusiness",mainMajor);
+            }
+            else {
+                object.put("mmMajorBusiness","未选");
+            }
+
             object.put("mmCompanyPlace",mainmanufacturer.getMmCompanyPlace());
             if (!mmStatus.equals("2")){
                 String aOperateTime=getMMAOperateTime(mainmanufacturer.getMmId());

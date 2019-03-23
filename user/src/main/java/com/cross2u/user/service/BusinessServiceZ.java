@@ -588,5 +588,9 @@ public class BusinessServiceZ {
     }
 
 
+    public Business getBusinessByOpneId(String bOpenId) {
+        String sql="select * from business where bOpenId=? and bOtherStore1 is null";
+        return Business.dao.findFirst(sql,bOpenId);
+    }
 }
 

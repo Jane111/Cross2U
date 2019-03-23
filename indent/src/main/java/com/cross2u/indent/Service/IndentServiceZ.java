@@ -595,10 +595,11 @@ public class IndentServiceZ {
     public void updateIndentMtoB(){//5天默认好评
         String sql="SELECT inId,inMtoB " +
                 "from indent " +
-                "WHERE DATE_SUB(CURDATE(), INTERVAL 5 DAY) >= date(inCreateTime) and inMtoB is NULL ";
+                "WHERE DATE_SUB(CURDATE(), INTERVAL 5 DAY) >= date(inCreateTime) and inMtoB is NULL and inStatus=9 and inBtoM is not null";
         List<Indent> indents= Indent.dao.find(sql);
         for (Indent indent:indents){
             indent.setInMtoB(5);
+            indent.setInStatus(3);//已完成
             indent.update();
         }
     }
@@ -608,10 +609,11 @@ public class IndentServiceZ {
     public void updateIndentBtoM(){//默认好评
         String sql="SELECT inId,inBtoM " +
                 "from indent " +
-                "WHERE DATE_SUB(CURDATE(), INTERVAL 7 DAY) >= date(inCreateTime) and inBtoM is NULL ";
+                "WHERE DATE_SUB(CURDATE(), INTERVAL 7 DAY) >= date(inCreateTime) and inBtoM is NULL and inStatus =2";
         List<Indent> indents= Indent.dao.find(sql);
         for (Indent indent:indents){
             indent.setInBtoM(5);//默认好评
+            indent.setInStatus(9);//M待评价
             indent.update();
         }
     }
@@ -623,6 +625,42 @@ public class IndentServiceZ {
         List<Indent> list=Indent.dao.find(sql);
         for (Indent indent:list){
             indent.delete();//删除
+        }
+    }
+
+    //清除违禁商品3-23
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void clearUnnormalWare(){
+        String sql="select * from sensi";
+        List<Record> list=Db.find(sql);
+        List<Record> wares=Db.find("select wId,wName,wStore from ware");
+        String updateSql="update ware set wStatus=4 where wId=?";
+        String storeSql="select sScore from store where sId=?";
+        String updateStoreSql="update store set sScore=? where sId =?";
+
+        for (Record sensi:list){
+            String sensiv=sensi.getStr("senText");
+            for (Record ware:wares){
+                String name=ware.getStr("wName");
+                if (name.contains(sensiv)){
+                    Db.update(updateSql,ware.getBigInteger("wId"));
+                    updateIndentStatus(ware.getBigInteger("wId"));
+                    Integer sScore=Db.queryInt(storeSql,ware.getBigInteger("wStore"));
+                    sScore=sScore-10;//扣十分
+                    if (sScore<0){
+                        sScore=0;
+                    }
+                    Db.update(updateStoreSql,sScore,ware.getBigInteger("wStore"));
+                }
+            }
+        }
+    }
+
+    private void updateIndentStatus(BigInteger wId) {//有违规商品更新indent订单状态 3-23
+        String updateProductSql="select inId from indent where inWare=?";
+        List<Indent> list=Indent.dao.find(updateProductSql,wId);
+        for (Indent indent:list){
+            indent.setInStatus(7);
         }
     }
 

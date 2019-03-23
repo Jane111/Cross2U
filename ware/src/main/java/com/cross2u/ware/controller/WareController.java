@@ -985,6 +985,10 @@ public class WareController  {
         String wfdId=request.getParameter("wfdId");
         String wsdId=request.getParameter("wsdId");
         String wId=request.getParameter("wId");
+        if (!wareServices.wsdIsInWF(wfdId,wsdId)){
+            baseResponse.setResult(ResultCodeEnum.S_NOT_BELONG_F);
+            return baseResponse;
+        }
         if (wareServices.dispatchIsIn(wfdId,wsdId,wId)){//在分类中已经有这个商品
             baseResponse.setResult(ResultCodeEnum.DISPATCH_IS_IN);
         }

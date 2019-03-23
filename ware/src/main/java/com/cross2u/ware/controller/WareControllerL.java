@@ -398,7 +398,7 @@ public class WareControllerL {
             @RequestParam("inLeftStatus") Integer inLeftStatus)
     {
         JSONArray result = ws.showIndentLeftProductNum(bId,inLeftStatus);
-        if(result==null)
+        if(result!=null)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
         }

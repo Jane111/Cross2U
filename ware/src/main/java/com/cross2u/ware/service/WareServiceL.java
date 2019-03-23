@@ -315,7 +315,7 @@ public class WareServiceL {
         if (!w.getWPriceUnit().equals("1"))//不是rmb单位 进行汇率转换
         {
             rmbStartPrice=transferMoney(w.getWStartPrice(),w.getWPriceUnit().toString());
-            rmbHighPrice=transferMoney(w.getWStartPrice(),w.getWHighPrice().toString());
+            rmbHighPrice=transferMoney(w.getWHighPrice(),w.getWPriceUnit().toString());
         }
         baseInfo.put("rmbStartPrice",rmbStartPrice);
         baseInfo.put("rmbHighPrice",rmbHighPrice);

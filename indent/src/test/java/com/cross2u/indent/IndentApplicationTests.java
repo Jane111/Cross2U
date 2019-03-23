@@ -9,18 +9,24 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.web3j.crypto.CipherException;
-import org.web3j.crypto.Credentials;
-import org.web3j.crypto.WalletUtils;
+import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Function;
+import org.web3j.abi.datatypes.Type;
+import org.web3j.abi.datatypes.generated.Uint256;
+import org.web3j.crypto.*;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.Web3ClientVersion;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Contract;
 import org.web3j.utils.Convert;
+import org.web3j.utils.Numeric;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +34,8 @@ import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.web3j.tx.ManagedTransaction.GAS_PRICE;
 
@@ -65,9 +73,9 @@ public class IndentApplicationTests {
 	@Test
     public void test() throws Exception {
 		Web3j web3j = Web3j.build(new HttpService());  // defaults to http://localhost:8545/ http://10.169.42.25:9090/
-        Credentials credentials = WalletUtils.loadCredentials("123456", "E:/IDEAworkspace/private-geth/keystore/UTC--2019-03-22T09-07-59.250376800Z--618a0456af5142c9c97797825d2a5f5b2a8a67ae");
+        Credentials credentials = WalletUtils.loadCredentials("123456", "E:/IDEAworkspace/private-geth/keystore/UTC--2019-03-23T01-43-06.760528400Z--6edf076703ec6dd2dd1e14b416b93ebe1320ee4e");
 
-        String address = "0x618a0456af5142c9c97797825d2a5f5b2a8a67ae";
+        String address = "0x6edf076703ec6dd2dd1e14b416b93ebe1320ee4e";
 
         EthGetBalance ethGetBalance = web3j.ethGetBalance(address, DefaultBlockParameterName.LATEST).send();
 
@@ -85,8 +93,8 @@ public class IndentApplicationTests {
 
         //Transaction transaction=contract.
 
-        System.out.println("address"+contract.getContractAddress()+"     hash:"+contract.hashCode()+"  contract.getIndentNum()"+contract.getIndentNum()+" valid"+contract
-        .isValid());
+        System.out.println("address"+contract.getContractAddress()+"     hash:"+contract.hashCode()+
+                "  contract.getIndentNum()"+contract.getIndentNum()+" valid"+contract.isValid());
         System.out.println(contract.toString());
         //调用智能合约
         System.out.println(contract.getIndentNum().send());
@@ -110,6 +118,30 @@ public class IndentApplicationTests {
         else {
             System.out.println("not valid");
         }
+    }
+
+    @Test
+    public void  transfer() throws Exception {
+        Web3j web3j = Web3j.build(new HttpService());  // defaults to http://localhost:8545/ http://10.169.42.25:9090/
+        Credentials credentials = WalletUtils.loadCredentials("123456", new File("E:/IDEAworkspace/private-geth/keystore/UTC--2019-03-23T01-43-06.760528400Z--6edf076703ec6dd2dd1e14b416b93ebe1320ee4e"));//转出地址密码 钱包地址
+        String fromAddress = credentials.getAddress();
+        EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(
+                fromAddress, DefaultBlockParameterName.LATEST).sendAsync().get();
+        BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+        Address address = new Address("0xbc2a97fe18cd01a713eef360c008a895f118823f");
+        Uint256 value = new Uint256(11);
+        List<Type> parametersList = new ArrayList<>();
+        parametersList.add(address);
+        parametersList.add(value);
+        List<TypeReference<?>> outList = new ArrayList<>();
+        Function function = new Function("transfer", parametersList, outList);
+        String encodedFunction = FunctionEncoder.encode(function);
+        RawTransaction rawTransaction = RawTransaction.createTransaction(nonce, new BigInteger("10"), new BigInteger("22000"), "0x6edf076703ec6dd2dd1e14b416b93ebe1320ee4e", encodedFunction);
+        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
+        String hexValue = Numeric.toHexString(signedMessage);
+
+        EthSendTransaction ethSendTransaction = web3j.ethSendRawTransaction(hexValue).sendAsync().get();
+
     }
 
 

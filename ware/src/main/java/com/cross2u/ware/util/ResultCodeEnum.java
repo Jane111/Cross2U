@@ -26,7 +26,8 @@ public enum ResultCodeEnum
 	DISPATCH_IS_IN("20013","已经加入该分类中"),
 	HAS_ING_INDENT("20005","存在正在执行的订单"),
 	FIND_FAILURE("20004","查询失败"),
-	HAS_SENSI("200014","存在敏感词");
+	HAS_SENSI("200014","存在敏感词"),
+	S_NOT_BELONG_F("200015","该子类不属于该父类");
     private String code;
     private String desc;
 

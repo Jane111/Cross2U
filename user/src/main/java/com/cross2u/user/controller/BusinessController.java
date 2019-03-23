@@ -75,14 +75,26 @@ public class BusinessController {
 
         BusinessServiceZ businessService=new BusinessServiceZ();
 
-        Business business=new Business();
-        business.setBOpenId(bOpenId);
-        business.setBRank(1);
-        business.setBScore(0);
-        business.setBStatus(2);
-        business.setBName(bName);
-        business.setBPhone(bPhone);
-        business.setBEmail(bEmail);
+        Business business=businessService.getBusinessByOpneId(bOpenId);
+        if(business==null){
+            business=new Business();
+            business.setBOpenId(bOpenId);
+            business.setBRank(1);
+            business.setBScore(0);
+            business.setBStatus(2);
+            business.setBName(bName);
+            business.setBPhone(bPhone);
+            business.setBEmail(bEmail);
+        }
+        else {
+            business.setBOpenId(bOpenId);
+            business.setBRank(1);
+            business.setBScore(0);
+            business.setBStatus(2);
+            business.setBName(bName);
+            business.setBPhone(bPhone);
+            business.setBEmail(bEmail);
+        }
 
         JSONObject visitor=businessService.getVisitorByOpenId(bOpenId);//是否已经授权
         if (visitor!=null){
