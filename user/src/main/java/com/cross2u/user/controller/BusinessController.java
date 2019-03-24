@@ -345,15 +345,14 @@ public class BusinessController {
         BaseResponse baseResponse=new BaseResponse();
         BusinessServiceZ businessService=new BusinessServiceZ();
         String cId=request.getParameter("cId");
-        String [] cIds=cId.split(",");
-        for (String id :cIds){
-            if(businessService.deleteCollect(id)){
+        String[] cIds=cId.split(",");
+        for (String cid:cIds){
+            if(businessService.deleteCollect(cid)){
                 baseResponse.setResult(ResultCodeEnum.SUCCESS);
             }
             else
             {
                 baseResponse.setResult(ResultCodeEnum.DELETE_FAILURE);
-                break;
             }
         }
 

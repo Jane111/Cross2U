@@ -787,6 +787,13 @@ public class IndentServiceZ {
         return val;
     }
 
+    //B关闭
+    public boolean cancelMIndent(String inId) {
+        Indent indent=Indent.dao.findById(inId);
+        indent.setInStatus(5);//状态更新为B关闭
+        return indent.update();
+    }
+
     /*public void createContract(String _mId, String _wId, String _indentNum, String _time) throws Exception {
         // 创建一个 web3j 的连接
         Web3j web3j = Web3j.build(new HttpService("http://10.169.102.247:8989/"));//http://10.169.102.247:8989/

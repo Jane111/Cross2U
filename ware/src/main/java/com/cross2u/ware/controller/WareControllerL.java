@@ -410,14 +410,15 @@ public class WareControllerL {
             @RequestParam("inLeftStatus") Integer inLeftStatus)
     {
         JSONArray result = ws.showIndentLeftProductNum(bId,inLeftStatus);
-        if(result!=null)
+        /*if(result==null)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
         }
-        else if (result.isEmpty())
+        else if(result.equals(""))
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
-        }
+        }*/
+        jr.setResult(ResultCodeEnum.SUCCESS);
         jr.setData(result);
         return jr;
     }

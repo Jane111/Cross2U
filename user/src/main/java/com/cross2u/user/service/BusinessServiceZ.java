@@ -32,18 +32,38 @@ public class BusinessServiceZ {
     }
 
     //根据bId判断是否代理
-    private Integer isCooperation(String bId,String sId) {
+    private JSONObject isCooperation(String bId,String sId) {
+        JSONObject result=new JSONObject();
+        String waitSql="select copId from cooperation where copState=0 and copBId=? and copSId=?";
+        Record wait=Db.findFirst(waitSql,bId,sId);
+        if (wait!=null) result.put("isCooperation",3);
+
         String sql="SELECT copId from cooperation  WHERE copState=1 and copBId=? and copSId=?";
         Record isCooperation=Db.findFirst(sql,bId,sId);
-        return isCooperation==null?0:1;
+        if (isCooperation!=null){
+            result.put("isCooperation",0);
+            result.put("copId",isCooperation.getBigInteger("copId"));
+        }
+        else {
+            result.put("isCooperation",1);
+            result.put("copId",null);
+        }
+        return result;
     }
 
     //根据bId判断是否收藏
-    private Integer isCollect(String bId,String sId) {
+    private JSONObject isCollect(String bId,String sId) {
+        JSONObject result=new JSONObject();
         String sql="SELECT cId from collect WHERE cOwner=? and cStore=? and cWare is NULL";
         Record isCollect=Db.findFirst(sql,bId,sId);
         System.out.println(isCollect);
-        return isCollect==null?0:1;
+        result.put("cId",null);
+        result.put("isCollect",0);
+        if (isCollect!=null){
+            result.put("isCollect",1);
+            result.put("cId",isCollect.getBigInteger("cId"));
+        }
+        return result;
     }
 
 
@@ -94,7 +114,6 @@ public class BusinessServiceZ {
         jsonObject.put("sScore",record.get("sScore"));
         jsonObject.put("mmName",record.get("mmName"));
         jsonObject.put("mmLogo",record.get("mmLogo"));
-        jsonObject.put("copBId",record.get("copBId"));
 
         String countSql="SELECT count(copBId) as copNumber  " +
                 " FROM cooperation " +
@@ -114,13 +133,19 @@ public class BusinessServiceZ {
         String bId=getBIdByOpenId(openId);
         if (bId!=null){
             System.out.println("bID"+bId);
-            jsonObject.put("isCollect",isCollect(bId,sId));
-            jsonObject.put("isCooperation",isCooperation(bId,sId));
+            JSONObject iscollect=isCollect(bId,sId);
+            jsonObject.put("isCollect",iscollect.getString("isCollect"));
+            jsonObject.put("cId",iscollect.get("cId"));
+            JSONObject coop=isCooperation(bId,sId);
+            jsonObject.put("isCooperation",coop.getString("isCooperation"));
+            jsonObject.put("copId",coop.get("copId"));
         }
         else{//没有授权认证
             System.out.println("null????");
             jsonObject.put("isCollect",0);
             jsonObject.put("isCooperation",0);
+            jsonObject.put("copId",null);
+            jsonObject.put("cId",null);
         }
 
         System.out.println(jsonObject);

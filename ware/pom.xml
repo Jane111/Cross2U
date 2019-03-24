@@ -96,23 +96,23 @@
 			<artifactId>json</artifactId>
 			<version>20160810</version>
 		</dependency>
-        <!--导入mahout依赖-->
-        <dependency>
-            <groupId>org.apache.mahout</groupId>
-            <artifactId>mahout</artifactId>
-            <version>0.11.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.mahout</groupId>
-            <artifactId>mahout-examples</artifactId>
-            <version>0.11.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+		<!--导入mahout依赖-->
+		<dependency>
+			<groupId>org.apache.mahout</groupId>
+			<artifactId>mahout</artifactId>
+			<version>0.11.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.mahout</groupId>
+			<artifactId>mahout-examples</artifactId>
+			<version>0.11.1</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 
 		<dependency>
 			<groupId>net.sf.json-lib</groupId>
@@ -121,6 +121,12 @@
 			<classifier>jdk15</classifier>
 		</dependency>
 
+		<!--baidu nlp自然语言处理-->
+		<dependency>
+			<groupId>com.baidu.aip</groupId>
+			<artifactId>java-sdk</artifactId>
+			<version>4.8.0</version>
+		</dependency>
 
 	</dependencies>
 

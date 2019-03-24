@@ -54,18 +54,22 @@ public class MoneyUtil {
         if (unitStr.equals("1"))//1-代表人民币
             return null;
 
-        Object request=getRequest().get(0);;//.getJSONArray(0);
-        JSONArray array=JSONArray.fromObject(request);
+        JSONArray array=null;
+        if (getRequest()!=null){
+            Object request=getRequest().get(0);;//.getJSONArray(0);
+            array=JSONArray.fromObject(request);
+        }
+
 
         if (array==null){
-            return null;
+            return "6.716";
         }
         System.out.println("array="+array);
         JSONObject object=array.getJSONObject(0);
         Integer unit=new Integer(unitStr)-1;
         String data="data"+unit;
         String result=object.get(data).toString();
-
+        System.out.println("--------------getRMB result="+result);
         return result;
     }
 

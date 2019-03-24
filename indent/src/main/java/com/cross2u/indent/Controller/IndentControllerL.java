@@ -16,6 +16,7 @@ import com.cross2u.indent.model.*;
 import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 @CrossOrigin
 @RestController
@@ -562,20 +563,27 @@ public class IndentControllerL {
     }
     //B-M 的订单，B支付（订单中状态改变）商品支付
     @RequestMapping("/payForIndent")
-    public BaseResponse payForIndent(@RequestParam("inId") BigInteger inId)
+    public BaseResponse payForIndent(@RequestParam("inId") String inIds)
     {
-        Indent indent = new Indent();
-        indent.setInId(inId);
-        indent.setInStatus(1);//将状态改为已支付的状态
-        boolean result = indent.update();
-        if(result)
-        {
-            jr.setResult(ResultCodeEnum.SUCCESS);
+        String []inIdArray=inIds.split(",");
+        for (String inId:inIdArray){
+            Indent indent = new Indent();
+            BigInteger id=new BigInteger(inId);
+            indent.setInId(id);
+            indent.setInStatus(1);//将状态改为已支付的状态
+            indent.setInPayTime(new Date());
+            boolean result = indent.update();
+            if(result)
+            {
+                jr.setResult(ResultCodeEnum.SUCCESS);
+            }
+            else
+            {
+                jr.setResult(ResultCodeEnum.UPDATE_ERROR);
+                continue;
+            }
         }
-        else
-        {
-            jr.setResult(ResultCodeEnum.UPDATE_ERROR);
-        }
+
         jr.setData(null);
         return jr;
     }

@@ -89,6 +89,7 @@ import java.util.List;
     //39、b评价订单
     public boolean updateIndent(Indent indent)
     {
+        indent.setInStatus(9);//更新为M待评价
         return indent.update();
     }
     //40、与M退款订单找管理员介入
@@ -528,7 +529,7 @@ import java.util.List;
 
         //收入(Indent 只有B-M的订单 )
         List<Indent> indents= Indent.dao.find("select inId,inNum,inWare,inProduct,inProductNum,inTotalMoney,inPayTime " +
-                "from indent where inStore=?",sId);
+                "from indent where inStore=? and inPayTime is not null",sId);//324 inPayTime 不是null时才是收入
         JSONArray Indent = new JSONArray();
         for(Indent indent:indents)
         {

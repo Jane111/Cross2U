@@ -626,6 +626,9 @@ public class WareServiceL {
                 wareDetail.put("skPImg",product.getPImage());//单品的图片
                 wareDetail.put("skProductMoney",product.getPMoney());//单品价格
                 wareDetail.put("skProductMoneyUnit",product.getPMoneyUnit());//单品价格单位
+                String pMoneyUnit=product.getPMoneyUnit().toString();
+                wareDetail.put("exchangeRate",MoneyUtil.getRMB(pMoneyUnit));//汇率
+                System.out.println("ware in stock exchange rate"+MoneyUtil.getRMB(pMoneyUnit));
                 //得到单品对应的商品信息
                 BigInteger wareId = product.getPWare();
                 wareDetail.put("wId",wareId);//商品Id
@@ -643,7 +646,7 @@ public class WareServiceL {
     public JSONArray showIndentLeftProductNum(BigInteger bId,Integer inLeftStatus)
     {
         List<Record> list = Db.find("SELECT inProduct,inStore,inWare,sum(inLeftNum) as sumLeft " +
-                "from indent WHERE inBusiness=? GROUP BY inProduct,inStore,inWare",bId);
+                "from indent WHERE inBusiness=?  GROUP BY inProduct,inStore,inWare",bId);//324 instatus=1 要不要加？
         //进行不同库存的区分
         List<Record> targetList = new ArrayList<>();
         if(inLeftStatus==0)//无库存的情况

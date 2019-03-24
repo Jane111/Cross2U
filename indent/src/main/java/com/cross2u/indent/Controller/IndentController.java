@@ -9,10 +9,7 @@ import com.cross2u.indent.util.Constant;
 import com.cross2u.indent.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
@@ -34,6 +31,8 @@ public class IndentController {
         BaseResponse baseResponse = new BaseResponse();
         String bid = request.getParameter("bId");
         String outStatus = request.getParameter("outStatus");//订单状态
+        String pageIndex= request.getParameter("pageIndex");
+        String pageSize=request.getParameter("pageSize");
         JSONArray outindents = null;
 
         switch (outStatus) {
@@ -105,6 +104,7 @@ public class IndentController {
         BaseResponse baseResponse=new BaseResponse();
         String bId=request.getParameter("bId");
         String inStatus=request.getParameter("inStatus");
+
 
         JSONArray mIndentList=new JSONArray();
         switch(inStatus){
@@ -317,4 +317,23 @@ public class IndentController {
         }
         return baseResponse;
     }
+
+    /**
+     * 取消订单
+     * @param request
+     * @return
+     */
+    @RequestMapping()
+    @ResponseBody
+    public BaseResponse cancelMIndent(HttpServletRequest request){
+        String inId=request.getParameter("inId");
+        if (service.cancelMIndent(inId)) {
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.UPDATE_FAILURE);
+        }
+        return response;
+    }
+
 }
