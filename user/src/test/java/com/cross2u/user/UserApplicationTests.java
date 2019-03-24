@@ -2,6 +2,7 @@ package com.cross2u.user;
 
 
 import com.cross2u.user.model.Administrator;
+import com.cross2u.user.service.BusinessServiceZ;
 import com.cross2u.user.service.businessServiceL;
 import com.cross2u.user.util.HttpClientUtil;
 import com.jfinal.plugin.activerecord.Db;
@@ -17,8 +18,17 @@ import com.alibaba.fastjson.JSONObject;
 @SpringBootTest
 public class UserApplicationTests {
 
+
 	@Autowired
-	businessServiceL bs;
+	BusinessServiceZ bs;
+
+	@Test
+	public void  test(){
+		bs.isCooperation("1","1");
+	}
+
+	@Autowired
+	businessServiceL bsL;
 	@Test
 	public void contextLoads() {
 
@@ -41,6 +51,8 @@ public class UserApplicationTests {
 		Administrator a = Administrator.dao.findById(2);
         System.out.println(a);
     }
+
+
 
 }
 

@@ -32,22 +32,30 @@ public class BusinessServiceZ {
     }
 
     //根据bId判断是否代理
-    private JSONObject isCooperation(String bId,String sId) {
+    public JSONObject isCooperation(String bId,String sId) {
         JSONObject result=new JSONObject();
         String waitSql="select copId from cooperation where copState=0 and copBId=? and copSId=?";
         Record wait=Db.findFirst(waitSql,bId,sId);
-        if (wait!=null) result.put("isCooperation",3);
+        if (wait!=null) {
+            result.put("copId",wait.getBigInteger("copId"));
+            result.put("isCooperation",3);
+
+            System.out.println("result"+result+"  copId"+result.get("copId"));
+            return result;
+        }
 
         String sql="SELECT copId from cooperation  WHERE copState=1 and copBId=? and copSId=?";
         Record isCooperation=Db.findFirst(sql,bId,sId);
+        System.out.println("isCooperation"+isCooperation);
         if (isCooperation!=null){
-            result.put("isCooperation",0);
-            result.put("copId",isCooperation.getBigInteger("copId"));
+            result.put("isCooperation",1);
+            result.put("copId",isCooperation.getBigInteger("copid"));
         }
         else {
-            result.put("isCooperation",1);
+            result.put("isCooperation",0);
             result.put("copId",null);
         }
+        System.out.println("result"+result+"  copId"+result.get("copId"));
         return result;
     }
 
@@ -57,11 +65,15 @@ public class BusinessServiceZ {
         String sql="SELECT cId from collect WHERE cOwner=? and cStore=? and cWare is NULL";
         Record isCollect=Db.findFirst(sql,bId,sId);
         System.out.println(isCollect);
-        result.put("cId",null);
-        result.put("isCollect",0);
+
         if (isCollect!=null){
             result.put("isCollect",1);
             result.put("cId",isCollect.getBigInteger("cId"));
+            System.out.println(isCollect+"  cId"+isCollect.getBigInteger("cId"));
+        }
+        else {
+            result.put("cId",null);
+            result.put("isCollect",0);
         }
         return result;
     }
