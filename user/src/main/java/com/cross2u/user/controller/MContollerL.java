@@ -15,6 +15,7 @@ import java.util.List;
 
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.IAtom;
+@CrossOrigin
 @RestController
 @RequestMapping("/manufacturer")
 public class MContollerL {
@@ -47,7 +48,7 @@ public class MContollerL {
     * */
     //个人中心
     //显示M的基本信息
-    @RequestMapping("/manufacture/showMyself")
+    @RequestMapping("/showMyself")
     public JsonResult showMyself(@RequestParam("sId") BigInteger sId)
     {
         Mainmanufacturer result = ms.selectMDetail(sId);
@@ -59,7 +60,7 @@ public class MContollerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
-        jr.setData(null);
+        jr.setData(result);
         return jr;
     }
 

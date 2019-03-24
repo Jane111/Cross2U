@@ -191,6 +191,13 @@
     <orderEntry type="library" name="Maven: org.apache.hbase:hbase-client:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.hbase:hbase-annotations:1.0.0" level="project" />
     <orderEntry type="module-library">
+      <library name="Maven: jdk.tools:jdk.tools:1.7">
+        <CLASSES>
+          <root url="jar://E:/Program Files (x86)/Java/jdk1.8.0_73/lib/tools.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
     </orderEntry>
     <orderEntry type="library" name="Maven: org.apache.hbase:hbase-common:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.mortbay.jetty:jetty-util:6.1.26" level="project" />

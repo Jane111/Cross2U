@@ -66,6 +66,7 @@ public class WareControllerL {
     public BaseResponse findProductById(
             @PathVariable("pId") BigInteger pId)
     {
+        System.out.println(pId);
         JSONObject result = ws.selectProductById(pId);
         if(result!=null)
         {

@@ -10,7 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 @CrossOrigin
 @RestController
 @RequestMapping("/store")
@@ -92,6 +95,43 @@ public class StoreControllerL {
     /*
     * 面向前端的controller
     * */
+    //M-(九)2、显示品牌商的店铺情况(信用等级，信用分数，店铺名称）
+    @RequestMapping("/showMStore")
+    public BaseResponse showMStore(@RequestParam("sId") BigInteger sId)
+    {
+        Store store = Store.dao.findById(sId);
+        JSONObject result = new JSONObject();
+        result.put("sName",store.getSName());
+        result.put("sScore",store.getSScore());
+        //得到店铺最后的保证金,根据storeBill中的内容进行计算
+        List<Storebill> storebillList = Storebill.dao.find("select sbMoney,sbBalance " +
+                "from storebill where sbSId=?",sId);
+        Float totalMoney = 0f;
+        Float payMoney = 0f;
+        for(Storebill storebill:storebillList)
+        {
+            if(storebill.getSbBalance()==1)
+            {
+                totalMoney+=storebill.getSbMoney();
+                payMoney+=storebill.getSbMoney();
+            }else
+            {
+                totalMoney-=storebill.getSbMoney();
+            }
+        }
+        result.put("totalMoney",totalMoney);
+        result.put("payMoney",payMoney);
+        if(!result.isEmpty())
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
     //16.M查看退货模板列表
     @RequestMapping("/showReturnMoulds")
     public BaseResponse showReturnMoulds(@RequestParam("sId") BigInteger sId)
@@ -319,6 +359,69 @@ public class StoreControllerL {
         jr.setData(null);
         return jr;
     }
+    //7、删除子账号
+    @RequestMapping("/deleteSubAccount")
+    public BaseResponse deleteSubAccount(
+            @RequestParam("mId") BigInteger mId
+    )
+    {
+        Manufacturer manufacturer = new Manufacturer();
+        manufacturer.setMId(mId);
+        boolean result = manufacturer.delete();
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.DELETE_ERROR);
+        }
+        jr.setData(null);
+        return jr;
+    }
+    //8、筛选子账号
+    @RequestMapping("/pickSubAccounts")
+    public BaseResponse pickSubAccounts(
+            @RequestParam("sId") BigInteger sId,
+            @RequestParam(value = "mManageWare",required = false) Integer mManageWare,
+            @RequestParam(value = "mManageIndent",required = false) Integer mManageIndent,
+            @RequestParam(value = "mManageMessage",required = false) Integer mManageMessage,
+            @RequestParam(value = "mManageClient",required = false) Integer mManageClient)
+    {
+        String keyPointString ="";
+        Integer keyPointInt = 0;
+        if(mManageWare!=0)
+        {
+            keyPointString = "mManageWare";
+            keyPointInt = mManageWare;
+        }
+        if(mManageIndent!=0)
+        {
+            keyPointString = "mManageIndent";
+            keyPointInt = mManageIndent;
+        }
+        if(mManageMessage!=0)
+        {
+            keyPointString = "mManageMessage";
+            keyPointInt = mManageMessage;
+        }
+        if(mManageClient!=0)
+        {
+            keyPointString = "mManageClient";
+            keyPointInt = mManageClient;
+        }
+        List<Manufacturer> result = storeServiceL.pickMSubAccounts(sId,keyPointString,keyPointInt);
+        if(!result.isEmpty())
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
 
 
     //设置
@@ -377,7 +480,7 @@ public class StoreControllerL {
     @RequestMapping("/setGuarantee")
     public BaseResponse setGuarantee(
             @RequestParam("sId") BigInteger sId,
-            @RequestParam("select") Integer select
+            @RequestParam("select") Float select
     )
     {
         Storebill storeBill = new Storebill();

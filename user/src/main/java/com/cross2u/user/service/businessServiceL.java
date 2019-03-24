@@ -89,8 +89,5 @@ public class businessServiceL {
         return Businesssearchrecord.dao.find("select bsrContent " +
                 "from businesssearchrecord where bsrBusiness=? limit 10",bsrBusiness);
     }
-    //todo 搜索词的提示和添加搜索记录
-
-
 
 }

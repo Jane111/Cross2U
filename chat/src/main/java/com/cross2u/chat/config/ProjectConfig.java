@@ -1,4 +1,4 @@
-package com.cross2u.chat.util;
+package com.cross2u.chat.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

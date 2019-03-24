@@ -1,11 +1,10 @@
-package com.cross2u.ware.util;
+package com.cross2u.search.util;
 
 import com.alibaba.fastjson.JSON;
 import net.sf.json.JSONArray;
-import org.springframework.beans.factory.annotation.Autowired;
+import net.sf.json.JSONObject;
 import sun.net.www.protocol.http.HttpURLConnection;
 
-import net.sf.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStream;
@@ -15,7 +14,6 @@ import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * 汇率转换工具

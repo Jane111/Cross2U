@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class StoreServiceL {
@@ -53,7 +54,7 @@ public class StoreServiceL {
     //3、得到storebill
     public List<Storebill> selectStorebill(BigInteger sId)
     {
-        return Storebill.dao.find("select sbId,sbNumber,sbInfo,sbMoney,sbTime from Storebill where sbSId=?",sId);
+        return Storebill.dao.find("select sbId,sbNumber,sbInfo,sbMoney,sbTime from storebill where sbSId=?",sId);
     }
 
     /*
@@ -79,8 +80,14 @@ public class StoreServiceL {
     //展示子账号列表
     public List<Manufacturer> selectMSubAccounts(BigInteger sId)
     {
-        return Manufacturer.dao.find("select mId,mStatus,mPhone,mName,mManageWare,mManageIndent,mManageMessage,mManageClient " +
+        return Manufacturer.dao.find("select mId,mStatus,mPassword,mPhone,mName,mManageWare,mManageIndent,mManageMessage,mManageClient " +
                 "from manufacturer where mStore=? AND mRank=?",sId,1);
+    }
+    //筛选子账号
+    public List<Manufacturer> pickMSubAccounts(BigInteger sId,String keyPointString,Integer keyPointInt)
+    {
+        return Manufacturer.dao.find("select mId,mStatus,mPhone,mName,mManageWare,mManageIndent,mManageMessage,mManageClient " +
+                "from manufacturer where mStore=? AND mRank=? AND "+keyPointString+"=?",sId,1,keyPointInt);
     }
 
     //展示子账号详情

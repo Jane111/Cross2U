@@ -25,27 +25,27 @@ public abstract class BaseStorebill<M extends BaseStorebill<M>> extends Model<M>
 		return get("sbSId");
 	}
 
-	public void setSbInfo(Integer sbInfo) {
+	public void setSbInfo(String sbInfo) {
 		set("sbInfo", sbInfo);
 	}
 
-	public Integer getSbInfo() {
+	public String getSbInfo() {
 		return get("sbInfo");
 	}
 
-	public void setSbMoney(Integer sbMoney) {
+	public void setSbMoney(Float sbMoney) {
 		set("sbMoney", sbMoney);
 	}
 
-	public Integer getSbMoney() {
+	public Float getSbMoney() {
 		return get("sbMoney");
 	}
 
-	public void setSbBalance(Float sbBalance) {
+	public void setSbBalance(Integer sbBalance) {
 		set("sbBalance", sbBalance);
 	}
 
-	public Float getSbBalance() {
+	public Integer getSbBalance() {
 		return get("sbBalance");
 	}
 

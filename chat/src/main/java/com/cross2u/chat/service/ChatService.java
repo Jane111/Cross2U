@@ -1,19 +1,24 @@
-package com.cross2u.chat.controller;
+package com.cross2u.chat.service;
 
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 
 import org.ansj.domain.Result;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.ToAnalysis;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-public class ChatController {
+@Service
+public class ChatService {
 
+    @Autowired
+    MChatService mChatService;
     /**
      * 阻尼系数（ＤａｍｐｉｎｇＦａｃｔｏｒ），一般取值为0.85
      */
@@ -23,17 +28,16 @@ public class ChatController {
      */
     static final int max_iter = 200;
     static final float min_diff = 0.001f;
-
     //分词
     public String splitWord(String question,String account) throws IOException
     {
         String result = null;
         question = question.replaceAll("</?[a-zA-Z]+[^><]*>", "");
-        System.out.println(question);
-        if(question.contains("你好"))
-        {
-            return "你好，有什么可以帮助您的~";
-        }
+//        System.out.println(question);
+//        if(question.contains("你好"))
+//        {
+//            return "你好，有什么可以帮助您的~";
+//        }
 
         /*为了不将商品名称分词分开*/
         String productName = "";
@@ -54,9 +58,9 @@ public class ChatController {
         {
             return "抱歉，没有找到答案，是否转为人工客服？";
         }
-//        List<Record> list = findAnswer(theWords,account);
-        List<String> list = new ArrayList<>();
-        list.add("这个是从数据库中得到的答案，也就是机器人的答案");
+        //elasticsearch搜索关键词得到，关键词的回答
+        List<Object> list = mChatService.searchMKeyWordCache(theWords,account);
+
         if(list.isEmpty())
         {
             result = "抱歉，没有找到答案，是否转为人工客服？";
@@ -70,7 +74,6 @@ public class ChatController {
             }
             result = answerStr.toString();
         }
-        System.out.println(result);
         return result;
     }
 
@@ -82,6 +85,7 @@ public class ChatController {
         {
             if (shouldInclude(t))
             {
+                System.out.println(t.getName());
                 wordList.add(t.getName());
             }
         }
@@ -159,10 +163,10 @@ public class ChatController {
     public static boolean shouldInclude(Term term)
     {
         if (
-                term.getNatureStr().startsWith("n") ||
-                        term.getNatureStr().startsWith("v") ||
-                        term.getNatureStr().startsWith("d") ||
-                        term.getNatureStr().startsWith("a")
+                term.getNatureStr().startsWith("n")
+                        || term.getNatureStr().startsWith("v")
+                        || term.getNatureStr().startsWith("d")
+                        || term.getNatureStr().startsWith("a")
                 )
         {
             return true;
@@ -173,22 +177,23 @@ public class ChatController {
     public String getProductName(String question,String mId)
     {
         String productName = null;
-
-        //得到mId对应的主账号，对应的store,对应的ware名称
-//        List<String> nameList =
-//        for(int i=0;i<nameList.length;i++)
-//        {
-//            if(question.indexOf(nameList[0][i])!=-1)
-//            {
-//                productName = nameList[0][i];
-//            }
-//            else
-//            {
-//                productName="";
-//            }
-//        }
-//        return productName;
-        return "电子产品";
+        //得到M所在的店铺的Id
+        BigInteger sId = Db.findFirst("select mStore from manufacturer " +
+                "where mId=?",mId).getBigInteger("mStore");
+        //得到mId对应的store,对应的ware名称
+        List<Record> wareNameList = Db.find("select wTitle from ware where wStore=?",sId);
+        for(Record record:wareNameList)
+        {
+            if(question.indexOf(record.getStr("wTitle"))!=-1)
+            {
+                productName = record.getStr("wTitle");
+            }
+            else
+            {
+                productName="";
+            }
+        }
+        return productName;
     }
 
     public List<Record> findAnswer(StringBuffer words, String saccount)
@@ -200,9 +205,7 @@ public class ChatController {
         {
             sql.append(" and mkText like'%" + str[i] + "%'");
         }
-        //公司的Id
-//        long cid = Db.findFirst("select cid from company where cname='" + saccount + "'").getLong("cid");
-//        //
+
         return Db.find("select answer from rule,question where company_id=? and question.answer_id=rule_id"
                 + sql);
         //与store进行通信，得到问题的回答

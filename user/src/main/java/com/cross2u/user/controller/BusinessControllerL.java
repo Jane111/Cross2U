@@ -207,6 +207,28 @@ public class BusinessControllerL {
         jr.setData(result);
         return jr;
     }
+    //56、添加用户搜索记录
+    @RequestMapping("/addSearchRecord")
+    public JsonResult addSearchRecord(
+            @RequestParam("bsrBusiness") BigInteger bsrBusiness,
+            @RequestParam("bsrContent") String bsrContent
+    )
+    {
+        Businesssearchrecord searchrecord = new Businesssearchrecord();
+        searchrecord.setBsrBusiness(bsrBusiness);
+        searchrecord.setBsrContent(bsrContent);
+        boolean result = searchrecord.save();
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.ADD_ERROR);
+        }
+        jr.setData(null);
+        return jr;
+    }
 
 
 }

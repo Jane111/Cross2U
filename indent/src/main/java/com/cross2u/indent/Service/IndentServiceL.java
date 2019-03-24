@@ -10,6 +10,7 @@ import com.cross2u.indent.model.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigInteger;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,10 +66,10 @@ import java.util.List;
          return response.getJSONObject("data");
     }
     //得到storebill
-    public JSONObject getStorebill(BigInteger sId)
+    public JSONArray getStorebill(BigInteger sId)
     {
-        JSONObject response = restTemplate.getForObject("http://Store/store/findAdminById/"+sId,JSONObject.class);
-            return response.getJSONObject("data");
+        JSONObject response = restTemplate.getForObject("http://Store/store/findStorebill/"+sId,JSONObject.class);
+        return response.getJSONArray("data");
     }
     //没有代理信息
     public JSONObject getStoreDetail(BigInteger sId)
@@ -81,9 +82,10 @@ import java.util.List;
     service
     * */
     //10、创建新订单
-    public boolean insertIndent(Indent indent)
+    public BigInteger insertIndent(Indent indent)
     {
-        return indent.save();
+        indent.save();
+        return indent.getInId();
     }
     //39、b评价订单
     public boolean updateIndent(Indent indent)
@@ -237,15 +239,16 @@ import java.util.List;
         for(Outindent outindent:outIndentList)
         {
             JSONObject outorder = new JSONObject();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
             //todo 外拉订单的创建
             outorder.put("outId",outindent.getOutId());//订单id
             outorder.put("outPlatform",outindent.getOutId());//来源平台
-            outorder.put("outCreateTime",outindent.getOutCreateTime());//下单时间
+            outorder.put("outCreateTime",sdf.format(outindent.getOutCreateTime()));//下单时间
             outorder.put("outNumber",outindent.getOutNumber());//订单编号
             outorder.put("outName",outindent.getOutCName());//买家昵称
             outorder.put("outCPhone",outindent.getOutCPhone());//买家联系方式
             outorder.put("outCAddress",outindent.getOutCAddress());//买家地址
-            outorder.put("outCInfo",outindent.getOutCInfo());//买家个人信息照片--身份证正反面 ‘,’隔开 可能为null
+            outorder.put("outCInfo",outindent.getOutCInfo().split(","));//买家个人信息照片--身份证正反面 ‘,’隔开 可能为null
             outorder.put("outStatus",outindent.getOutStatus());//状态 1：未发货，2：已发货=待收货，3：已完成，4：售后
 
 //            Business business = Business.dao.findFirst("select bName from business where bId=?",outindent.getOutBusiness());
@@ -281,7 +284,7 @@ import java.util.List;
             outorder.put("OutPIdentifier",outindent.getOutPIdentifier());//单品编号
             outorder.put("pId",myProduct.getBigInteger("pId"));//单品id
             outorder.put("pAtr",myProduct.getString("format"));//单品规格
-            outorder.put("outAcount",outindent.getOutNumber());//单品个数
+            outorder.put("outAmount",outindent.getOutAmount());//单品个数
             /*与其他模块通信*/
 
             //已经发货订单特有字段
@@ -289,14 +292,18 @@ import java.util.List;
             outorder.put("outExpressCompany",outindent.getOutExpressCompany());//快递公司
 
             //已经收货订单特有字段
-            outorder.put("outModifyTime",outindent.getOutModifyTime());//快递公司
-
+            outorder.put("outModifyTime",sdf.format(outindent.getOutModifyTime()));//快递公司
             //售后订单特有状态
-            Returngoods returngoods = Returngoods.dao.findFirst("select rgReasons,rgType from returngoods " +
+            Returngoods returngoods = Returngoods.dao.findFirst("select * from returngoods " +
                     "where rgOOId=?",outindent.getOutId());
             outorder.put("rcCatalog",Returncatalog.dao.findById(Returngoodreasons.dao.findById
                     (returngoods.getRgType()).getRgrRCId()).getRcCatalog());//退货catelog，退货或退款
+            outorder.put("rgId",returngoods.getRgId());//退货Id
             outorder.put("rgState",returngoods.getRgState());//退货状态
+            Returngoodreasons returngoodreasons = Returngoodreasons.dao.findById(returngoods.getRgType());
+            outorder.put("rgReasons",returngoodreasons.getRgrReasons());//退货原因，由类型去找
+
+            outorder.put("copCreate",sdf.format(returngoods.getRgCreateTime()));//申请时间
 
             outOrderList.add(outorder);
         }
@@ -317,12 +324,13 @@ import java.util.List;
                 "where outId=?",outId);
         indentDetail.put("outId",outIndent.getOutId());//订单id
         indentDetail.put("outPlatform",outIndent.getOutId());//来源平台
-        indentDetail.put("outCreateTime",outIndent.getOutCreateTime());//下单时间
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        indentDetail.put("outCreateTime",sdf.format(outIndent.getOutCreateTime()));//下单时间
         indentDetail.put("outNumber",outIndent.getOutNumber());//订单编号
         indentDetail.put("outName",outIndent.getOutCName());//买家昵称
         indentDetail.put("outCPhone",outIndent.getOutCPhone());//买家联系方式
         indentDetail.put("outCAddress",outIndent.getOutCAddress());//买家地址
-        indentDetail.put("outCInfo",outIndent.getOutCInfo());//买家个人信息照片--身份证正反面 ‘,’隔开 可能为null
+        indentDetail.put("outCInfo",outIndent.getOutCInfo().split(","));//买家个人信息照片--身份证正反面 ‘,’隔开 可能为null
         indentDetail.put("outStatus",outIndent.getOutStatus());//状态 1：未发货，2：已发货=待收货，3：已完成，4：售后
 
 //        Business business = Business.dao.findFirst("select bName from business where bId=?",outIndent.getOutBusiness());
@@ -343,7 +351,7 @@ import java.util.List;
         JSONObject myProduct = getProductFromOther(outIndent.getOutPIdentifier());//单品编号
         indentDetail.put("pId",myProduct.getBigInteger("pId"));//单品id
         indentDetail.put("pAtr",myProduct.getString("format"));//单品规格
-        indentDetail.put("outAcount",outIndent.getOutNumber());//单品个数
+        indentDetail.put("outAmount",outIndent.getOutAmount());//单品个数
         /*与其他模块通信*/
 
         Returngoods returngoods = Returngoods.dao.findFirst("select * from returngoods " +
@@ -358,7 +366,7 @@ import java.util.List;
         indentDetail.put("rgImg1",returngoods.getRgImg1());//退货凭证，最多三张,可能为null
         indentDetail.put("rgImg2",returngoods.getRgImg2());//退货凭证，最多三张,可能为null
         indentDetail.put("rgImg3",returngoods.getRgImg3());//退货凭证，最多三张,可能为null
-        indentDetail.put("copCreate",returngoods.getRgCreateTime());//申请时间
+        indentDetail.put("copCreate",sdf.format(returngoods.getRgCreateTime()));//申请时间
 
         if(moreDetail)
         {
@@ -372,8 +380,10 @@ import java.util.List;
             indentDetail.put("rgiTrackNumber",returngoods.getRgiTrackNumber());//C上传的物流单号 可能为null
             indentDetail.put("rgiTrackCompany",returngoods.getrgTrackCompany());//物流快递公司
             indentDetail.put("rgiImg",returngoods.getRgImg());//快递凭证
-            indentDetail.put("rgiTrakTime",returngoods.getRgiTrakTime());//c登记物流单号的时间
-            indentDetail.put("rgModify",returngoods.getRgModifyTime());//returngoods表修改的时间
+            indentDetail.put("rgiTrakTime",sdf.format(returngoods.getRgiTrakTime()));//c登记物流单号的时间
+            indentDetail.put("rgModify",sdf.format(returngoods.getRgModifyTime()));//returngoods表修改的时间
+            indentDetail.put("rgState",returngoods.getRgState());//returngoods表中rgState
+
 
         }
         return indentDetail;
@@ -403,14 +413,15 @@ import java.util.List;
 
             /*与其他模块通信*/
             JSONObject ware = getWareFromOther(indent.getInWare());
-            indentDetail.put("wName",ware.getString("wTitle"));//商品名称
-            JSONObject myProduct = getProductFromOther(indent.getInId());
-            indentDetail.put("format",myProduct.getJSONObject("format"));//单品规格
+            indentDetail.put("wName",ware.getString("wtitle"));//商品名称
+            JSONObject myProduct = getProductFromOther(indent.getInProduct());
+            indentDetail.put("format",myProduct.getString("format"));//单品规格
             /*与其他模块通信*/
 
             indentDetail.put("inProductNum",indent.getInProductNum());//购买量（不考虑退款 退款部分在支出部分）
             indentDetail.put("inTotalMoney",indent.getInTotalMoney());//金额
-            indentDetail.put("inPayTime",indent.getInPayTime());//付款时间
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+            indentDetail.put("inPayTime",sdf.format(indent.getInPayTime()));//付款时间
             Indent.add(indentDetail);
         }
         billDetail.put("Indent",Indent);
@@ -440,13 +451,13 @@ import java.util.List;
 
              /*与其他模块通信*/
             JSONObject ware = getWareFromOther(drawbackinfo.getBigInteger("inWare"));
-            drawBackDetail.put("wName",ware.getString("wTitle"));//单品对应的商品的title
+            drawBackDetail.put("wName",ware.getString("wtitle"));//单品对应的商品的title
             /*与其他模块通信*/
 
             drawBackDetail.put("format",drawbackinfo.getBigInteger("inProduct"));//单品的规格
-            drawBackDetail.put("diNUmber",drawbackinfo.getInt("diNUmber"));//退款数目
+            drawBackDetail.put("diNUmber",drawbackinfo.getInt("diNumber"));//退款数目
             drawBackDetail.put("diMoney",drawbackinfo.getFloat("diMoney"));//退款金额
-            drawBackDetail.put("diModify",drawbackinfo.getDate("diModify"));//时间
+            drawBackDetail.put("diModify",drawbackinfo.getDate("diModifyTime"));//时间
             DrawbackInfo.add(drawBackDetail);
         }
         billDetail.put("DrawbackInfo",DrawbackInfo);

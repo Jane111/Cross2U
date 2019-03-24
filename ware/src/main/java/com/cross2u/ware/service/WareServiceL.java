@@ -25,27 +25,6 @@ public class WareServiceL {
     @Autowired
     RestTemplate restTemplate;
 
-    //获取当前汇率 美元转人民币
-    public Float transferMoney(Float origin,String unit)
-    {
-        if (unit.equals("1"))
-        {
-            return origin;
-        }
-        DecimalFormat df = new DecimalFormat("###.00");
-        String rateStr= MoneyUtil.getRMB(unit);
-        if(rateStr==null){
-            return origin;
-        }
-        JSONObject object= JSON.parseObject(rateStr);
-        Float rate=(object.getFloat("fSellPri")) /100;
-        System.out.println("rate"+rate);
-        String result=df.format(rate*origin);
-        Float resultMoney=new Float(result);
-        return resultMoney;
-    }
-
-
     /*
     * 与其他模块进行通信consumer
     * */
@@ -246,7 +225,7 @@ public class WareServiceL {
             }
             for(Category thirdca:thirdList)
             {
-                //显示出商品,没有考虑货币单位和商品的数量
+                //显示出商品,考虑货币单位和商品的数量
                 List<Ware> wareListPart = Ware.dao.find("select wId,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit " +
                         "from ware where wClass=? limit "+pageSize+" offset "+(pageIndex-1)*pageSize,thirdca.getCtId());
                 wareList.addAll(wareListPart);
@@ -254,7 +233,7 @@ public class WareServiceL {
         }
         else
         {
-            // todo 显示出商品,没有考虑货币单位和商品的数量
+            //显示出商品,考虑货币单位和商品的数量
             wareList=Ware.dao.find("select wId,wMainImage,wTitle,wStartPrice," +
                     "wHighPrice,wPriceUnit from ware limit "+pageSize+" offset "+(pageIndex-1)*pageSize);
             //分页的语句limit pageSize offset (pageIndex-1)*pageSize
@@ -266,9 +245,10 @@ public class WareServiceL {
             showWare.put("wId",w.getWId());
             showWare.put("wMainImage",w.getWMainImage());
             showWare.put("wTitle",w.getWTitle());
-            showWare.put("wStartPrice",w.getWStartPrice());
-            showWare.put("wHighPrice",w.getWHighPrice());
-            showWare.put("wPriceUnit",w.getWPriceUnit());
+            Float rmb=MoneyUtil.transferMoney(w.getWStartPrice(),w.getWPriceUnit().toString());
+            showWare.put("wStartPrice",rmb);
+//            showWare.put("wHighPrice",w.getWHighPrice());
+//            showWare.put("wPriceUnit",w.getWPriceUnit());
             //调用封装的方法，查询商品的月销量
             Integer wMonthSale= getMonthSale(w.getWId());
 
@@ -317,8 +297,8 @@ public class WareServiceL {
         Float rmbHighPrice=w.getWStartPrice();
         if (!w.getWPriceUnit().toString().equals("1"))//不是rmb单位 进行汇率转换
         {
-            rmbStartPrice=transferMoney(w.getWStartPrice(),w.getWPriceUnit().toString());
-            rmbHighPrice=transferMoney(w.getWStartPrice(),w.getWHighPrice().toString());
+            rmbStartPrice=MoneyUtil.transferMoney(w.getWStartPrice(),w.getWPriceUnit().toString());
+            rmbHighPrice=MoneyUtil.transferMoney(w.getWStartPrice(),w.getWHighPrice().toString());
         }
         baseInfo.put("rmbStartPrice",rmbStartPrice);
         baseInfo.put("rmbHighPrice",rmbHighPrice);
@@ -796,7 +776,7 @@ public class WareServiceL {
     {
         JSONArray badCommentList = new JSONArray();
         List<Abevalreport> abList;
-        if(aerState.equals(new BigInteger("0")))
+        if(aerType.equals(new BigInteger("0")))
         {
             abList = Abevalreport.dao.find("select * from abevalreport " +
                     "where aerState=?",aerState);

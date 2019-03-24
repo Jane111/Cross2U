@@ -16,7 +16,7 @@ import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 
-import com.cross2u.chat.controller.ChatController;
+import com.cross2u.chat.service.ChatService;
 import com.cross2u.chat.service.MChatService;
 import org.springframework.stereotype.Component;
 
@@ -31,7 +31,7 @@ public class WebSocketBMUtil {
 //    ChatController cc = new ChatController();
 //    @Autowired
 //    MChatService mcs;
-    ChatController cc = new ChatController();
+    ChatService cs = new ChatService();
     MChatService mcs = new MChatService();
 
     // 储存所有建立连接的用户信息，考虑到线程安全，选取支持多线程的ConcurrentHashMap
@@ -66,10 +66,10 @@ public class WebSocketBMUtil {
                 clientlist.get(from).getBasicRemote().sendText("欢迎您登陆该系统！");
             }
             else if(to.charAt(0)=='s')
-            {//todo 根据store设置的关键词进行修改
+            {
                 String sId = to.substring(1);
                 System.out.println("我是客户,进入机器人咨询页面");
-                clientlist.get(from).getBasicRemote().sendText("欢迎您光临本店");
+                clientlist.get(from).getBasicRemote().sendText("欢迎您光临本店，有什么可以帮助您的~");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -172,7 +172,7 @@ public class WebSocketBMUtil {
                 }
                 else {// ①机器人
                     String session = (String)clientlist.get(from).getUserProperties().get("to");
-                    String string = cc.splitWord(msg, (String) clientlist.get(from).getUserProperties().get("to"));
+                    String string = cs.splitWord(msg, (String) clientlist.get(from).getUserProperties().get("to"));
 //                    clientlist.get(from).getBasicRemote().sendText(msg);
                     clientlist.get(from).getBasicRemote().sendText(string);//机器人回答问题
                 }

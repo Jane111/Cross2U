@@ -59,11 +59,11 @@ public abstract class BaseOutindent<M extends BaseOutindent<M>> extends Model<M>
 		return get("outPIdentifier");
 	}
 
-	public void setOutAmount(String outAmount) {
+	public void setOutAmount(Integer outAmount) {
 		set("outAmount", outAmount);
 	}
 
-	public String getOutAmount() {
+	public Integer getOutAmount() {
 		return get("outAmount");
 	}
 

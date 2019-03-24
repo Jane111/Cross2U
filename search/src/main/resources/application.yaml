@@ -4,6 +4,7 @@ spring:
 server:
   port: 8008
 
+
 eureka:
   instance:
     prefer-ip-address: true #注册服务时使用ip地址
@@ -19,3 +20,6 @@ jfinal:
   dbUser: root
   #dbPwd: '!yue980122M!'
   dbPwd: 123456
+
+
+

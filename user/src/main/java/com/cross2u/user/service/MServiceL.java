@@ -33,7 +33,7 @@ public class MServiceL {
     //显示M的基本信息
     public Mainmanufacturer selectMDetail(BigInteger sId)
     {
-        return Mainmanufacturer.dao.findFirst("select * from Mainmanufacturer where mmStore=?",sId);
+        return Mainmanufacturer.dao.findFirst("select * from mainmanufacturer where mmStore=?",sId);
     }
 
 

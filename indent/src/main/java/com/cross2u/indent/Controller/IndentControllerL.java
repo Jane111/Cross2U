@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.IAtom;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,7 +17,7 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.List;
-
+@CrossOrigin
 @RestController
 @RequestMapping("/indent")
 public class IndentControllerL {
@@ -25,7 +26,6 @@ public class IndentControllerL {
     @Autowired
     BaseResponse jr;
     //10、购买商品（创建订单）
-    //todo 商品支付
     @RequestMapping("/addIndent")
     public BaseResponse addIndent(
             @RequestParam("inBusiness") BigInteger inBusiness,
@@ -60,8 +60,8 @@ public class IndentControllerL {
 
         indent.setInLeftNum(inProductNum);//订单单品分销的剩余量一开始默认为购买单品的数量
         indent.setInStatus(0);//创建时默认为未支付状态
-        boolean result = indentServiceL.insertIndent(indent);
-        if(result)
+        BigInteger result = indentServiceL.insertIndent(indent);
+        if(result!=null)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
         }
@@ -69,7 +69,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.ADD_ERROR);
         }
-        jr.setData(null);
+        jr.setData(result);
         return jr;
     }
 
@@ -447,7 +447,7 @@ public class IndentControllerL {
         return jr;
     }
     //（七）我的收支明细
-    @RequestMapping("/backstage/myBill")
+    @RequestMapping("/myBill")
     public BaseResponse myBill(@RequestParam("sId") BigInteger sId)
     {
         JSONObject result = indentServiceL.selectBill(sId);
@@ -462,6 +462,26 @@ public class IndentControllerL {
         jr.setData(result);
         return jr;
     }
+    //B-M 的订单，B支付（订单中状态改变）商品支付
+    @RequestMapping("/payForIndent")
+    public BaseResponse payForIndent(@RequestParam("inId") BigInteger inId)
+    {
+        Indent indent = new Indent();
+        indent.setInId(inId);
+        indent.setInStatus(1);//将状态改为已支付的状态
+        boolean result = indent.update();
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.UPDATE_ERROR);
+        }
+        jr.setData(null);
+        return jr;
+    }
+
 
 
 }
