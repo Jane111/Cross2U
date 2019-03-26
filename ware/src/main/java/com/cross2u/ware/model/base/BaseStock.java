@@ -1,7 +1,7 @@
-package com.cross2u.user.model.base;
+package com.cross2u.ware.model.base;
 
-import com.jfinal.plugin.activerecord.Model;
 import com.jfinal.plugin.activerecord.IBean;
+import com.jfinal.plugin.activerecord.Model;
 
 import java.math.BigInteger;
 
