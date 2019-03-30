@@ -59,6 +59,7 @@ public class businessServiceL {
         aComment.put("mepCotent",ew.getEwReply());//回复文字内容
         return aComment;
     }
+
     //得到商品类别的一级目录
     public JSONArray selectFirstClass()
     {
@@ -189,7 +190,7 @@ public class businessServiceL {
         baseInfo.put("wDeliverHour",w.getWDeliverHour());
         baseInfo.put("wDescription",w.getWDescription());
         baseInfo.put("wMonthSale",getMonthSale(wId));//通过函数得到商品的月销量
-        baseInfo.put("wDeliverArea",Delivertemp.dao.findById(w.getWDeliverArea()).getDtSource());
+        baseInfo.put("wDeliverArea",w.getWDeliverArea());
         //查询配送区域，得到配送区域的内容
         wareBrief.put("baseInfo",baseInfo);
 
@@ -326,4 +327,21 @@ public class businessServiceL {
     {
         return Businesssearchrecord.dao.find("select bsrContent from Businesssearchrecord limit 10");
     }
+    //39、b评价订单
+    public boolean updateIndent(Indent indent)
+    {
+        return indent.update();
+    }
+    //40、与M退款订单找管理员介入
+    public boolean updateDrawBackInfo(Drawbackinfo drawbackinfo)
+    {
+        return drawbackinfo.update();
+    }
+    //40、B申请退款
+    public boolean insertDrawBackInfo(Drawbackinfo drawbackinfo)
+    {
+        return drawbackinfo.save();
+    }
+    //todo 搜索词的提示和添加搜索记录
+
 }

@@ -25,11 +25,11 @@ public abstract class BaseReturngoods<M extends BaseReturngoods<M>> extends Mode
 		return get("rgBId");
 	}
 
-	public void setRgMId(Long rgMId) {
+	public void setRgMId(java.math.BigInteger rgMId) {
 		set("rgMId", rgMId);
 	}
 
-	public Long getRgMId() {
+	public java.math.BigInteger getRgMId() {
 		return get("rgMId");
 	}
 

@@ -33,11 +33,11 @@ public abstract class BaseStorebill<M extends BaseStorebill<M>> extends Model<M>
 		return get("sbInfo");
 	}
 
-	public void setSbMoney(Long sbMoney) {
+	public void setSbMoney(Integer sbMoney) {
 		set("sbMoney", sbMoney);
 	}
 
-	public Long getSbMoney() {
+	public Integer getSbMoney() {
 		return get("sbMoney");
 	}
 

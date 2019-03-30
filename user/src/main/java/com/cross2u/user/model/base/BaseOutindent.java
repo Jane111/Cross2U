@@ -49,6 +49,22 @@ public abstract class BaseOutindent<M extends BaseOutindent<M>> extends Model<M>
 		return get("outWIdentifier");
 	}
 
+	public void setOutPIdentifier(String outPIdentifier) {
+		set("outPIdentifier", outPIdentifier);
+	}
+
+	public String getOutPIdentifier() {
+		return get("outPIdentifier");
+	}
+
+	public void setOutAmount(String outAmount) {
+		set("outAmount", outAmount);
+	}
+
+	public String getOutAmount() {
+		return get("outAmount");
+	}
+
 	public void setOutPlatform(Integer outPlatform) {
 		set("outPlatform", outPlatform);
 	}

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigInteger;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +80,7 @@ public class bLj {
     public JsonResult showWare(@RequestParam("bId") BigInteger bId)
     {
         JSONArray showWareList = bs.selectAllWare(bId);
-        if(showWareList!=null)
+        if(!showWareList.isEmpty())
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
         }
@@ -174,7 +175,7 @@ public class bLj {
         stock.setSNumber(sNumber);
         stock.setSSum(sSum);
         boolean result = bs.insertStock(stock);
-        if(!result)
+        if(result)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
         }
@@ -185,6 +186,7 @@ public class bLj {
         return jr;
     }
     //10、购买商品（创建订单）
+    //todo 商品支付
     @RequestMapping("/addIndent")
     public JsonResult addIndent(
             @RequestParam("inBusiness") BigInteger inBusiness,
@@ -201,10 +203,24 @@ public class bLj {
         indent.setInProductNum(inProductNum);
         indent.setInTotalMoney(inTotalMoney);
         //默认填充的东西
+
+        //确定订单编号
+        String str = "";
+        Calendar c = Calendar.getInstance();
+        str += c.get(Calendar.YEAR);//四位
+        str += String.format("%02d", c.get(Calendar.MONTH));//两位
+        str += String.format("%02d", c.get(Calendar.DATE));//两位
+        str += String.format("%02d", c.get(Calendar.HOUR));//两位
+        str += String.format("%02d", c.get(Calendar.MINUTE));//两位
+        str += String.format("%02d", c.get(Calendar.SECOND));//两位
+        str += String.format("%02d", c.get(Calendar.SECOND));//两位
+        str += String.format("%04d", inBusiness.mod(new BigInteger("10000")));//bId最后四位
+        indent.setInNum(str);
+        
         indent.setInLeftNum(inProductNum);//订单单品分销的剩余量一开始默认为购买单品的数量
         indent.setInStatus(0);//创建时默认为未支付状态
         boolean result = bs.insertIndent(indent);
-        if(!result)
+        if(result)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
         }
@@ -246,7 +262,7 @@ public class bLj {
         bevalreply.setBerSpeaker(berSpeaker);
         bevalreply.setBerCotent(berCotent);
         boolean result = bs.insertBevalreply(bevalreply);
-        if(!result)
+        if(result)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
         }
@@ -267,7 +283,7 @@ public class bLj {
         collect.setCOwner(cOwner);
         collect.setCWare(cWare);
         boolean result = bs.insertCollectWare(collect);
-        if(!result)
+        if(result)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
         }
@@ -295,46 +311,6 @@ public class bLj {
         jr.setData(result);
         return jr;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     //35、首页显示一级目录
     @RequestMapping("/showFirstClass")
     public JsonResult showFirstClass()
@@ -367,5 +343,84 @@ public class bLj {
         jr.setData(result);
         return jr;
     }
-
+    //39、B评价订单
+    @RequestMapping("/updateB2MIndent")
+    public JsonResult updateB2MIndent(
+            @RequestParam("inId") BigInteger inId,
+            @RequestParam("inBtoM") Integer inBtoM
+    )
+    {
+        Indent indent = new Indent();
+        indent.setInId(inId);//订单Id
+        indent.setInBtoM(inBtoM);//B对应M的评价
+        boolean result = bs.updateIndent(indent);
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.UPDATE_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
+    //40、与M退款订单找管理员介入
+    @RequestMapping("/updateDrawBackInfo")
+    public JsonResult updateDrawBackInfo(
+            @RequestParam("diId") BigInteger diId,
+            @RequestParam("diStatus") Integer diStatus
+    )
+    {
+        Drawbackinfo drawbackinfo = new Drawbackinfo();
+        drawbackinfo.setDiId(diId);//退款申请信息ID
+        drawbackinfo.setDiStatus(diStatus);//退款状态
+        boolean result = bs.updateDrawBackInfo(drawbackinfo);
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.UPDATE_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
+    //42、B申请退款
+    @RequestMapping("/addDrawBackInfo")
+    public JsonResult addDrawBackInfo(
+            @RequestParam("diReporter") BigInteger diReporter,
+            @RequestParam("diInId") BigInteger diInId,
+            @RequestParam("diType") BigInteger diType,
+            @RequestParam("diNumber") Integer diNumber,
+            @RequestParam("diMoney") Float diMoney,
+            @RequestParam("diReasons") String diReasons,
+            @RequestParam("diImg1") String diImg1,
+            @RequestParam("diImg2") String diImg2,
+            @RequestParam("diImg3") String diImg3
+    )
+    {
+        Drawbackinfo drawbackinfo = new Drawbackinfo();
+        drawbackinfo.setDiReporter(diReporter);
+        drawbackinfo.setDiInId(diInId);
+        drawbackinfo.setDiType(diType);
+        drawbackinfo.setDiNUmber(diNumber);
+        drawbackinfo.setDiMoney(diMoney);
+        drawbackinfo.setDiReasons(diReasons);
+        drawbackinfo.setDiImg1(diImg1);
+        drawbackinfo.setDiImg2(diImg2);
+        drawbackinfo.setDiImg3(diImg3);
+        boolean result = bs.insertDrawBackInfo(drawbackinfo);
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.ADD_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
 }

@@ -17,11 +17,11 @@ public abstract class BaseReturngoodmould<M extends BaseReturngoodmould<M>> exte
 		return get("rgmId");
 	}
 
-	public void setRgSId(Long rgSId) {
+	public void setRgSId(java.math.BigInteger rgSId) {
 		set("rgSId", rgSId);
 	}
 
-	public Long getRgSId() {
+	public java.math.BigInteger getRgSId() {
 		return get("rgSId");
 	}
 
