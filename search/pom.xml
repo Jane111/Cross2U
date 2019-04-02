@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.Cross2U</groupId>
-	<artifactId>user</artifactId>
+	<artifactId>search</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>user</name>
+	<name>search</name>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
@@ -28,6 +28,10 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+        </dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -70,6 +74,13 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+
+        <!--引入json-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.31</version>
+        </dependency>
 	</dependencies>
 
 	<dependencyManagement>

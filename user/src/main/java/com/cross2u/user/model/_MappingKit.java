@@ -16,9 +16,6 @@ import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 public class _MappingKit {
 
 	public static void mapping(ActiveRecordPlugin arp) {
-		arp.addMapping("abevalreport", "aerId", Abevalreport.class);
-		arp.addMapping("abnormalgoodsinfo", "agiId", Abnormalgoodsinfo.class);
-		arp.addMapping("abnormalminfo", "amiId", Abnormalminfo.class);
 		arp.addMapping("administrator", "aId", Administrator.class);
 		arp.addMapping("browserecord", "brId", Browserecord.class);
 		arp.addMapping("business", "bId", Business.class);
@@ -26,7 +23,6 @@ public class _MappingKit {
 		arp.addMapping("collect", "cId", Collect.class);
 		arp.addMapping("mainmanufacturer", "mmId", Mainmanufacturer.class);
 		arp.addMapping("smsverification", "smsId", Smsverification.class);
-		arp.addMapping("stock", "sId", Stock.class);
 		arp.addMapping("visitor", "vId", Visitor.class);
 	}
 }

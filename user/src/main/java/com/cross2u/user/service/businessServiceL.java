@@ -3,12 +3,20 @@ package com.cross2u.user.service;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.cross2u.user.model.*;
-import org.springframework.stereotype.Service;;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;;
 
 import java.math.BigInteger;
 import java.util.List;
 @Service
 public class businessServiceL {
+
+    @Autowired
+    RestTemplate restTemplate;
+    /*
+    * consumer
+    * */
 
     /*
     * provider
@@ -69,11 +77,6 @@ public class businessServiceL {
         return browserecord.save();
     }
 
-    //9、加入购物车
-    public boolean insertStock(Stock stock)
-    {
-        return stock.save();
-    }
 
     //15、收藏商品
     public boolean insertCollectWare(Collect collect)
@@ -87,5 +90,7 @@ public class businessServiceL {
                 "from businesssearchrecord where bsrBusiness=? limit 10",bsrBusiness);
     }
     //todo 搜索词的提示和添加搜索记录
+
+
 
 }

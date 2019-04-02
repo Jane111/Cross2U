@@ -1,9 +1,6 @@
 package com.cross2u.user;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.cross2u.user.model.Visitor;
-import com.cross2u.user.model.Ware;
+
 import com.cross2u.user.service.businessServiceL;
 import org.junit.Test;
 import org.junit.runner.RunWith;

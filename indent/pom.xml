@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.Cross2U</groupId>
-	<artifactId>user</artifactId>
+	<artifactId>indent</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>user</name>
+	<name>indent</name>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
@@ -95,11 +95,6 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-        <dependency>
-            <groupId>com.Cross2U</groupId>
-            <artifactId>user</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
 
     </dependencies>
 

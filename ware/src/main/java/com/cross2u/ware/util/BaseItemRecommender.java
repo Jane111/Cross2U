@@ -19,7 +19,7 @@ import java.util.List;
 @Component
 public class BaseItemRecommender {
 
-    public List<BigInteger> recommendBaseUser(BigInteger bId,BigInteger wId) throws Exception  {
+    public List<BigInteger> recommendBaseItem(BigInteger bId,BigInteger wId) throws Exception  {
 
         //1、准备数据 来自mySQL数据库
         DataSource dataSource = MyDataSource.getDataSource();
@@ -45,7 +45,6 @@ public class BaseItemRecommender {
         List<RecommendedItem> recommendedItemList = recommender.recommendedBecause(bId.longValue(), wId.longValue(), 8);
 //        List<RecommendedItem> recommendedItemList = recommender.recommendedBecause(bId, wId, 8);
         //打印推荐的结果
-//        System.out.println("使用基于物品的协同过滤算法");
         for (RecommendedItem recommendedItem : recommendedItemList) {
 //            System.out.println(recommendedItem);
             wList.add(new BigInteger(recommendedItem.getItemID()+""));

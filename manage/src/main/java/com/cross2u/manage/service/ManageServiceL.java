@@ -6,7 +6,9 @@ import com.cross2u.manage.model.*;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -14,6 +16,7 @@ import static com.jfinal.plugin.activerecord.Db.query;
 
 @Service
 public class ManageServiceL {
+
 
     //52、读取系统的通知
     public JSONArray selectPublicInfo()
@@ -32,6 +35,24 @@ public class ManageServiceL {
             infoList.add(info);
         }
         return infoList;
+    }
+
+
+    //27、显示已经设置的关键词
+    public JSONArray selectKeyWord()
+    {
+        JSONArray showKeyWordList = new JSONArray();
+
+        List<Adminkeyword> keywordList = Adminkeyword.dao.find("select akId,akText,akReply from adminkeyword");
+        for(Adminkeyword adminkeyword:keywordList)
+        {
+            JSONObject showKeyWord = new JSONObject();
+            showKeyWord.put("akId",adminkeyword.getAkId());
+            showKeyWord.put("akText",adminkeyword.getAkText());
+            showKeyWord.put("akReply",adminkeyword.getAkReply());
+            showKeyWordList.add(showKeyWord);
+        }
+        return showKeyWordList;
     }
     //31、显示已经设置的敏感词
     public JSONArray selectSensitive()

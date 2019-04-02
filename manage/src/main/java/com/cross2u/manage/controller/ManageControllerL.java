@@ -43,6 +43,137 @@ public class ManageControllerL {
     /*
     * A的api
     * */
+
+    //27、显示已经设置的关键词
+    @RequestMapping("/showKeyWord")
+    public BaseResponse showKeyWord()
+    {
+        JSONArray result = ms.selectKeyWord();
+        if(!result.isEmpty())
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
+    //28、编辑已经设置的关键词
+    @RequestMapping("/updateKeyWord")
+    public BaseResponse updateKeyWord(
+            @RequestParam("akId") BigInteger akId,
+            @RequestParam(value = "akText",required = false) String akText,
+            @RequestParam(value = "akReply",required = false) String akReply
+    )
+    {
+        Adminkeyword adminkeyword = new Adminkeyword();
+        adminkeyword.setAkId(akId);
+        if(akText!=null)
+        {
+            adminkeyword.setAkText(akText);
+        }
+        if(akReply!=null)
+        {
+            adminkeyword.setAkReply(akReply);
+        }
+        boolean result = adminkeyword.update();
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.UPDATE_ERROR);
+        }
+        jr.setData(null);
+        return jr;
+    }
+    //29、添加新的关键词
+    @RequestMapping("/addKeyWord")
+    public BaseResponse addKeyWord(
+            @RequestParam("akText") String akText,
+            @RequestParam("akReply") String akReply,
+            @RequestParam("akAdministrator") BigInteger akAdministrator
+    )
+    {
+        Adminkeyword adminkeyword = new Adminkeyword();
+        adminkeyword.setAkText(akText);
+        adminkeyword.setAkReply(akReply);
+        adminkeyword.setAkAdministrator(akAdministrator);
+        boolean result = adminkeyword.save();
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.ADD_ERROR);
+        }
+        jr.setData(null);
+        return jr;
+    }
+    //53、删除已经设置的关键词
+    @RequestMapping("/deleteKeyWord")
+    public BaseResponse deleteKeyWord(
+            @RequestParam("akId") BigInteger akId
+    )
+    {
+        Adminkeyword adminkeyword = new Adminkeyword();
+        adminkeyword.setAkId(akId);
+        boolean result = adminkeyword.delete();
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.DELETE_ERROR);
+        }
+        jr.setData(null);
+        return jr;
+    }
+    //30、 显示其他智能客服设置（收到消息/注册通过）
+    @RequestMapping("/showAutoReply")
+    public BaseResponse showAutoReply()
+    {
+        List<Adminreply> result = Adminreply.dao.find("select * from adminreply");
+        if(!result.isEmpty())
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
+    //54、 编辑其他智能客服设置（收到消息/注册通过）
+    @RequestMapping("/updateAutoReply")
+    public BaseResponse updateAutoReply(
+            @RequestParam("arId") BigInteger arId,
+            @RequestParam("arReply") String arReply,
+            @RequestParam("arAdministrator") BigInteger arAdministrator
+    )
+    {
+        Adminreply adminreply = new Adminreply();
+        adminreply.setArId(arId);
+        adminreply.setArReply(arReply);
+        adminreply.setArAdministrator(arAdministrator);
+        boolean result = adminreply.update();
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.UPDATE_ERROR);
+        }
+        jr.setData(null);
+        return jr;
+    }
     //31、显示已经设置的敏感词
     @RequestMapping("/showSensitive")
     public BaseResponse showSensitive()
@@ -101,6 +232,7 @@ public class ManageControllerL {
         jr.setData(null);
         return jr;
     }
+
     //39、修改系统通知
     @RequestMapping("/updatePublicInfo")
     public BaseResponse updatePublicInfo(

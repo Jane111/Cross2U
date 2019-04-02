@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.Cross2U</groupId>
-	<artifactId>user</artifactId>
+	<artifactId>manage</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>user</name>
+	<name>manage</name>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
@@ -69,6 +69,12 @@
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 			<scope>runtime</scope>
+		</dependency>
+		<!--引入json-->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.2.31</version>
 		</dependency>
 	</dependencies>
 

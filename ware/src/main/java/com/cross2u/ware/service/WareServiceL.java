@@ -1,5 +1,8 @@
 package com.cross2u.ware.service;
 
+import com.cross2u.ware.util.BaseItemRecommender;
+import com.jfinal.plugin.activerecord.Record;
+import org.apache.catalina.Store;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -57,7 +60,11 @@ public class WareServiceL {
     {
         return restTemplate.getForObject("http://User/business/findBIsCollectW?wId="+wId+"&bId="+bId,Integer.class);
     }
-
+    //5、得到根据算法推荐的商品
+//    public String getWListByRecommender(BigInteger bId,BigInteger wId)
+//    {
+//        return restTemplate.getForObject("http://Analysis/analysis/findWListByRecommender?wId="+wId+"&bId="+bId,String.class);
+//    }
     /*
      * 与其他模块进行通信provider
     * */
@@ -209,12 +216,12 @@ public class WareServiceL {
 
 //            Integer bMainBusiness = Business.dao.findById(bId).getBMainBusiness();
             //得到其对应的商品类别
-            List<Category> secondList=Category.dao.find("select ctId from Category where ctParentId=?",bMainBusiness);
+            List<Category> secondList=Category.dao.find("select ctId from category where ctParentId=?",bMainBusiness);
             List<Category> thirdList = new ArrayList<>();
             for(Category ca:secondList)
             {
                 BigInteger bSecondId=ca.getCtId();
-                List<Category> thirdListPart=Category.dao.find("select ctId from Category where ctParentId=?",bSecondId);
+                List<Category> thirdListPart=Category.dao.find("select ctId from category where ctParentId=?",bSecondId);
                 thirdList.addAll(thirdListPart);//List进行合并
             }
             for(Category thirdca:thirdList)
@@ -414,6 +421,12 @@ public class WareServiceL {
         }
         return commentList;
     }
+    //9、加入购物车
+    public boolean insertStock(Stock stock)
+    {
+        return stock.save();
+    }
+
     //根据商品找到对应的单品
     public JSONArray selectProductFromWare(BigInteger pWare)
     {
@@ -497,4 +510,286 @@ public class WareServiceL {
         return bevalreply.save();
     }
 
+    //商品详情页，显示看了又看，使用基于物品的协同过滤算法
+    public JSONArray selectWareFromRecommender(BigInteger bId,BigInteger wId)
+    {
+        JSONArray showWareList = new JSONArray();
+        List<BigInteger> wIdList = new ArrayList<>();
+        BaseItemRecommender recommender = new BaseItemRecommender();
+        try {
+            wIdList = recommender.recommendBaseItem(bId, wId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //封装商品的信息
+        for(BigInteger recommendWId:wIdList)
+        {
+            Ware w = Ware.dao.findById(recommendWId);
+            JSONObject showWare = new JSONObject();
+            showWare.put("wId",recommendWId);
+            showWare.put("wMainImage",w.getWMainImage());
+            showWare.put("wTitle",w.getWTitle());
+            showWare.put("wStartPrice",w.getWStartPrice());
+            showWare.put("wHighPrice",w.getWHighPrice());
+            showWare.put("wPriceUnit",w.getWPriceUnit());
+            //调用封装的方法，查询商品的月销量
+            Integer wMonthSale= getMonthSale(w.getWId());
+
+            showWare.put("wMonthSale", wMonthSale);
+            showWareList.add(showWare);
+        }
+        return showWareList;
+    }
+
+    //商品详情页"看了又看",推荐同一类型的商品
+    public JSONArray selectWareFromClass(BigInteger wId,Integer status)
+    {
+        JSONArray showWareList = new JSONArray();
+        BigInteger wClass = Ware.dao.findFirst("select wClass from ware where wId=?",wId).getWClass();
+        List<Ware> wList = new ArrayList<>();
+        if(status==0)
+        {
+            wList = Ware.dao.find("select * from ware where wClass=? limit 8",wClass);
+        }else
+        {
+            wList = Ware.dao.find("select * from ware where wClass=?",wClass);
+        }
+
+        //封装商品的信息
+        for(Ware ware:wList)
+        {
+            JSONObject showWare = new JSONObject();
+            showWare.put("wId",ware.getWId());
+            showWare.put("wMainImage",ware.getWMainImage());
+            showWare.put("wTitle",ware.getWTitle());
+            showWare.put("wStartPrice",ware.getWStartPrice());
+            showWare.put("wHighPrice",ware.getWHighPrice());
+            showWare.put("wPriceUnit",ware.getWPriceUnit());
+            //调用封装的方法，查询商品的月销量
+            Integer wMonthSale= getMonthSale(ware.getWId());
+
+            showWare.put("wMonthSale", wMonthSale);
+            showWareList.add(showWare);
+        }
+        return showWareList;
+    }
+    //46、显示购物车中的商品（按照店铺进行组织）
+    public JSONArray selectWareInStock(BigInteger bId)
+    {
+        JSONArray showStockList = new JSONArray();
+        //得到对应的店铺Id
+        List<Stock> storeList = Stock.dao.find("SELECT skSId from stock WHERE skBid=? GROUP BY skSId",bId);
+        for(Stock store:storeList)
+        {
+            JSONObject showStock = new JSONObject();
+            /*与其他模块进行通信*/
+            JSONObject showStore = getStoreDetail(store.getSkSId());
+            /*与其他模块进行通信*/
+
+            //得到对应店铺的信息
+            showStock.put("sSId",store.getSkSId());//店铺ID
+            showStock.put("sName",showStore.getString("sName"));//店铺名称
+            showStock.putAll(getMMLogoDetail(showStore.getBigInteger("sMmId")));//供货商公司Logo
+
+            List<Stock> stockList = Stock.dao.find("select skId,skPId,skNumber,skSum,skSumUnit " +
+                    "from stock where skBid=? AND skSId=?",bId,store.getSkSId());
+
+            JSONArray wareList = new JSONArray();
+            //获得该店铺对应的所有的商品信息
+            for(Stock storeStock:stockList)
+            {
+                JSONObject wareDetail = new JSONObject();
+                wareDetail.put("skId",storeStock.getSkId());//进货ID
+                wareDetail.put("skNumber",storeStock.getSkNumber());//进货数目
+
+                wareDetail.put("skFormat",getFormatForProduct(storeStock.getSkPId()));//单品规格
+
+                Product product = Product.dao.findById(storeStock.getSkPId());
+                wareDetail.put("pId",storeStock.getSkPId());//单品Id
+                wareDetail.put("skPImg",product.getPImage());//单品的图片
+                wareDetail.put("skProductMoney",product.getPMoney());//单品价格
+                wareDetail.put("skProductMoneyUnit",product.getPMoneyUnit());//单品价格单位
+                //得到单品对应的商品信息
+                BigInteger wareId = product.getPWare();
+                wareDetail.put("wId",wareId);//商品Id
+                wareDetail.put("wName",Ware.dao.findById(wareId).getWTitle());//商品名称
+                wareList.add(wareDetail);
+            }
+            showStock.put("data",wareList);//商品数组
+            showStockList.add(showStock);
+        }
+        return showStockList;
+    }
+
+    //51、b查看库存,按照单品分类//已经完成的订单,即是无库存的订单
+    //按照库存数量进行分类，首先计算数量
+    public JSONArray showIndentLeftProductNum(BigInteger bId,Integer inLeftStatus)
+    {
+        List<Record> list = Db.find("SELECT inProduct,inStore,inWare,sum(inLeftNum) as sumLeft " +
+                "from indent WHERE inBusiness=? GROUP BY inProduct,inStore,inWare",bId);
+        //进行不同库存的区分
+        List<Record> targetList = new ArrayList<>();
+        if(inLeftStatus==0)//无库存的情况
+        {
+            for(Record record:list)
+            {
+                if(record.getInt("sumLeft")==0)
+                {
+                    targetList.add(record);
+                }
+            }
+        }
+        if(inLeftStatus==1)//库存较少的情况
+        {
+            for(Record record:list)
+            {
+                if(record.getInt("sumLeft")<=10 && record.getInt("sumLeft")>0)
+                {
+                    targetList.add(record);
+                }
+            }
+        }
+        if(inLeftStatus==2)//库存充足的情况
+        {
+            for(Record record:list)
+            {
+                if(record.getInt("sumLeft")>10)
+                {
+                    targetList.add(record);
+                }
+            }
+        }
+        if(targetList.isEmpty())
+        {
+            return null;
+        }
+        //收集得到所有的店铺Id
+        List<BigInteger> storeIdList = new ArrayList<>();
+        storeIdList.add(targetList.get(0).getBigInteger("inStore"));
+        for(Record record:targetList)
+        {
+            boolean flag = false;//是否有相同的
+            BigInteger recordStoreId = record.getBigInteger("inStore");
+            for(BigInteger storeId:storeIdList)
+            {
+                if(recordStoreId.equals(storeId))
+                {
+                    flag = true;
+                    break;
+                }
+            }
+            if(!flag)
+            {
+                storeIdList.add(recordStoreId);
+            }
+        }
+        JSONArray showStoreList = new JSONArray();
+        for(BigInteger storeId:storeIdList)
+        {
+            JSONObject showStoreDetail = new JSONObject();
+            /*与其他模块进行通信*/
+            JSONObject showStore = getStoreDetail(storeId);
+            /*与其他模块进行通信*/
+            //得到对应店铺的信息
+            showStoreDetail.put("sId",storeId);//店铺ID
+            showStoreDetail.put("sName",showStore.getString("sName"));//店铺名称
+            showStoreDetail.putAll(getMMLogoDetail(showStore.getBigInteger("sMmId")));//供货商公司Logo
+
+            JSONArray showStoreProductDetail = new JSONArray();
+            for(Record record:targetList)
+            {
+                if(record.getBigInteger("inStore").equals(storeId))
+                {
+                    //得到对应的商品Id，商品名称
+                    JSONObject productDetail = new JSONObject();
+                    productDetail.put("wId",record.getBigInteger("inWare"));
+                    Ware ware = Ware.dao.findById(record.getBigInteger("inWare"));
+                    productDetail.put("wName",ware.getWTitle());//商品名称
+                    productDetail.put("wStartNum",ware.getWStartNum());//商品的起批量
+
+                    Product product = Product.dao.findById(record.getBigInteger("inProduct"));
+
+                    productDetail.put("pId",record.getBigInteger("inProduct"));//单品的图片
+                    productDetail.put("pImage",product.getPImage());//单品的图片
+                    productDetail.put("format",getFormatForProduct(record.getBigInteger("inProduct")));//单品规格
+                    productDetail.put("pMoney",product.getPMoney());//单品价格
+                    productDetail.put("sumLeft",record.getInt("sumLeft"));//总的剩余量
+
+                    showStoreProductDetail.add(productDetail);
+                }
+            }
+            showStoreDetail.put("showStoreProductDetail",showStoreProductDetail);
+            showStoreList.add(showStoreDetail);
+        }
+        return showStoreList;
+    }
+    //53、评价订单中的商品（打分+文字评论）
+    public boolean insertEvalWare(Evalware evalware)
+    {
+        return evalware.save();
+    }
+    //A-18、显示举报商品
+    public JSONArray selectAbnormalGoodInfo(BigInteger agiType, Integer agiResult)
+    {
+        JSONArray badWareList = new JSONArray();
+        List<Abnormalgoodsinfo> abList;
+        if(agiType.equals(new BigInteger("0")))
+        {
+            abList = Abnormalgoodsinfo.dao.find("select * from abnormalgoodsinfo " +
+                    "where agiResult=?",agiResult);
+        }
+        else
+        {
+            abList = Abnormalgoodsinfo.dao.find("select * from abnormalgoodsinfo " +
+                    "where agiType=? and agiResult=?",agiType,agiResult);
+        }
+        for(Abnormalgoodsinfo ab:abList)
+        {
+            JSONObject badWare = new JSONObject();
+            badWare.put("agiId",ab.getAgiId());//异常商品信息ID
+            Ware ware = Ware.dao.findById(ab.getAgiWId());//举报商品详细信息
+            badWare.put("agiWName",ware.getWTitle());//举报的商品名称
+            /*与其他模块通信*/
+            JSONObject store = getStoreDetail(ware.getWStore());
+            /*与其他模块通信*/
+            badWare.put("agiSName",store.getString("sName"));//举报的商品所在店铺的名称
+            badWare.put("agiType",ab.getAgiType());//举报类型
+            badWare.put("agiReasons",ab.getAgiReasons());//举报原因
+            badWare.put("agiImg",ab.getAgiImg());//举报凭证
+            badWareList.add(badWare);
+        }
+        return badWareList;
+    }
+    //A-24、显示举报评论
+    public JSONArray selectBadComment(BigInteger aerType, Integer aerState)
+    {
+        JSONArray badCommentList = new JSONArray();
+        List<Abevalreport> abList;
+        if(aerState.equals(new BigInteger("0")))
+        {
+            abList = Abevalreport.dao.find("select * from abevalreport " +
+                    "where aerState=?",aerState);
+        }
+        else
+        {
+            abList = Abevalreport.dao.find("select * from abevalreport " +
+                    "where aerType=? and aerState=?",aerType,aerState);
+        }
+        for(Abevalreport ab:abList)
+        {
+            JSONObject badComment = new JSONObject();
+            badComment.put("aerId",ab.getAerId());//异常评价ID
+            Evalware evalware = Evalware.dao.findById(ab.getAerEWId());
+            badComment.put("aerContent",evalware.getEwCotent());//异常评价的内容
+            //得到对应的店铺
+            /*与其他模块通信*/
+            JSONObject store = getStoreDetail(Db.findFirst("select mStore from manufacturer where mId=?",ab.getAerFReportId()).getBigInteger("mStore"));
+            /*与其他模块通信*/
+            badComment.put("aerSName",store.getString("sName"));//举报的商品所在店铺的名称
+            badComment.put("aerType",ab.getAerType());//举报类型
+            badComment.put("aerReason",ab.getAerContent());//举报原因
+            badCommentList.add(badComment);
+        }
+        return badCommentList;
+    }
 }

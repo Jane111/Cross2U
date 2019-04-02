@@ -27,8 +27,6 @@ import org.springframework.stereotype.Component;
 @ServerEndpoint(value="/webSocketM/{from}/{to}")
 @Component
 public class WebSocketBMUtil {
-
-
 //    @Autowired
 //    ChatController cc = new ChatController();
 //    @Autowired
@@ -98,67 +96,67 @@ public class WebSocketBMUtil {
         if (msg.charAt(0) == 's')// 客户发来转m人工的请求，以s开头+sId
         {
             String sId = msg.substring(1);
-            if(msg.charAt(1)>'1' && msg.charAt(1)<'9')
-            {
-                // todo 进行实际化 从数据库获取组内所有的客服账号
-                List<String> accounts = mcs.getMChatAccount(new BigInteger(sId));
 
-                int small = 0;
-                boolean isFlag=false;//是否有对应的客服在
-                String smallAccount = new String();//现在连接最少的客服账号
-                boolean flag = false;//为了第一个在线客服相关信息的赋值
+            // todo 进行实际化 从数据库获取组内所有的客服账号
+            List<String> accounts = mcs.getMChatAccount(new BigInteger(sId));
 
-            /*
-            * 并取出人数最少的客服账号以及当前人数,默认为0人
-            * */
-                for (int i = 0; i < accounts.size(); i++) {
-                    String account = accounts.get(i);
-                    if (clientlist.containsKey("m"+account)) {// 该客服当前在线
-                        isFlag=true;
-                        //计算该客服现在有多少个service
-                        int count = 0;
-                        Iterator<String> iter = serviceMap.keySet().iterator();
-                        while (iter.hasNext()) {
-                            String key = iter.next();
-                            String val = serviceMap.get(key);
-                            if (val.equals(sId + "_" + account))
-                                count++;
-                        }
-                        //第一个在线的客服
-                        if (!flag) {
-                            small = count;//最少的数量为第一个客服对应的数值，初始化
-                            smallAccount = account;
-                            flag = true;
-                        }
-                        if (count == 0) {
-                            smallAccount = account;
-                            small = 0;
-                            break;
-                        }
-                        if (small > count) {//有连接数更少的客服
-                            smallAccount = account;
-                            small = count;
-                        }
+            int small = 0;
+            boolean isFlag=false;//是否有对应的客服在
+            String smallAccount = new String();//现在连接最少的客服账号
+            boolean flag = false;//为了第一个在线客服相关信息的赋值
+
+        /*
+        * 并取出人数最少的客服账号以及当前人数,默认为0人
+        * */
+            for (int i = 0; i < accounts.size(); i++) {
+                String account = accounts.get(i);
+                if (clientlist.containsKey("m"+account)) {// 该客服当前在线
+                    isFlag=true;
+                    //计算该客服现在有多少个service
+                    int count = 0;
+                    Iterator<String> iter = serviceMap.keySet().iterator();
+                    while (iter.hasNext()) {
+                        String key = iter.next();
+                        String val = serviceMap.get(key);
+                        if (val.equals(sId + "_" + account))
+                            count++;
                     }
-                }
-
-                if(isFlag)//有客服
-                {
-                    serviceMap.put(from, "s"+sId + "_m" + smallAccount);// 同时在serviceMap里面存入分配到的公司名字_客服账号
-                    // 给chat页面返回数据
-                    clientlist.get(from).getBasicRemote().sendText("s"+sId + "_m" + smallAccount);
-                    // 如果位次<2,给被找到的客服账号发送新接入的客户id
-                    if (small < 2)
-                    {
-                        clientlist.get("m"+smallAccount).getBasicRemote().sendText("通信的客户是" + from);
+                    //第一个在线的客服
+                    if (!flag) {
+                        small = count;//最少的数量为第一个客服对应的数值，初始化
+                        smallAccount = account;
+                        flag = true;
                     }
-                }
-                else//无客服
-                {
-                    // 给chat页面返回数据
-                    clientlist.get(from).getBasicRemote().sendText("目前尚无客服在线，建议留言");
+                    if (count == 0) {
+                        smallAccount = account;
+                        small = 0;
+                        break;
+                    }
+                    if (small > count) {//有连接数更少的客服
+                        smallAccount = account;
+                        small = count;
+                    }
                 }
             }
+
+            if(isFlag)//有客服
+            {
+                serviceMap.put(from, "s"+sId + "_m" + smallAccount);// 同时在serviceMap里面存入分配到的公司名字_客服账号
+                // 给chat页面返回数据
+//                clientlist.get(from).getBasicRemote().sendText("s"+sId + "_m" + smallAccount);
+                clientlist.get(from).getBasicRemote().sendText("在线客服为您服务，请问有什么可以帮助您的~");
+                // 如果位次<2,给被找到的客服账号发送新接入的客户id
+                if (small < 2)
+                {
+                    clientlist.get("m"+smallAccount).getBasicRemote().sendText(from);
+                }
+            }
+            else//无客服
+            {
+                // 给chat页面返回数据
+                clientlist.get(from).getBasicRemote().sendText("目前尚无客服在线，建议留言");
+            }
+
         }
        else {// 需要显示的消息
             System.out.println("需要显示的消息");
@@ -168,14 +166,14 @@ public class WebSocketBMUtil {
                 // ②客服给客户
                 if (str2 != null) {
                     System.out.println("客服给客户回复");
-                    clientlist.get(from).getBasicRemote().sendText(msg);//给客服发消息
+//                    clientlist.get(from).getBasicRemote().sendText(msg);//给客服发消息
                     clientlist.get(str2).getBasicRemote().sendText(str1);//给客户发消息
                     mcs.saveBMDialogue(new BigInteger(str2.substring(1)),new BigInteger(from.substring(1)), str1, new BigInteger(from.substring(1)));
                 }
                 else {// ①机器人
                     String session = (String)clientlist.get(from).getUserProperties().get("to");
                     String string = cc.splitWord(msg, (String) clientlist.get(from).getUserProperties().get("to"));
-                    clientlist.get(from).getBasicRemote().sendText(msg);
+//                    clientlist.get(from).getBasicRemote().sendText(msg);
                     clientlist.get(from).getBasicRemote().sendText(string);//机器人回答问题
                 }
             } else {
@@ -184,7 +182,7 @@ public class WebSocketBMUtil {
                 to = serviceMap.get(from);
                 to = to.split("_")[1];
                 clientlist.get(to).getBasicRemote().sendText(msg);
-                clientlist.get(from).getBasicRemote().sendText(msg);
+//                clientlist.get(from).getBasicRemote().sendText(msg);
                 mcs.saveBMDialogue(new BigInteger(to.substring(1)),new BigInteger(from.substring(1)), msg, new BigInteger(from.substring(1)));
             }
         }

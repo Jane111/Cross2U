@@ -17,11 +17,11 @@ public abstract class BaseReturncatalog<M extends BaseReturncatalog<M>> extends 
 		return get("rcId");
 	}
 
-	public void setRcCatalog(Integer rcCatalog) {
+	public void setRcCatalog(String rcCatalog) {
 		set("rcCatalog", rcCatalog);
 	}
 
-	public Integer getRcCatalog() {
+	public String getRcCatalog() {
 		return get("rcCatalog");
 	}
 
