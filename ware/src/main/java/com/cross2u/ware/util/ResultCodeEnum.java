@@ -19,8 +19,13 @@ public enum ResultCodeEnum
 	EXIST_USER_PHONE("10013","手机号已经被注册"),
 	ERROR_ACCOUNT_OR_PASSWORD("10014","账户或密码错误"),
 	NOT_LOGIN("10015", "您还未登录，请先登录！"),
-	ADD_FAILURE("20001","添加失败");
-	private String code;
+	ADD_FAILURE("20001","添加失败"),
+	ADD_PRODUCT_FAILURE("20010","单品添加失败"),
+	ADD_WARE_FAILURE("20011","商品添加失败"),
+	WARE_CLASS_FAILURE("20012","商品分类失败"),
+	HAS_ING_INDENT("20005","存在正在执行的订单"),
+	FIND_FAILURE("20004","查询失败");
+    private String code;
     private String desc;
 
     ResultCodeEnum(String code, String desc)

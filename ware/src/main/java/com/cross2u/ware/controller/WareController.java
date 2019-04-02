@@ -1,127 +1,921 @@
-//package com.cross2u.ware.controller;
-//
-//import com.cross2u.ware.service.WareServicesZ;
-//import com.cross2u.ware.util.BaseResponse;
-//import com.cross2u.ware.util.ResultCodeEnum;
-//import com.jfinal.plugin.activerecord.Record;
-//import org.json.JSONArray;
-//import org.springframework.web.bind.annotation.RequestMapping;
-//import org.springframework.web.bind.annotation.ResponseBody;
-//
-//import javax.servlet.http.HttpServletRequest;
-//import java.util.List;
-//
-//public class WareController  {
-//
-//    @RequestMapping("/ware/demo")
-//    @ResponseBody
-//    public BaseResponse demmo(HttpServletRequest request){
-//        BaseResponse baseResponse=new BaseResponse();
-//        WareServicesZ wareServices=new WareServicesZ();
-//
-//        return baseResponse;
-//    }
-//
-//    @RequestMapping("/ware/showFDispatch")
-//    @ResponseBody
-//    public BaseResponse showFDispatch(HttpServletRequest request){
-//        BaseResponse baseResponse=new BaseResponse();
-//        WareServicesZ wareServices=new WareServicesZ();
-//
-//        String wfdSId=request.getParameter("wfdSId");//店铺id
-//        List<Warefdispatch> warefdispatchs=wareServices.showFDispatch(wfdSId);
-//        if (warefdispatchs!=null)
-//        {
-//            baseResponse.setData(warefdispatchs);
-//            baseResponse.setResult(ResultCodeEnum.SUCCESS);
-//        }
-//        else {
-//            baseResponse.setResult(ResultCodeEnum.NOT_FIND);//空
-//        }
-//        return baseResponse;
-//    }
-//
-//    @RequestMapping("/ware/showSDispatch")
-//    @ResponseBody
-//    public BaseResponse showSDispatch(HttpServletRequest request){
-//        BaseResponse baseResponse=new BaseResponse();
-//        WareServicesZ wareServices=new WareServicesZ();
-//        String wfdId=request.getParameter("wfdId");
-//
-//        List<Waresdispatch> waresdispatches=wareServices.showSDispatch(wfdId);
-//        if (waresdispatches!=null)
-//        {
-//            baseResponse.setData(waresdispatches);
-//            baseResponse.setResult(ResultCodeEnum.SUCCESS);
-//        }
-//        else {
-//            baseResponse.setResult(ResultCodeEnum.NOT_FIND);//空
-//        }
-//        return baseResponse;
-//    }
-//*/
-//    /**
-//     * 显示规格
-//     * @param request
-//     * @return
-//     */
-//    @RequestMapping("/ware/showForOptions")
-//    @ResponseBody
-//    public BaseResponse showForOptions(HttpServletRequest request){
-//        BaseResponse baseResponse=new BaseResponse();
-//        WareServicesZ wareServices=new WareServicesZ();
-//
-//        String fId=request.getParameter("fId");
-//        List<Record> formatoptions=wareServices.showForOptions(fId);
-//        if (formatoptions!=null)
-//        {
-//            baseResponse.setData(formatoptions);
-//            baseResponse.setResult(ResultCodeEnum.SUCCESS);
-//        }
-//        else {
-//            baseResponse.setResult(ResultCodeEnum.NetERROR);//空
-//        }
-//        return baseResponse;
-//    }
-//
-//    /**
-//     * 显示属性的下拉框
-//     * @param request
-//     * @return
-//     */
-//    @RequestMapping("/ware/showAttrOptions")
-//    @ResponseBody
-//    public BaseResponse showAttrOptions(HttpServletRequest request){
-//        BaseResponse baseResponse=new BaseResponse();
-//        WareServicesZ wareServices=new WareServicesZ();
-//
-//        return baseResponse;
-//    }
-//
-//    @RequestMapping("/ware/addCatalog")
-//    @ResponseBody
-//    public BaseResponse addCatalog(HttpServletRequest request) {
-//        BaseResponse baseResponse=new BaseResponse();
-//        WareServicesZ wareServices=new WareServicesZ();
-//        String jsons=request.getParameter("jsonArray");
-//        JSONArray jsonArray=null;
-//        try {
-//            jsonArray= new JSONArray(jsons);
-//            String fatherid=request.getParameter("fatherId");
-//            String rank=request.getParameter("rank");
-//            for (int i=0;i<jsonArray.length();i++){
-//                org.json.JSONObject json=jsonArray.getJSONObject(i);
-//                String name=json.getString("name");
-//                wareServices.addCatalog(name,fatherid,rank);
-//            }
-//            baseResponse.setResult(ResultCodeEnum.SUCCESS);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            System.out.println(e);
-//            baseResponse.setResult(ResultCodeEnum.NetERROR);
-//        }
-//
-//        return baseResponse;
-//    }
-//}
-//
+package com.cross2u.ware.controller;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.cross2u.ware.model.*;
+import com.cross2u.ware.service.WareServicesZ;
+import com.cross2u.ware.util.BaseResponse;
+import com.cross2u.ware.util.ResultCodeEnum;
+import com.jfinal.plugin.activerecord.Record;
+import org.apache.poi.hssf.usermodel.*;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+public class WareController  {
+
+    @Autowired
+    private WareServicesZ wareServices;
+
+    @Autowired
+    private BaseResponse baseResponse;
+
+    @RequestMapping("/ware/demo")
+    @ResponseBody
+    public String demmo(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String sId=request.getParameter("sId");
+        return "tongxin!"+sId;
+    }
+
+
+
+    /**
+     * 显示店铺前四个商品
+     */
+    @RequestMapping("/ware/getTopFourWare")
+    public JSONObject  getTopFourWare(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        JSONObject object=new JSONObject();
+        JSONArray array=wareServices.getTopFourWare(sId);
+        if (array!=null){
+            object.put("data",array);
+            object.put("result",ResultCodeEnum.SUCCESS);
+        }
+        else {
+            object.put("result",ResultCodeEnum.FIND_FAILURE);
+        }
+        return object;
+    }
+
+
+
+    /**
+     *显示店铺的商品
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/showStoreWare")
+    public BaseResponse showStoreWare(HttpServletRequest request){
+        String wStore=request.getParameter("wStore");//店铺id
+        String bId=request.getParameter("bId");//bId 若为null
+        JSONArray ware=wareServices.showStoreWare(wStore);
+
+
+        if (ware!=null){
+            System.out.println(ware);
+            baseResponse.setData(ware);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        System.out.println("baseResponse"+baseResponse);
+        return baseResponse;
+    }
+
+
+    /**
+     * 其他模块调用
+     * 显示一级或二级分类中的商品
+     */
+    @RequestMapping("/ware/showStoreClassWare")
+
+    public BaseResponse showStoreClassWare(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+        String wbWFDId = request.getParameter("wbWFDId");//一级id
+        String wbWSDId = request.getParameter("wbWSDId");//二级id
+        if (wbWSDId==null||wbWSDId.equals(""))//如果是一级
+        {
+           JSONArray record=wareServices.showStoreFClassWare(wbWFDId);
+            baseResponse.setData(record);
+        }
+        else {
+            JSONArray record=wareServices.showStoreSClassWare(wbWSDId);
+            baseResponse.setData(record);
+        }
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }
+
+
+    /**
+     * 显示规格
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/showForOptions")
+    @ResponseBody
+    public BaseResponse showForOptions(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+
+        String fId=request.getParameter("fId");
+        JSONArray formatoptions=wareServices.showForOptions(fId);
+        if (formatoptions!=null)
+        {
+            baseResponse.setData(formatoptions);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);//空
+        }
+        return baseResponse;
+    }
+
+    /**
+     * 显示属性的下拉框
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/showAttrOptions")
+    @ResponseBody
+    public BaseResponse showAttrOptions(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+
+
+        String atId=request.getParameter("atId");
+        List<Attributeoption>attributeoptions=wareServices.showAttrOptions(atId);
+        if (attributeoptions!=null){
+            baseResponse.setData(attributeoptions);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/outputExcels")
+    @ResponseBody
+    public BaseResponse outputExcels(HttpServletResponse response,HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String sId=request.getParameter("sId");//店铺id
+        String wIds=request.getParameter("wIds");
+        List<Record> infos =new ArrayList<>();
+        if (wIds.equals("0")){
+            infos = wareServices.outputExcelAll(sId);
+        }
+        else {
+            infos=wareServices.outputExcel(sId,wIds);
+        }
+
+        HSSFWorkbook workbook = new HSSFWorkbook();
+        HSSFSheet sheet = workbook.createSheet("wares");
+        createTitle(workbook,sheet);
+
+        int rowNum=1;
+        for (Record info:infos){
+            HSSFRow row = sheet.createRow(rowNum);
+            //序号 商品名称 商品起批量 商品最高批量
+            HSSFCell cell = row.createCell(0);//序号
+            cell.setCellValue(rowNum);
+
+            cell=row.createCell(1);//名称
+            String wTitle=info.get("wTitle");
+            cell.setCellValue(wTitle);
+
+            cell=row.createCell(2);
+            String wStartNum=info.get("wStartNum").toString();//起批数目
+            cell.setCellValue(wStartNum);
+
+            cell=row.createCell(3);
+            String wHighNum=info.get("wHighNum").toString();//最高批发数目
+            cell.setCellValue(wHighNum);
+
+            //商品最低价格 商品最高价格
+            cell=row.createCell(4);
+            Float wStartPrice=info.get("wStartPrice");//最低价格数目
+            cell.setCellValue(wStartPrice);
+
+            cell=row.createCell(5);
+            Float wHighPrice=info.get("wHighPrice");//最高价格数目
+            cell.setCellValue(wHighPrice);
+
+            //// 销量 商品描述评分 商品编号
+            cell=row.createCell(6);
+            String wSale=info.get("wSale").toString();//最高价格数目
+            cell.setCellValue(wSale);
+
+            cell=row.createCell(7);
+            Integer wDesScore=info.get("wDesScore");//商品描述评分
+            cell.setCellValue(wDesScore);
+
+            cell=row.createCell(8);
+            String wIdentifier=info.get("wIdentifier");//商品编码
+            cell.setCellValue(wIdentifier);
+            rowNum++;
+        }
+
+        String fileName= UUID.randomUUID().toString()+".xls";
+
+        try {
+            //生成excel文件
+            buildExcelFile(fileName, workbook);
+            //浏览器下载excel
+            buildExcelDocument(fileName,workbook,response);
+            //删除本地文件
+            deleteExcelFile(fileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(e);
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+            return baseResponse;
+        }
+
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }
+    //创建表头
+    //序号 商品名称 商品起批量 商品最高批量 商品最低价格 商品最高价格
+    //销量 商品描述评分 商品编号
+    private void createTitle(HSSFWorkbook workbook, HSSFSheet sheet){
+        HSSFRow row = sheet.createRow(0);
+
+        //设置为居中加粗
+        HSSFCellStyle style = workbook.createCellStyle();
+        HSSFFont font = workbook.createFont();
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setFont(font);
+
+        HSSFCell cell;
+        cell = row.createCell(0);
+        cell.setCellValue("序号");
+        cell.setCellStyle(style);
+
+        cell = row.createCell(1);
+        cell.setCellValue("商品名称");
+        cell.setCellStyle(style);
+
+        cell = row.createCell(2);
+        cell.setCellValue("商品起批量");
+        cell.setCellStyle(style);
+
+        cell = row.createCell(3);
+        cell.setCellValue("商品最高批量");
+        cell.setCellStyle(style);
+
+        cell = row.createCell(4);
+        cell.setCellValue("商品最低价格");
+        cell.setCellStyle(style);
+
+        cell = row.createCell(5);
+        cell.setCellValue("商品最高价格");
+        cell.setCellStyle(style);
+
+        cell = row.createCell(6);
+        cell.setCellValue("销量");
+        cell.setCellStyle(style);
+
+        cell = row.createCell(7);
+        cell.setCellValue("商品描述评分");
+        cell.setCellStyle(style);
+
+        cell = row.createCell(8);
+        cell.setCellValue("商品编号");
+        cell.setCellStyle(style);
+    }
+
+    //生成excel文件
+    protected void buildExcelFile(String filename,HSSFWorkbook workbook) throws Exception{
+        FileOutputStream fos = new FileOutputStream(filename);
+        workbook.write(fos);
+        fos.flush();
+        fos.close();
+    }
+    //删除本地文档
+    protected boolean deleteExcelFile(String fileName)throws Exception{
+        File file = new File(fileName);
+        // 如果文件路径所对应的文件存在，并且是一个文件，则直接删除
+        if (file.exists() && file.isFile()) {
+            if (file.delete()) {
+                System.out.println("删除单个文件" + fileName + "成功！");
+                return true;
+            } else {
+                System.out.println("删除单个文件" + fileName + "失败！");
+                return false;
+            }
+        } else {
+            System.out.println("删除单个文件失败：" + fileName + "不存在！");
+            return false;
+        }
+    }
+
+    //浏览器下载excel
+    protected void buildExcelDocument(String filename,HSSFWorkbook workbook,HttpServletResponse response) throws Exception{
+        response.setContentType("application/vnd.ms-excel");
+        response.setHeader("Content-Disposition", "attachment;filename="+ URLEncoder.encode(filename, "utf-8"));
+        OutputStream outputStream = response.getOutputStream();
+        workbook.write(outputStream);
+        outputStream.flush();
+        outputStream.close();
+    }
+
+    /**
+     * 筛选商品 全部出售中 售完下架 已下架
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/showWares")
+    @ResponseBody
+    public BaseResponse showWares(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String sId=request.getParameter("sId");
+        String operation=request.getParameter("operation");
+
+        JSONArray wares=wareServices.showWares(sId,operation);
+        if (wares!=null){
+            baseResponse.setData(wares);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/addGetFirstCata")
+    @ResponseBody
+    public BaseResponse addGetFirstCata(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        List<Category> first=wareServices.addGetCata("0");
+        baseResponse.setData(first);
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/addGetSonCata")
+    @ResponseBody
+    public BaseResponse addGetSonCata(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String ctParentId=request.getParameter("ctId");
+        List<Category> first=wareServices.addGetCata(ctParentId);
+        baseResponse.setData(first);
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }
+
+    /**
+     * 根据类别返回 attr 和 format
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/addFirstStep")
+    @ResponseBody
+    public BaseResponse addFirstStep(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String ctSId=request.getParameter("ctSId");
+        String ctTId=request.getParameter("ctTId");
+
+        JSONObject atrAndFor=wareServices.addFirstStep(ctSId,ctTId);
+        baseResponse.setData(atrAndFor);
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }
+
+    /**
+     *创建商品
+     */
+    @RequestMapping("/ware/addSecondStep")
+    @ResponseBody
+    public BaseResponse addSecondStep(HttpServletRequest request)
+    {
+        BaseResponse baseResponse=new BaseResponse();
+
+        Ware ware=new Ware();
+        ware.setWClass(new BigInteger(request.getParameter("ctId")));//类别id
+        ware.setWStore(new BigInteger(request.getParameter("sId")));//商品所属店铺
+        ware.setWTitle(request.getParameter("wTitle"));
+        ware.setWMainImage(request.getParameter("wMainImage"));//主照片
+        ware.setWImage1(request.getParameter("wImage1"));
+        ware.setWImage2(request.getParameter("wImage2"));
+        ware.setWImage3(request.getParameter("wImage3"));
+        ware.setWImage4(request.getParameter("wImage4"));
+        ware.setWDescription(request.getParameter("wDescription"));
+        ware.setWStartNum(new Integer(request.getParameter("wStartNum")));
+        ware.setWHighNum(new Integer(request.getParameter("wHighNum")));
+        ware.setWStatus(new Integer(request.getParameter("wStatus")));
+        ware.setWIsReceipt(new Integer(request.getParameter("wIsReceipt")));
+        ware.setWIsEnsure(new Integer(request.getParameter("wIsEnsure")));
+        ware.setWIsEnsureQuality(new Integer(request.getParameter("wIsEnsureQuality")));
+        ware.setWReplaceDays(new Integer(request.getParameter("wReplaceDays")));
+        ware.setWDeliverHour(new Integer(request.getParameter("wDeliverHour")));
+        ware.setWDeliverArea(request.getParameter("wDeliverArea"));
+        ware.setWPriceUnit(Integer.valueOf(request.getParameter("pMoneyUnit")));//价格单位
+
+        BigInteger wId=wareServices.addOneWare(ware);//保存一件商品
+        if(wId==null)
+        {
+            baseResponse.setResult(ResultCodeEnum.ADD_WARE_FAILURE);//商品添加失败
+            return baseResponse;
+        }
+
+        String attribute=request.getParameter("attribute");
+        JSONArray attriArray=JSONArray.parseArray(attribute);
+        for (int m=0;m<attriArray.size();m++){
+            JSONObject oneAtr=attriArray.getJSONObject(m);
+            Wareattribute wareattribute=new Wareattribute();
+            wareattribute.setWaWare(wId);
+            wareattribute.setWaAttribute(oneAtr.getBigInteger("atId"));
+            wareattribute.setWaAttributeOption(oneAtr.getBigInteger("aoId"));
+            if(!wareServices.saveOneAtr(wareattribute))
+            {
+                System.out.println("商品属性添加失败");
+                //22删除以保存商品信息 删除之前商品属性信息
+                baseResponse.setResult(ResultCodeEnum.ADD_WARE_FAILURE);//商品添加失败
+                return baseResponse;
+            }
+        }
+
+        //-----保存单品
+        String products=request.getParameter("products");
+        String pMoneyUnit=request.getParameter("pMoneyUnit");
+        if(!saveWareProduct(products,pMoneyUnit,wId))
+        {
+            baseResponse.setResult(ResultCodeEnum.ADD_PRODUCT_FAILURE);//单品添加失败
+            return baseResponse;
+        }
+        //-----商品分类
+        String wbWFDId=request.getParameter("wbWFDId");
+        String wbWSDId=request.getParameter("wbWSDId");
+        if(!wareServices.addOneWareBelong(wbWFDId,wbWSDId,wId))
+        {
+            baseResponse.setResult(ResultCodeEnum.WARE_CLASS_FAILURE);//商品分类错误
+            return baseResponse;
+        }
+        baseResponse.setData(wId);
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }
+
+    private boolean saveWareProduct(String products,String pMoneyUnit,BigInteger wId)
+    {
+        Float wareStartPrice= 0.0f;
+        Float wareHighPrice= 0.0f;
+        JSONArray productArray=JSONObject.parseArray(products);
+        for (int i=0;i<productArray.size();i++){
+            JSONObject oneProduct=productArray.getJSONObject(i);
+            Product product=new Product();
+            product.setPImage(oneProduct.getString("pImage"));
+            Float pMoney=new Float(oneProduct.getString("pMoney"));
+            product.setPMoney(pMoney);
+            product.setPStorage(new Integer(oneProduct.getString("pStorage")));
+            product.setPMoneyUnit(new Integer(pMoneyUnit));
+            BigInteger pId=wareServices.addOneProduct(product);
+            if (pId==null){
+                System.out.println("product 添加失败");
+                return false;
+            }
+
+            //---商品最高价格&最低价格
+            wareStartPrice=wareStartPrice>pMoney?pMoney:wareStartPrice;
+            wareHighPrice=wareHighPrice<pMoney?pMoney:wareHighPrice;
+
+            //---单品规格
+            JSONArray format=oneProduct.getJSONArray("format");
+            if(saveProductFormat(format,pId)){
+                System.out.println("productformat 创建失败");
+                return false;
+            }
+        }
+        wareServices.updateWarePrice(wareStartPrice,wareHighPrice,wId);//更新商品最高最低价格
+        return true;
+    }
+    private boolean saveProductFormat(JSONArray formats,BigInteger pId){
+        for (int i=0;i<formats.size();i++){
+            JSONObject format=formats.getJSONObject(i);
+            String fId=format.getString("fId");
+            String fo=format.getString("fo");
+            if(!wareServices.addOneProductFormat(fId,fo,pId))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 编辑商品信息 显示商品初始信息
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/editShow")
+    @ResponseBody
+    public BaseResponse editShow(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
+        String wId=request.getParameter("wId");//商品id
+        String mId=request.getParameter("mId");//店铺id
+        JSONObject ware=wareServices.editShow(wId,mId);
+        if (ware!=null)
+        {
+            if (wareServices.hasINGIndent(wId))
+            {
+                baseResponse.setResult(ResultCodeEnum.HAS_ING_INDENT);//存在正在进行的订单
+                baseResponse.setData(ware);
+            }
+            else {
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
+                baseResponse.setData(ware);
+            }
+        }
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/editSubmit")
+    @ResponseBody
+    public BaseResponse editSubmit(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+
+        String wIdOld=request.getParameter("wId");
+        Boolean undercarriage = wareServices.editUndercarriage(wIdOld);//下架原来的商品
+
+        baseResponse=addSecondStep(request);//创建一个新的
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/editSubmitOld")
+    @ResponseBody
+    public BaseResponse editSubmitOld(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+
+        String sId=request.getParameter("sId");
+        String wId=request.getParameter("wId");
+        Ware ware=wareServices.getWareById(wId);
+        ware.setWTitle(request.getParameter("wTitle"));
+        ware.setWMainImage(request.getParameter("wMainImage"));
+        ware.setWImage1(request.getParameter("wImage1"));
+        ware.setWImage2(request.getParameter("wImage2"));
+        ware.setWImage3(request.getParameter("wImage3"));
+        ware.setWImage4(request.getParameter("wImage4"));
+        ware.setWDescription(request.getParameter("wDescription"));
+        ware.setWStartNum(Integer.valueOf(request.getParameter("wStartNum")));
+        ware.setWHighNum(Integer.valueOf(request.getParameter("wHighNum")));
+        ware.setWStatus(Integer.valueOf(request.getParameter("wStatus")));
+        String wbWFDId=request.getParameter("wbWFDId");
+        String wbWSDId=request.getParameter("wbWSDId");
+        String wbId=request.getParameter("wbId");
+        if(!wareServices.updateWareBelong(wbId,wbWFDId,wbWSDId))
+        {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        else {
+            if(!wareServices.updateOneWare(ware))
+            {
+                baseResponse.setResult(ResultCodeEnum.NetERROR);
+            }
+            else {
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
+            }
+        }
+
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/editDelete")
+    @ResponseBody
+    public BaseResponse editDelete(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+        String wId=request.getParameter("wId");
+        if(wareServices.hasINGIndent(wId))
+        {
+            baseResponse.setResult(ResultCodeEnum.HAS_ING_INDENT);
+        }
+        else {
+            if(wareServices.editDelete(wId))
+            {
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
+            }
+            else {
+                baseResponse.setResult(ResultCodeEnum.DELETE_ERROR);
+            }
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/editUndercarriage")
+    @ResponseBody
+    public BaseResponse editUndercarriage(HttpServletRequest request)
+    {
+        BaseResponse baseResponse = new BaseResponse();
+        String wId=request.getParameter("wId");
+        if (wareServices.editUndercarriage(wId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/editupcarriage")
+    @ResponseBody
+    public BaseResponse editupcarriage(HttpServletRequest request) {
+        BaseResponse baseResponse = new BaseResponse();
+        String wId=request.getParameter("wId");
+        if (wareServices.editupcarriage(wId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/batchSelectDispatchs")
+    @ResponseBody
+    public BaseResponse batchSelectDispatchs(HttpServletRequest request )
+    {
+        BaseResponse baseResponse=new BaseResponse();
+        String wIds=request.getParameter("wIds");
+        String wsdId=request.getParameter("wsdId");
+        String wfdId=request.getParameter("wfdId");
+        if(wareServices.batchSelectDispatchs(wIds,wfdId,wsdId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/batchChangeMoney")
+    @ResponseBody
+    public BaseResponse batchChangeMoney(HttpServletRequest request )
+    {
+        BaseResponse baseResponse=new BaseResponse();
+        String wIds=request.getParameter("wIds");
+
+        String[] wIdStr=wIds.split(",");//判断是否有正在执行的订单
+        for (String wId:wIdStr){
+            if(wareServices.hasINGIndent(wId)){
+                baseResponse.setResult(ResultCodeEnum.HAS_ING_INDENT);
+                return baseResponse;
+            }
+        }
+
+        String money=request.getParameter("money");
+        String unit=request.getParameter("unit");
+        if(wareServices.batchChangeMoney(wIds,money,unit))
+        {
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/batchChangeOriginMoney")
+    @ResponseBody
+    public BaseResponse batchChangeOriginMoney(HttpServletRequest request )
+    {
+        BaseResponse baseResponse=new BaseResponse();
+        String wIds=request.getParameter("wIds");
+
+        String[] wIdStr=wIds.split(",");//判断是否有正在执行的订单
+        for (String wId:wIdStr){
+            if(wareServices.hasINGIndent(wId)){
+                baseResponse.setResult(ResultCodeEnum.HAS_ING_INDENT);
+                return baseResponse;
+            }
+        }
+
+        String calculate=request.getParameter("calculate");
+        String number=request.getParameter("number");
+        switch (calculate){
+            case "1"://加
+                if(!wareServices.addMoney(wIds,number))
+                    baseResponse.setResult(ResultCodeEnum.NetERROR);
+                else
+                    baseResponse.setResult(ResultCodeEnum.SUCCESS);
+                break;
+            case "2"://减
+                if(!wareServices.subMoney(wIds,number))
+                    baseResponse.setResult(ResultCodeEnum.NetERROR);
+                else
+                    baseResponse.setResult(ResultCodeEnum.SUCCESS);
+                break;
+            case "3"://乘
+                if(!wareServices.mulMoney(wIds,number))
+                    baseResponse.setResult(ResultCodeEnum.NetERROR);
+                else
+                    baseResponse.setResult(ResultCodeEnum.SUCCESS);
+                break;
+            case "4"://除
+                if (!wareServices.divideMoney(wIds,number))
+                    baseResponse.setResult(ResultCodeEnum.NetERROR);
+                else
+                    baseResponse.setResult(ResultCodeEnum.SUCCESS);
+                break;
+            default:
+                baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/batchDeleteMany")
+    @ResponseBody
+    public BaseResponse batchDeleteMany(HttpServletRequest request ) {
+        BaseResponse baseResponse = new BaseResponse();
+        String wIds=request.getParameter("wIds");
+        String[] wIdStr=wIds.split(",");//判断是否有正在执行的订单
+        for (String wId:wIdStr){
+            if(wareServices.hasINGIndent(wId)){
+                baseResponse.setResult(ResultCodeEnum.HAS_ING_INDENT);
+                return baseResponse;
+            }
+        }
+
+        for (String wId:wIdStr){
+            if (!wareServices.editDelete(wId)){
+                baseResponse.setData(wId);
+                baseResponse.setResult(ResultCodeEnum.DELETE_ERROR);
+                return baseResponse;
+            }
+        }
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/batchUndercarriage")
+    @ResponseBody
+    public BaseResponse batchUndercarriage(HttpServletRequest request ) {
+        BaseResponse baseResponse = new BaseResponse();
+        String wIds=request.getParameter("wId");
+        String[] wIdStr=request.getParameterValues(",");
+        for (String wId:wIdStr){
+            if(!wareServices.editUndercarriage(wId))
+            {
+                baseResponse.setResult(ResultCodeEnum.NetERROR);
+                baseResponse.setData(wId);
+                return baseResponse;
+            }
+        }
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/dispatchShowWares")
+    @ResponseBody
+    public BaseResponse dispatchShowWares(HttpServletRequest request)
+    {
+        String wfdId=request.getParameter("wfdId");
+        String wsdId=request.getParameter("wsdId");
+        if (wfdId!=null && wsdId==null){
+            JSONArray array=wareServices.getWFDWares(wfdId);
+            if(array!=null)
+            {
+                baseResponse.setData(array);
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
+            }
+            else baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        else if(wfdId==null && wsdId!=null)
+        {
+            JSONArray array=wareServices.getWSDWares(wsdId);
+            if(array!=null)
+            {
+                baseResponse.setData(array);
+                baseResponse.setResult(ResultCodeEnum.SUCCESS);
+            }
+            else baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.NetERROR);
+        }
+        return baseResponse;
+    }
+
+    /**
+     * 显示店铺 商品排序
+     */
+    @RequestMapping("/ware/showStoreWareRank")
+    @ResponseBody
+    public BaseResponse showStoreWareRank(HttpServletRequest request){
+        String wStore=request.getParameter("wStore");
+        String operation=request.getParameter("operation");
+        String rank=request.getParameter("rank");
+        JSONArray ware=null;
+        switch (operation){
+            case "1"://sale
+                ware=wareServices.showStoreWareBySale(wStore,rank);
+                break;
+            case "2"://price
+                ware=wareServices.showStoreWareByPrice(wStore,rank);
+                break;
+            case "3"://上新时间
+                ware=wareServices.showStoreWareByTime(wStore,rank);
+                break;
+                default:baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+
+        }
+        if(ware!=null){
+            baseResponse.setData(ware);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/dispatchAddWare")
+    @ResponseBody
+    public BaseResponse dispatchAddWare(HttpServletRequest request)
+    {
+        String wfdId=request.getParameter("wfdId");
+        String wsdId=request.getParameter("wsdId");
+        String wId=request.getParameter("wId");
+        if (wareServices.dispatchAddWare(wfdId,wsdId,wId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else baseResponse.setResult(ResultCodeEnum.ADD_FAILURE);
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/dispatchDeleteWare")
+    @ResponseBody
+    public BaseResponse dispatchDeleteWare(HttpServletRequest request)
+    {
+        String wbId=request.getParameter("wbId");
+        if (wareServices.dispatchDeleteWare(wbId)){
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else baseResponse.setResult(ResultCodeEnum.DELETE_ERROR);
+        return baseResponse;
+    }
+
+
+    @RequestMapping("/ware/showGoodEval")
+    @ResponseBody
+    public BaseResponse showGoodEval(HttpServletRequest request)
+    {
+        String sId=request.getParameter("sId");
+        JSONArray array=wareServices.showGoodEval(sId);
+        if (!array.isEmpty()){
+            baseResponse.setData(array);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return baseResponse;
+    }
+
+    /**
+     * 1、显示好评评价列表（4、5星）
+     * @param request
+     * @return
+     */
+    @RequestMapping("/ware/showNormalEval")
+    public BaseResponse showNormalEval(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        JSONArray array=wareServices.showNormalEval(sId);
+        if (array==null){
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        else {
+            baseResponse.setData(array);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        return baseResponse;
+    }
+
+    @RequestMapping("/ware/showBadEval")
+    public BaseResponse showBadEval(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        JSONArray array=wareServices.showBadEval(sId);
+        if (array==null){
+            baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        else {
+            baseResponse.setData(array);
+            baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        }
+        return baseResponse;
+    }
+
+}

@@ -67,6 +67,23 @@ public abstract class BaseOutindent<M extends BaseOutindent<M>> extends Model<M>
 		return get("outAmount");
 	}
 
+	public void setOutPice(Float outPrice) {
+		set("outPrice", outPrice);
+	}
+
+	public String getOutPrice() {
+		return get("outPrice");
+	}
+
+	public void setOutUnit(String outUnit) {
+		set("outUnit", outUnit);
+	}
+
+	public String getOutUnit() {
+		return get("outUnit");
+	}
+
+
 	public void setOutPlatform(Integer outPlatform) {
 		set("outPlatform", outPlatform);
 	}

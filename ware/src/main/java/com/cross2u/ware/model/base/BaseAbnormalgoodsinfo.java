@@ -59,6 +59,14 @@ public abstract class BaseAbnormalgoodsinfo<M extends BaseAbnormalgoodsinfo<M>> 
 		return get("agiReasons");
 	}
 
+	public void setAgiImg(String agiImg) {
+		set("agiReasons", agiImg);
+	}
+
+	public String getAgiImg() {
+		return get("agiImg");
+	}
+
 	public void setAgiIsAnymous(Integer agiIsAnymous) {
 		set("agiIsAnymous", agiIsAnymous);
 	}

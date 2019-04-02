@@ -1,8 +1,5 @@
 package com.cross2u.ware.service;
 
-import com.cross2u.ware.util.BaseItemRecommender;
-import com.jfinal.plugin.activerecord.Record;
-import org.apache.catalina.Store;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +19,25 @@ public class WareServiceL {
 
     @Autowired
     RestTemplate restTemplate;
+
+    //获取当前汇率 美元转人民币
+    public Float transferMoney(Float origin,String unit)
+    {
+        if (unit.equals("1"))
+        {
+            return origin;
+        }
+        DecimalFormat df = new DecimalFormat("###.00");
+        String rateStr= MoneyUtil.getRMB(unit);
+        JSONObject object= JSON.parseObject(rateStr);
+        Float rate=(object.getFloat("fSellPri")) /100;
+        System.out.println("rate"+rate);
+        String result=df.format(rate*origin);
+        Float resultMoney=new Float(result);
+        return resultMoney;
+    }
+
+
     /*
     * 与其他模块进行通信consumer
     * */
@@ -60,11 +76,7 @@ public class WareServiceL {
     {
         return restTemplate.getForObject("http://User/business/findBIsCollectW?wId="+wId+"&bId="+bId,Integer.class);
     }
-    //5、得到根据算法推荐的商品
-//    public String getWListByRecommender(BigInteger bId,BigInteger wId)
-//    {
-//        return restTemplate.getForObject("http://Analysis/analysis/findWListByRecommender?wId="+wId+"&bId="+bId,String.class);
-//    }
+
     /*
      * 与其他模块进行通信provider
     * */
@@ -292,6 +304,16 @@ public class WareServiceL {
         baseInfo.put("wDescription",w.getWDescription().split(","));
         baseInfo.put("wMonthSale",getMonthSale(wId));//通过函数得到商品的月销量
         baseInfo.put("wDeliverArea",w.getWDeliverArea());//得到配送区域的内容
+
+        Float rmbStartPrice= w.getWStartPrice();
+        Float rmbHighPrice=w.getWStartPrice();
+        if (!w.getWPriceUnit().equals("1"))//不是rmb单位 进行汇率转换
+        {
+            rmbStartPrice=transferMoney(w.getWStartPrice(),w.getWPriceUnit().toString());
+            rmbHighPrice=transferMoney(w.getWStartPrice(),w.getWHighPrice().toString());
+        }
+        baseInfo.put("rmbStartPrice",rmbStartPrice);
+        baseInfo.put("rmbHighPrice",rmbHighPrice);
 
         if(bId!=null)
         {

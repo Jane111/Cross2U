@@ -93,7 +93,7 @@ public class BusinessControllerL {
     //1、小程序用户授权
     @RequestMapping("/authorize")
     public JsonResult authorize(
-            @RequestParam("code") String code)
+            @RequestParam(value="code",required = false) String code)
 //            @RequestParam("vWeiXinIcon") String vWeiXinIcon,
 //            @RequestParam("vWeiXinName") String vWeiXinName
     {
@@ -104,7 +104,9 @@ public class BusinessControllerL {
         param.put("js_code", code);
         param.put("grant_type", Constant.GRANTTYPE);
         // 发送请求
+        System.out.println("code="+code);
         String wxResult = HttpClientUtil.doGet(Constant.LOGINURL, param);
+        System.out.println(wxResult);
         JSONObject jsonObject = JSONObject.parseObject(wxResult);
         // 获取参数返回的
         String session_key = jsonObject.get("session_key").toString();

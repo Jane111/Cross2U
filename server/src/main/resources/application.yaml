@@ -2,7 +2,7 @@ server:
  port: 8761
 eureka:
   instance:
-    hostname: eureka-server #eureka实例的主机名
+    hostname: localhost #eureka-server eureka实例的主机名
   client:
     register-with-eureka: false
     #不将自己注册到eureka上

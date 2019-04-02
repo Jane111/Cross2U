@@ -1,8 +1,12 @@
 package com.cross2u.user.util;
 
 
+import com.jfinal.json.FastJson;
 import com.jfinal.kit.JsonKit;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
+@Component
 public class BaseResponse
 {
 	private Object data;
@@ -50,7 +54,7 @@ public class BaseResponse
 	
 	public String toString()
 	{ //JsonKit 是Jfinal 封装的一个工具类里面的
-		return JsonKit.toJson(this);
+		return FastJson.getJson().toJson(this);
 	}
 	
 }
