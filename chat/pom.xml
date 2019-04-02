@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.Cross2U</groupId>
-	<artifactId>user</artifactId>
+	<artifactId>chat</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>user</name>
+	<name>chat</name>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>

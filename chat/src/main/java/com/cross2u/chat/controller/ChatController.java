@@ -66,7 +66,7 @@ public class ChatController {
             StringBuffer answerStr = new StringBuffer();
             for (int i = 0; i < list.size(); i++)
             {
-                answerStr.append(list.get(i)+"</br>");
+                answerStr.append(list.get(i)+" ");
             }
             result = answerStr.toString();
         }
