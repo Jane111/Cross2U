@@ -130,6 +130,15 @@ public class BusinessControllerL {
             }
         }
         else{
+            Business business = Business.dao.findFirst("select bId from business where bOpenId=?",open_id);
+            if(business==null)//游客身份
+            {
+                result.put("bId","");
+            }
+            else//business身份
+            {
+                result.put("bId", business.getBId()+"");
+            }
             jr.setResult(ResultCodeEnum.SUCCESS);
         }
         jr.setData(result);
@@ -155,7 +164,7 @@ public class BusinessControllerL {
         jr.setData(null);
         return jr;
     }
-//todo 加多个
+//加多个
 //    9、加入购物车
     @RequestMapping("/addStock")
     public JsonResult addStock(
