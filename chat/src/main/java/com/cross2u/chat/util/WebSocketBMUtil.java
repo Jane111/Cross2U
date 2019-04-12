@@ -69,7 +69,7 @@ public class WebSocketBMUtil {
             {//todo 根据store设置的关键词进行修改
                 String sId = to.substring(1);
                 System.out.println("我是客户,进入机器人咨询页面");
-                clientlist.get(from).getBasicRemote().sendText("根据每个store设置的关键词进行欢迎");
+                clientlist.get(from).getBasicRemote().sendText("欢迎您光临本店");
             }
         } catch (IOException e) {
             e.printStackTrace();
