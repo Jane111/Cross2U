@@ -1,15 +1,10 @@
 package com.cross2u.user.controller;
 
 import com.cross2u.user.model.Business;
-import com.cross2u.user.model.Outindent;
-import com.cross2u.user.model.Publicinfo;
-import com.cross2u.user.model.Ware;
 import com.cross2u.user.service.BusinessServiceZ;
 import com.cross2u.user.util.BaseResponse;
 import com.cross2u.user.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -224,37 +219,37 @@ public class BusinessController {
     /**
      * 删除浏览记录
      */
-    @RequestMapping("/business/deleteBrowseRecord")
-    @ResponseBody
-    public BaseResponse deleteBrowseRecord(HttpServletRequest request)
-    {
-        BaseResponse baseResponse=new BaseResponse();
-        BusinessServiceZ businessService=new BusinessServiceZ();
-        String brIdstr=request.getParameter("brId");
-        String []brIds=brIdstr.split(",");
-        for (String id : brIds){
-            if(!businessService.deleteBrowseRecord(id))
-            {
-                deleteBrowseRecordRollback(brIdstr,id);//回滚
-                baseResponse.setResult(ResultCodeEnum.DELETE_FAILURE);
-                return baseResponse;
-            }
-        }
-        baseResponse.setResult(ResultCodeEnum.SUCCESS);
-        return baseResponse;
-    }
+//    @RequestMapping("/business/deleteBrowseRecord")
+//    @ResponseBody
+//    public BaseResponse deleteBrowseRecord(HttpServletRequest request)
+//    {
+//        BaseResponse baseResponse=new BaseResponse();
+//        BusinessServiceZ businessService=new BusinessServiceZ();
+//        String brIdstr=request.getParameter("brId");
+//        String []brIds=brIdstr.split(",");
+//        for (String id : brIds){
+//            if(!businessService.deleteBrowseRecord(id))
+//            {
+//                deleteBrowseRecordRollback(brIdstr,id);//回滚
+//                baseResponse.setResult(ResultCodeEnum.DELETE_FAILURE);
+//                return baseResponse;
+//            }
+//        }
+//        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+//        return baseResponse;
+//    }
 
-    private void deleteBrowseRecordRollback(String brIdstr,String badId) {
-        BusinessServiceZ businessService=new BusinessServiceZ();
-        String []ids=brIdstr.split(",");
-        for (String id:ids){
-            if(id.equals(badId))
-            {
-                return;
-            }
-            businessService.deleteBrowseRecordRollback(id);
-        }
-    }
+//    private void deleteBrowseRecordRollback(String brIdstr,String badId) {
+//        BusinessServiceZ businessService=new BusinessServiceZ();
+//        String []ids=brIdstr.split(",");
+//        for (String id:ids){
+//            if(id.equals(badId))
+//            {
+//                return;
+//            }
+//            businessService.deleteBrowseRecordRollback(id);
+//        }
+//    }
 
     /**
      * 查看收藏的商品

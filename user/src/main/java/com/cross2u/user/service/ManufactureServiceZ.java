@@ -1,12 +1,9 @@
 package com.cross2u.user.service;
 
 import com.cross2u.user.model.Mainmanufacturer;
-import com.cross2u.user.model.Manufacturer;
-import com.cross2u.user.model.Store;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import org.springframework.stereotype.Service;
-import sun.applet.Main;
 
 import java.math.BigInteger;
 

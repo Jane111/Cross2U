@@ -1,7 +1,6 @@
 package com.cross2u.indent.Controller;
 
 import com.cross2u.indent.Service.IndentServiceZ;
-import com.cross2u.indent.model.Indent;
 import com.cross2u.indent.util.BaseResponse;
 import com.cross2u.indent.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;

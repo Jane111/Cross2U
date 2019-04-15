@@ -1,7 +1,9 @@
 package com.cross2u.user.util;
 
 import com.jfinal.kit.JsonKit;
+import org.springframework.stereotype.Component;
 
+@Component
 public class JsonResult
 {
 	private Object data;
@@ -48,4 +50,5 @@ public class JsonResult
 	{
 		return JsonKit.toJson(this);
 	}
+
 }

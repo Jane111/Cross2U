@@ -3,7 +3,6 @@ package com.cross2u.user.service;
 import com.cross2u.user.model.*;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
-import org.springframework.boot.configurationprocessor.json.JSONArray;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
@@ -97,16 +96,16 @@ public class BusinessServiceZ {
         return browseRecords;
     }
 
-    public boolean deleteBrowseRecord(String id) {
-        Browserecord browserecord=Browserecord.dao.findById(new BigInteger(id));
-        browserecord.setBrIsDelete(1);
-        return browserecord.update();
-    }
-
-    public void deleteBrowseRecordRollback(String id) {
-        Browserecord browserecord=Browserecord.dao.findById(new BigInteger(id));
-        browserecord.setBrIsDelete(0);
-    }
+//    public boolean deleteBrowseRecord(String id) {
+//        Browserecord browserecord=Browserecord.dao.findById(new BigInteger(id));
+//        browserecord.setBrIsDelete(1);
+//        return browserecord.update();
+//    }
+//
+//    public void deleteBrowseRecordRollback(String id) {
+//        Browserecord browserecord=Browserecord.dao.findById(new BigInteger(id));
+//        browserecord.setBrIsDelete(0);
+//    }
 
     public List<Record> showCollectWare(String bId) {
         String sql="SELECT cId,cWare,wMainImage,wTitle,wStartPrice,wHighPrice,wPriceUnit,sum(inProductNum) as wMonthSale " +
