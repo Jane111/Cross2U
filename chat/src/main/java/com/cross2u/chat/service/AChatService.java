@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.cross2u.chat.config.ElasticSearchConfig;
 import com.cross2u.chat.model.Abchart;
 import com.cross2u.chat.model.Amchart;
-import com.cross2u.chat.model.Mbchat;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import org.elasticsearch.action.search.SearchResponse;
@@ -13,7 +12,6 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +19,12 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-@Service
-public class MChatService {
 
-    /*m的机器人聊天*/
-    public String mFindAnswer(String question,String account) throws IOException
+@Service
+public class AChatService {
+
+    /*a的机器人聊天*/
+    public String aFindAnswer(String question) throws IOException
     {
         String result = "";
         question = question.replaceAll("</?[a-zA-Z]+[^><]*>", "");
@@ -36,7 +35,7 @@ public class MChatService {
         }
 
         //elasticsearch搜索关键词得到，关键词的回答
-        List<String> list = searchMKeyWordCache(question,account);
+        List<String> list = searchAKeyWordCache(question);
 
         if(list.isEmpty())
         {
@@ -53,57 +52,65 @@ public class MChatService {
         }
         return result;
     }
+    //2、得到A对应的客服账号
+    public List<String> getAChatAccount() {
+        List<String> aIdList = new ArrayList<>();
 
-    //1、得到M对应的所有客服账号
-    public List<String> getMChatAccount(BigInteger sId) {
-
-        List<String> mIdList = new ArrayList<>();
-        //在manu表中得到客服(mManageMessage==1)账号mId
-        List<Record> mList = Db.find("select mId from manufacturer " +
-                "where wStore=? and mManageMessage=?",sId,1);
-        for(Record record:mList)
+        //在admin表中得到所有的客服账号
+        List<Record> aList = Db.find("select aId from administrator " +
+                "where aPostion=? and aStatus=?",4,1);
+        for(Record record:aList)
         {
-            mIdList.add(record.getStr("mId"));
+            aIdList.add(record.getStr("aId"));
+            System.out.println("aId"+record.getStr("aId"));
         }
-        return mIdList;
+        return aIdList;
     }
-
-    // 存储会话消息
-    public void saveBMDialogue(BigInteger bId, BigInteger mId, String msg, BigInteger from)
+    //存储对话消息
+    public void saveBADialogue(BigInteger bId, BigInteger aId, String msg, BigInteger from)
     {
-        Mbchat mbchat = new Mbchat();
-        mbchat.setMbchBusiness(bId);
-        mbchat.setMbchManu(mId);
-        mbchat.setMbchContent(msg);
+        Abchart abchart = new Abchart();
+        abchart.setAbchAdministrator(aId);
+        abchart.setAbchBusiness(bId);
+        abchart.setAbchContent(msg);
         if(bId==from)//说话者为b
         {
-            mbchat.setMbchSpeaker(2);
+            abchart.setAbchSpeaker(1);
         }
-        else//说话者为M
+        else//说话者为A
         {
-            mbchat.setMbchSpeaker(1);
+            abchart.setAbchSpeaker(2);
         }
-        mbchat.save();
+        abchart.save();
     }
-
-    //搜索M的KeyWord
-    @Cacheable(value = "manukeyword" ,key="#a0")//以第一个参数作为key
-    public List<String> searchMKeyWordCache(String searchContent,String account)
+    //存储对话消息
+    public void saveMADialogue(BigInteger mId, BigInteger aId, String msg, BigInteger from)
+    {
+        Amchart amchart = new Amchart();
+        amchart.setAmchManu(mId);
+        amchart.setAmchAdministrator(aId);
+        amchart.setAmchContent(msg);
+        if(mId==from)//说话者为m
+        {
+            amchart.setAmchSpeaker(1);
+        }
+        else//说话者为A
+        {
+            amchart.setAmchSpeaker(2);
+        }
+        amchart.save();
+    }
+    //搜索a的KeyWord
+    @Cacheable(value = "adminkeyword")//以第一个参数作为key
+    public List<String> searchAKeyWordCache(String searchContent)
     {
         TransportClient client = ElasticSearchConfig.client();
         List<String> mKeyList = new ArrayList<String>();
 
-        //得到mId
-        BigInteger mId = new BigInteger(account.substring(1));
-        //根据mId得到店铺sId
-        Integer sId = Db.findFirst("select mStore from manufacturer " +
-                "where mId=?",mId).getInt("mStore");
-
-        QueryBuilder qb1 = QueryBuilders.matchQuery("mktext", searchContent);
-        QueryBuilder qb2 = QueryBuilders.termQuery("mkstore", sId);
+        QueryBuilder qb1 = QueryBuilders.matchQuery("akText", searchContent);
 
         QueryBuilder builder = QueryBuilders.boolQuery()
-                .must(qb1).filter(qb2);
+                .must(qb1);
 
         SearchResponse sr = client.prepareSearch("cross2u")
                 .setSize(3000)
@@ -113,8 +120,9 @@ public class MChatService {
         SearchHits hits = sr.getHits();
         for(SearchHit hit:hits){
             JSONObject jsonObject = JSONObject.parseObject(hit.getSourceAsString());
-            mKeyList.add(jsonObject.getString("mkreply"));
+            mKeyList.add(jsonObject.getString("akreply"));
         }
         return mKeyList;
     }
+
 }

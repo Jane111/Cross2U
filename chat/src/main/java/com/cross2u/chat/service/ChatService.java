@@ -7,210 +7,230 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
-import org.ansj.domain.Result;
-import org.ansj.domain.Term;
-import org.ansj.splitWord.analysis.ToAnalysis;
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.ansj.domain.Result;
+//import org.ansj.domain.Term;
+//import org.ansj.splitWord.analysis.ToAnalysis;
+//import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
 @Service
 public class ChatService {
 
-    @Autowired
-    MChatService mChatService;
-    /**
-     * 阻尼系数（ＤａｍｐｉｎｇＦａｃｔｏｒ），一般取值为0.85
-     */
-    static final float d = 0.85f;
-    /**
-     * 最大迭代次数
-     */
-    static final int max_iter = 200;
-    static final float min_diff = 0.001f;
-    //分词
-    public String splitWord(String question,String account) throws IOException
-    {
-        String result = null;
-        question = question.replaceAll("</?[a-zA-Z]+[^><]*>", "");
+//    @Autowired
+//    MChatService mChatService;
+//    /**
+//     * 阻尼系数（ＤａｍｐｉｎｇＦａｃｔｏｒ），一般取值为0.85
+//     */
+//    static final float d = 0.85f;
+//    /**
+//     * 最大迭代次数
+//     */
+//    static final int max_iter = 200;
+//    static final float min_diff = 0.001f;
+//    //分词
+//    public String splitWord(String question,String account) throws IOException
+//    {
+//        MChatService mChatService = new MChatService();
+//        String result = "这是回答，成功啦";
+//        question = question.replaceAll("</?[a-zA-Z]+[^><]*>", "");
 //        System.out.println(question);
 //        if(question.contains("你好"))
 //        {
 //            return "你好，有什么可以帮助您的~";
 //        }
+//
+//        /*为了不将商品名称分词分开*/
+////        String productName = "";
+////        if(account!=null)//如果是m，有对应的商品
+////        {
+////            /*获取询问的商品*/
+////            productName = getProductName(question,account);//获得已经提取出的产品名称
+////            question = question.replace(productName, "");
+////        }
+////        String theWords = getKeyword("", question);//调用其他函数，得到keyword
+////        if(account!=null)
+////        {
+////            theWords+=" "+productName;//加上产品名称
+////        }
+////        if(question.length()<1)
+////        {
+////            return "抱歉，没有找到答案，是否转为人工客服？";
+////        }
+//
+//        //elasticsearch搜索关键词得到，关键词的回答
+//        List<Object> list = mChatService.searchMKeyWordCache(question,account);
+//
+//        if(list.isEmpty())
+//        {
+//            result = "抱歉，没有找到答案，是否转为人工客服？";
+//        }
+//        else
+//        {
+//            StringBuffer answerStr = new StringBuffer();
+//            for (int i = 0; i < list.size(); i++)
+//            {
+//                answerStr.append(list.get(i)+" ");
+//            }
+//            result = answerStr.toString();
+//        }
+//        return result;
+//    }
 
-        /*为了不将商品名称分词分开*/
-        String productName = "";
-        if(account!=null)//如果是m，有对应的商品
-        {
-            /*获取询问的商品*/
-            productName = getProductName(question,account);//获得已经提取出的产品名称
-            question = question.replace(productName, "");
-        }
-        StringBuffer theWords = getKeyword("", question);//调用其他函数，得到keyword
-        if(account!=null)
-        {
-            theWords.append(" "+productName);//加上产品名称
-        }
+//    public static String getKeyword(String title, String content)
+//    {
+//        Result termList = ToAnalysis.parse(title + content);
+//        List<String> wordList = new ArrayList<String>();//应该处理的wordList
+//        for (Term t : termList)
+//        {
+//            if (shouldInclude(t))
+//            {
+//                System.out.println(t.getName());
+//                wordList.add(t.getName());
+//            }
+//        }
+//        Map<String, Set<String>> words = new HashMap<String, Set<String>>();
+//        Queue<String> que = new LinkedList<String>();
+//        for (String w : wordList)//对发来语句的每个分词进行处理
+//        {
+//            if (!words.containsKey(w))
+//            {
+//                words.put(w, new HashSet<String>());
+//            }
+//            que.offer(w);//添加到队列
+//            if (que.size() > 5)
+//            {
+//                que.poll();//从队列中删除第一个元素
+//            }
+//
+//            for (String w1 : que)
+//            {
+//                for (String w2 : que)
+//                {
+//                    if (w1.equals(w2))
+//                    {
+//                        continue;
+//                    }
+//
+//                    words.get(w1).add(w2);//不相等时，对应的set中
+//                    words.get(w2).add(w1);
+//                }
+//            }
+//        }
+//        Map<String, Float> score = new HashMap<String, Float>();
+//        for (int i = 0; i < max_iter; ++i)
+//        {
+//            Map<String, Float> m = new HashMap<String, Float>();
+//            float max_diff = 0;
+//            for (Map.Entry<String, Set<String>> entry : words.entrySet())
+//            {
+//                String key = entry.getKey();
+//                Set<String> value = entry.getValue();
+//                m.put(key, 1 - d);
+//                for (String other : value)
+//                {
+//                    int size = words.get(other).size();
+//                    if (key.equals(other) || size == 0) continue;
+//                    m.put(key, m.get(key) + d / size * (score.get(other) == null ? 0 : score.get(other)));
+//                }
+//                max_diff = Math.max(max_diff, Math.abs(m.get(key) - (score.get(key) == null ? 0 : score.get(key))));
+//            }
+//            score = m;
+//            if (max_diff <= min_diff) break;
+//        }
+//        List<Map.Entry<String, Float>> entryList = new ArrayList<Map.Entry<String, Float>>(score.entrySet());
+//        Collections.sort(entryList, new Comparator<Map.Entry<String, Float>>()
+//        {
+//            @Override
+//            public int compare(Map.Entry<String, Float> o1, Map.Entry<String, Float> o2)
+//            {
+//                return (o1.getValue() - o2.getValue() > 0 ? -1 : 1);
+//            }
+//        });
+//        String result = "";
+//        for (int i = 0; i < entryList.size(); ++i)
+//        {
+//            result+=entryList.get(i).getKey()+" ";
+//        }
+//        return result;
+//    }
+//    /**
+//     * 是否应当将这个term纳入计算，词性属于名词、动词、副词、形容词
+//     * @param term
+//     * @return 是否应当
+//     */
+//    public static boolean shouldInclude(Term term)
+//    {
+//        if (
+//                term.getNatureStr().startsWith("n")
+//                        || term.getNatureStr().startsWith("v")
+//                        || term.getNatureStr().startsWith("d")
+//                        || term.getNatureStr().startsWith("a")
+//                )
+//        {
+//            return true;
+//        }
+//        return false;
+//    }
 
+//    public String getProductName(String question,String account)
+//    {
+//        String productName = null;
+//        BigInteger mId = new BigInteger(account.substring(1));
+//        //得到M所在的店铺的Id
+//        BigInteger sId = Db.findFirst("select mStore from manufacturer " +
+//                "where mId=?",mId).getBigInteger("mStore");
+//        //得到mId对应的store,对应的ware名称
+//        List<Record> wareNameList = Db.find("select wTitle from ware where wStore=?",sId);
+//        for(Record record:wareNameList)
+//        {
+//            if(question.indexOf(record.getStr("wTitle"))!=-1)
+//            {
+//                productName = record.getStr("wTitle");
+//            }
+//            else
+//            {
+//                productName="";
+//            }
+//        }
+//        return productName;
+//    }  public String getProductName(String question,String account)
+//    {
+//        String productName = null;
+//        BigInteger mId = new BigInteger(account.substring(1));
+//        //得到M所在的店铺的Id
+//        BigInteger sId = Db.findFirst("select mStore from manufacturer " +
+//                "where mId=?",mId).getBigInteger("mStore");
+//        //得到mId对应的store,对应的ware名称
+//        List<Record> wareNameList = Db.find("select wTitle from ware where wStore=?",sId);
+//        for(Record record:wareNameList)
+//        {
+//            if(question.indexOf(record.getStr("wTitle"))!=-1)
+//            {
+//                productName = record.getStr("wTitle");
+//            }
+//            else
+//            {
+//                productName="";
+//            }
+//        }
+//        return productName;
+//    }
 
-        if(theWords.length()<1)
-        {
-            return "抱歉，没有找到答案，是否转为人工客服？";
-        }
-        //elasticsearch搜索关键词得到，关键词的回答
-        List<Object> list = mChatService.searchMKeyWordCache(theWords,account);
-
-        if(list.isEmpty())
-        {
-            result = "抱歉，没有找到答案，是否转为人工客服？";
-        }
-        else
-        {
-            StringBuffer answerStr = new StringBuffer();
-            for (int i = 0; i < list.size(); i++)
-            {
-                answerStr.append(list.get(i)+" ");
-            }
-            result = answerStr.toString();
-        }
-        return result;
-    }
-
-    public static StringBuffer getKeyword(String title, String content)
-    {
-        Result termList = ToAnalysis.parse(title + content);
-        List<String> wordList = new ArrayList<String>();//应该处理的wordList
-        for (Term t : termList)
-        {
-            if (shouldInclude(t))
-            {
-                System.out.println(t.getName());
-                wordList.add(t.getName());
-            }
-        }
-        Map<String, Set<String>> words = new HashMap<String, Set<String>>();
-        Queue<String> que = new LinkedList<String>();
-        for (String w : wordList)//对发来语句的每个分词进行处理
-        {
-            if (!words.containsKey(w))
-            {
-                words.put(w, new HashSet<String>());
-            }
-            que.offer(w);//添加到队列
-            if (que.size() > 5)
-            {
-                que.poll();//从队列中删除第一个元素
-            }
-
-            for (String w1 : que)
-            {
-                for (String w2 : que)
-                {
-                    if (w1.equals(w2))
-                    {
-                        continue;
-                    }
-
-                    words.get(w1).add(w2);//不相等时，对应的set中
-                    words.get(w2).add(w1);
-                }
-            }
-        }
-        Map<String, Float> score = new HashMap<String, Float>();
-        for (int i = 0; i < max_iter; ++i)
-        {
-            Map<String, Float> m = new HashMap<String, Float>();
-            float max_diff = 0;
-            for (Map.Entry<String, Set<String>> entry : words.entrySet())
-            {
-                String key = entry.getKey();
-                Set<String> value = entry.getValue();
-                m.put(key, 1 - d);
-                for (String other : value)
-                {
-                    int size = words.get(other).size();
-                    if (key.equals(other) || size == 0) continue;
-                    m.put(key, m.get(key) + d / size * (score.get(other) == null ? 0 : score.get(other)));
-                }
-                max_diff = Math.max(max_diff, Math.abs(m.get(key) - (score.get(key) == null ? 0 : score.get(key))));
-            }
-            score = m;
-            if (max_diff <= min_diff) break;
-        }
-        List<Map.Entry<String, Float>> entryList = new ArrayList<Map.Entry<String, Float>>(score.entrySet());
-        Collections.sort(entryList, new Comparator<Map.Entry<String, Float>>()
-        {
-            @Override
-            public int compare(Map.Entry<String, Float> o1, Map.Entry<String, Float> o2)
-            {
-                return (o1.getValue() - o2.getValue() > 0 ? -1 : 1);
-            }
-        });
-        StringBuffer result = new StringBuffer();
-        for (int i = 0; i < entryList.size(); ++i)
-        {
-            result.append(entryList.get(i).getKey()+" ");
-        }
-        System.out.println(result);
-        return result;
-    }
-    /**
-     * 是否应当将这个term纳入计算，词性属于名词、动词、副词、形容词
-     * @param term
-     * @return 是否应当
-     */
-    public static boolean shouldInclude(Term term)
-    {
-        if (
-                term.getNatureStr().startsWith("n")
-                        || term.getNatureStr().startsWith("v")
-                        || term.getNatureStr().startsWith("d")
-                        || term.getNatureStr().startsWith("a")
-                )
-        {
-            return true;
-        }
-        return false;
-    }
-
-    public String getProductName(String question,String mId)
-    {
-        String productName = null;
-        //得到M所在的店铺的Id
-        BigInteger sId = Db.findFirst("select mStore from manufacturer " +
-                "where mId=?",mId).getBigInteger("mStore");
-        //得到mId对应的store,对应的ware名称
-        List<Record> wareNameList = Db.find("select wTitle from ware where wStore=?",sId);
-        for(Record record:wareNameList)
-        {
-            if(question.indexOf(record.getStr("wTitle"))!=-1)
-            {
-                productName = record.getStr("wTitle");
-            }
-            else
-            {
-                productName="";
-            }
-        }
-        return productName;
-    }
-
-    public List<Record> findAnswer(StringBuffer words, String saccount)
-    {
-        String string = new String(words);
-        String[] str = string.split(" ");
-        StringBuffer sql = new StringBuffer();
-        for (int i = 0; i < str.length; i++)
-        {
-            sql.append(" and mkText like'%" + str[i] + "%'");
-        }
-
-        return Db.find("select answer from rule,question where company_id=? and question.answer_id=rule_id"
-                + sql);
-        //与store进行通信，得到问题的回答
-//        Manukeyword.dao.find("select mkReply from manuKeyword where mkManu=? ");
-    }
+//    public List<Record> findAnswer(StringBuffer words, String saccount)
+//    {
+//        String string = new String(words);
+//        String[] str = string.split(" ");
+//        StringBuffer sql = new StringBuffer();
+//        for (int i = 0; i < str.length; i++)
+//        {
+//            sql.append(" and mkText like'%" + str[i] + "%'");
+//        }
+//
+//        return Db.find("select answer from rule,question where company_id=? and question.answer_id=rule_id"
+//                + sql);
+//
+//    }
 
        /*
     * 去wiki百科找相关答案
