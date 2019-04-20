@@ -34,6 +34,9 @@ public class WareServiceL {
         }
         DecimalFormat df = new DecimalFormat("###.00");
         String rateStr= MoneyUtil.getRMB(unit);
+        if(rateStr==null){
+            return origin;
+        }
         JSONObject object= JSON.parseObject(rateStr);
         Float rate=(object.getFloat("fSellPri")) /100;
         System.out.println("rate"+rate);
@@ -312,7 +315,7 @@ public class WareServiceL {
 
         Float rmbStartPrice= w.getWStartPrice();
         Float rmbHighPrice=w.getWStartPrice();
-        if (!w.getWPriceUnit().equals("1"))//不是rmb单位 进行汇率转换
+        if (!w.getWPriceUnit().toString().equals("1"))//不是rmb单位 进行汇率转换
         {
             rmbStartPrice=transferMoney(w.getWStartPrice(),w.getWPriceUnit().toString());
             rmbHighPrice=transferMoney(w.getWStartPrice(),w.getWHighPrice().toString());
@@ -733,6 +736,7 @@ public class WareServiceL {
                     Ware ware = Ware.dao.findById(record.getBigInteger("inWare"));
                     productDetail.put("wName",ware.getWTitle());//商品名称
                     productDetail.put("wStartNum",ware.getWStartNum());//商品的起批量
+                    productDetail.put("wHighNum",ware.getWHighNum());//商品的最高批量
 
                     Product product = Product.dao.findById(record.getBigInteger("inProduct"));
 

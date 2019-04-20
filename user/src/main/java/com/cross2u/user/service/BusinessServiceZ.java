@@ -417,22 +417,25 @@ public class BusinessServiceZ {
     }*/
 
     public boolean isArthorise(String openId){//是否授权
-        String checkSql="select vWeiXinIcon from visitor where vOpenId like '"+openId+"'";
+        String checkSql="select * from visitor where vOpenId like '"+openId+"'";
         Visitor check=Visitor.dao.findFirst(checkSql);
         System.out.println(check);
-        if (check.get("vWeiXinIcon")==null){
+        if (check.getVWeiXinIcon()==null){
             return false;//未授权
         }
         return true;
     }
-    public Visitor getVisitorByOpenId(String openId)
+    public JSONObject getVisitorByOpenId(String openId)
     {
-        String sql="select vWeiXinIcon as bWeiXinIcon,vWeiXinName as bWeiXinName from visitor where vOpenId like '"+openId+"'";
+        String sql="select vWeiXinIcon,vWeiXinName from visitor where vOpenId like '"+openId+"'";
         Visitor visitor=Visitor.dao.findFirst(sql);
         if (visitor.getVWeiXinIcon()==null||visitor.getVWeiXinIcon().equals("")) {
             return null;
         }
-        return visitor;
+        JSONObject object=new JSONObject();
+        object.put("bWeiXinIcon",visitor.getVWeiXinIcon());
+        object.put("bWeiXinName",visitor.getVWeiXinName());
+        return object;
     }
     public JSONObject intoMine(String openId) {
         String updateS="select * from business where bOpenId=?";
@@ -443,10 +446,15 @@ public class BusinessServiceZ {
         System.out.println("--------------update:"+updateR);
         BigInteger bId=updateR.getBId();
         updatBRank(updateR);
-        String sql="select bWeiXinIcon ,bWeiXinName,bScore,bRank from business where bId=?";
-        Business record=Business.dao.findFirst(sql,bId);
+        String sql="select bWeiXinIcon,bWeiXinName,bScore,bRank from business where bId=?";
+        Business business=Business.dao.findFirst(sql,bId);
+        JSONObject bu=new JSONObject();
         JSONObject object=new JSONObject();
-        object.put("business",record);
+        bu.put("bWeiXinIcon",business.getBWeiXinIcon());
+        bu.put("bWeiXinName",business.getBWeiXinName());
+        bu.put("bScore",business.getBScore());
+        bu.put("bRank",business.getBRank());
+        object.put("business",bu);
         object.put("collectStore",getCollectStore(bId));
         object.put("collectWare",getCollectWare(bId));
         object.put("browseWare",getBrowseWare(bId));

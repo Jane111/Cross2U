@@ -83,10 +83,10 @@ public class BusinessController {
         business.setBPhone(bPhone);
         business.setBEmail(bEmail);
 
-        Visitor visitor=businessService.getVisitorByOpenId(bOpenId);//是否已经授权
+        JSONObject visitor=businessService.getVisitorByOpenId(bOpenId);//是否已经授权
         if (visitor!=null){
-            String bWeiXinIcon=visitor.getVWeiXinIcon();
-            String bWeiXinName=visitor.getVWeiXinName();
+            String bWeiXinIcon=visitor.getString("bWeiXinIcon");
+            String bWeiXinName=visitor.getString("bWeiXinName");
             business.setBWeiXinIcon(bWeiXinIcon);
             business.setBWeiXinName(bWeiXinName);
         }
@@ -211,7 +211,7 @@ public class BusinessController {
     //获取店铺Top4商品
     private Object getTopFourWare(String sId) {
         System.out.println(sId+" "+(restTemplate==null));
-        JSONObject array = restTemplate.getForObject("http://localhost:8003/ware/getTopFourWare?sId="+sId,JSONObject.class);
+        JSONObject array = restTemplate.getForObject("http://Ware/ware/getTopFourWare?sId="+sId,JSONObject.class);
         return array.get("data");
         //return null;
     }
@@ -425,8 +425,8 @@ public class BusinessController {
         JSONObject mine=service.intoMine(openId);
 
         if (mine==null){
-            Visitor visitor=service.getVisitorByOpenId(openId);
-            baseResponse.setData(visitor);
+            JSONObject visitor=service.getVisitorByOpenId(openId);
+            System.out.println("visitor======"+visitor);
             baseResponse.setData(visitor);
             baseResponse.setResult(ResultCodeEnum.NOT_REGISTER);//未注册 已授权
         }

@@ -28,15 +28,15 @@ public class ManageController {
     /**
      * 看系统通知
      */
-    @RequestMapping("/manage/showPublicInfo")
-    @ResponseBody
-    public BaseResponse showPublicInfo(HttpServletRequest request){
-
-        List<Publicinfo> publicinfos=service.showPublicInfo();
-        baseResponse.setData(publicinfos);
-        baseResponse.setResult(ResultCodeEnum.SUCCESS);
-        return baseResponse;
-    }
+//    @RequestMapping("/manage/showPublicInfo")
+//    @ResponseBody
+//    public BaseResponse showPublicInfo(HttpServletRequest request){
+//
+//        List<Publicinfo> publicinfos=service.showPublicInfo();
+//        baseResponse.setData(publicinfos);
+//        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+//        return baseResponse;
+//    }
 
     /**
      * 显示统计信息

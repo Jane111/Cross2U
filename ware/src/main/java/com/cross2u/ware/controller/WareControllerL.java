@@ -530,6 +530,24 @@ public class WareControllerL {
         jr.setData(result);
         return jr;
     }
+    //......搜索
+    @RequestMapping("/searchWare")
+    public BaseResponse searchWare(
+            @RequestParam("searchContent") String searchContent
+    )
+    {
+        List<Ware> result = Ware.dao.find("select * from ware where wtitle like '%"+searchContent+"%'");
+        if(!result.isEmpty())
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.UPDATE_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
 
 
 }

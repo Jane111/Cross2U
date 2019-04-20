@@ -19,7 +19,7 @@ public class JfinalOrmConfig {
     @Bean
     public boolean createDatabaseConnectionPool() {
         DruidPlugin druidPlugin = new DruidPlugin(jdbcUrl, dbUser, dbPwd);
-        ActiveRecordPlugin arp = new ActiveRecordPlugin(druidPlugin);
+        ActiveRecordPlugin arp = new ActiveRecordPlugin("User",druidPlugin);
         arp.setDialect(new MysqlDialect());
         arp.setShowSql(debug);
         _MappingKit.mapping(arp);
