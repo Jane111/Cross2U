@@ -7,12 +7,12 @@ import com.cross2u.user.util.HttpClientUtil;
 import com.cross2u.user.util.*;
 import com.cross2u.user.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigInteger;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,19 +24,42 @@ import com.alibaba.fastjson.JSONObject;
 @RequestMapping("/business")
 //@GetMapping是一个组合注解，是@RequestMapping(method = RequestMethod.GET)的缩写。
 //@PostMapping是一个组合注解，是@RequestMapping(method = RequestMethod.POST)的缩写。
-public class bLj {
+public class BusinessControllerL {
 
     @Autowired
     businessServiceL bs;
     @Autowired
     JsonResult jr;
 
+    /*
+    * 面向其他模块
+    * */
+    //1、根据Id得到business的头像，昵称，级别，主营行业,姓名
+    @RequestMapping("/findBusinessDetailByBId/{bId}")
+    public JsonResult findBusinessDetailByBId(
+            @PathVariable("bId") BigInteger bId)
+    {
+        JSONObject result = bs.selectBusinessDetailByBId(bId);
+        if(result!=null)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
+    /*
+    * 面向前端的controller
+    * */
     //1、小程序用户授权
     @RequestMapping("/authorize")
     public JsonResult authorize(
-            @RequestParam("code") String code,
-            @RequestParam("vWeiXinIcon") String vWeiXinIcon,
-            @RequestParam("vWeiXinName") String vWeiXinName)
+            @RequestParam("code") String code)
+//            @RequestParam("vWeiXinIcon") String vWeiXinIcon,
+//            @RequestParam("vWeiXinName") String vWeiXinName
     {
         // 配置请求参数
         Map<String, String> param = new HashMap<>();
@@ -59,8 +82,8 @@ public class bLj {
         if(vs == null){
 
             Visitor insert_visitor = new Visitor();
-            insert_visitor.setVWeiXinName(vWeiXinName);
-            insert_visitor.setVWeiXinIcon(vWeiXinIcon);
+//            insert_visitor.setVWeiXinName(vWeiXinName);
+//            insert_visitor.setVWeiXinIcon(vWeiXinIcon);
             insert_visitor.setVOpenId(open_id);
 
             // 添加到数据库
@@ -123,32 +146,7 @@ public class bLj {
         }
         return jr;
     }
-    //12、回复商品评价
-    @RequestMapping("/addCommentReply")
-    public JsonResult addCommentReply(
-            @RequestParam("berECId") BigInteger berECId,
-            @RequestParam("berErId") BigInteger berErId,
-            @RequestParam("berSpeaker") BigInteger berSpeaker,
-            @RequestParam("berCotent") String berCotent
 
-    )
-    {
-        Bevalreply bevalreply = new Bevalreply();
-        bevalreply.setBerECId(berECId);
-        bevalreply.setBerErId(berErId);
-        bevalreply.setBerSpeaker(berSpeaker);
-        bevalreply.setBerCotent(berCotent);
-        boolean result = bs.insertBevalreply(bevalreply);
-        if(result)
-        {
-            jr.setResult(ResultCodeEnum.SUCCESS);
-        }
-        else
-        {
-            jr.setResult(ResultCodeEnum.ADD_ERROR);
-        }
-        return jr;
-    }
     //15、收藏商品
     @RequestMapping("/addCollectWare")
     public JsonResult addCollectWare(
@@ -177,38 +175,6 @@ public class bLj {
     )
     {
         List<Businesssearchrecord> result = bs.selectSearchRecord(bsrBusiness);
-        if(!result.isEmpty())
-        {
-            jr.setResult(ResultCodeEnum.SUCCESS);
-        }
-        else
-        {
-            jr.setResult(ResultCodeEnum.FIND_ERROR);
-        }
-        jr.setData(result);
-        return jr;
-    }
-    //35、首页显示一级目录
-    @RequestMapping("/showFirstClass")
-    public JsonResult showFirstClass()
-    {
-        JSONArray result = bs.selectFirstClass();
-        if(!result.isEmpty())
-        {
-            jr.setResult(ResultCodeEnum.SUCCESS);
-        }
-        else
-        {
-            jr.setResult(ResultCodeEnum.FIND_ERROR);
-        }
-        jr.setData(result);
-        return jr;
-    }
-    //36、显示二级三级目录
-    @RequestMapping("/showSecondClass")
-    public JsonResult showSecondClass(@RequestParam("ewWId") BigInteger ctParentId)
-    {
-        JSONArray result = bs.selectSecondClass(ctParentId);
         if(!result.isEmpty())
         {
             jr.setResult(ResultCodeEnum.SUCCESS);

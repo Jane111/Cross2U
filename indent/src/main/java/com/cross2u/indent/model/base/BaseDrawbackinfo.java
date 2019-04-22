@@ -91,11 +91,11 @@ public abstract class BaseDrawbackinfo<M extends BaseDrawbackinfo<M>> extends Mo
 		return get("diImg3");
 	}
 
-	public void setDiAId(Long diAId) {
+	public void setDiAId(BigInteger diAId) {
 		set("diAId", diAId);
 	}
 
-	public Long getDiAId() {
+	public BigInteger getDiAId() {
 		return get("diAId");
 	}
 

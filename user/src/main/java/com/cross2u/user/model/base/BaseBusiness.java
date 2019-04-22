@@ -97,6 +97,22 @@ public abstract class BaseBusiness<M extends BaseBusiness<M>> extends Model<M> i
 		return get("bOpenId");
 	}
 
+    public void setBWeiXinName(String bWeiXinName) {
+        set("bWeiXinName", bWeiXinName);
+    }
+
+    public String getBWeiXinName() {
+        return get("bWeiXinName");
+    }
+
+    public void setBWeiXinIcon(String bWeiXinIcon) {
+        set("bWeiXinName", bWeiXinIcon);
+    }
+
+	public String getBWeiXinIcon() {
+		return get("bWeiXinIcon");
+	}
+
 	public void setBIdUpImage(String bIdUpImage) {
 		set("bIdUpImage", bIdUpImage);
 	}

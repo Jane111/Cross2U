@@ -7,7 +7,7 @@ import com.jfinal.template.stat.ast.For;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+/*
 @Service
 public class WareServicesZ {
 
@@ -42,7 +42,6 @@ public class WareServicesZ {
         }
         return formatoptions;
     }
-
     public void addCatalog(String name,String fatherid,String rank)
     {
         Category category=new Category();
@@ -53,3 +52,4 @@ public class WareServicesZ {
     }
 
 }
+*/

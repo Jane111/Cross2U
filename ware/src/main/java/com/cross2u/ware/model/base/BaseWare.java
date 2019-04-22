@@ -33,11 +33,11 @@ public abstract class BaseWare<M extends BaseWare<M>> extends Model<M> implement
 		return get("wClass");
 	}
 
-	public void setWDeliverArea(java.math.BigInteger wDeliverArea) {
+	public void setWDeliverArea(String wDeliverArea) {
 		set("wDeliverArea", wDeliverArea);
 	}
 
-	public java.math.BigInteger getWDeliverArea() {
+	public String getWDeliverArea() {
 		return get("wDeliverArea");
 	}
 
