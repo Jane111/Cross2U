@@ -1,5 +1,9 @@
 package com.cross2u.indent.util;
 
+import org.web3j.tx.Contract;
+
+import java.math.BigInteger;
+
 public class Constant {
     /**
      * 订单状态
@@ -7,6 +11,13 @@ public class Constant {
      * 4：申请退款 5：B已关闭的 6:M已关闭
      * 7：商品异常关闭（强制停止） 9: M待评价
      */
+
+    public static final  BigInteger GAS = Contract.GAS_LIMIT;
+    public static final BigInteger GAS_PRICE = Contract.GAS_PRICE;
+    public static final String PASSWORD="123456";
+    public static final String PATH="E:/IDEAworkspace/private-geth/keystore/UTC--2019-03-23T01-43-06.760528400Z--6edf076703ec6dd2dd1e14b416b93ebe1320ee4e";
+    public static final String ADDRESS="";
+    public static final String NETWORKID="82200";
 
     public static final String IN_WAIT_PAY="0";
     public static final String IN_COOPERATION="1";

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import com.alibaba.fastjson.JSONObject;
 
+import javax.servlet.http.HttpServletRequest;
 
 
 @RestController
@@ -55,10 +56,10 @@ public class BusinessControllerL {
         return jr;
     }
     //2、一次得到多个B的头像和昵称
-    @RequestMapping("/findManyBusinessByBId/{bId}")
-    public JsonResult findManyBusinessByBId(
-            @PathVariable("bId") String bId)
+    @RequestMapping("/findManyBusinessByBId")
+    public JsonResult findManyBusinessByBId(HttpServletRequest request)
     {
+        String bId=request.getParameter("bId");
         JSONArray result = bs.selectManyBusinessByBId(bId);
         if(result!=null)
         {

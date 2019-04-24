@@ -37,7 +37,7 @@ public class WareServiceL {
     //得到多个business的信息
     public JSONArray getManyBusinessByBId(String bId)
     {
-        JSONObject response = restTemplate.getForObject("http://User/business/findManyBusinessByBId/"+bId,JSONObject.class);
+        JSONObject response = restTemplate.getForObject("http://User/business/findManyBusinessByBId?bId="+bId,JSONObject.class);
         return response.getJSONArray("data");
     }
     //2、得到商店的store的detail,含有代理信息
@@ -329,32 +329,38 @@ public class WareServiceL {
                 manyBId+=com.getEwCommentator()+",";
             }
         }
-        /*与其他模块通信*/
-        JSONArray manyBusiness = getManyBusinessByBId(manyBId);
-        /*与其他模块通信*/
-        int index=0;
-        //如果小于4个
-        for(Evalware com:comList)
-        {
-            if(com!=null)
+        if (manyBId.equals("")){
+            comment.put("commentList",commentList);//多个评论
+            wareBrief.put("comment",comment);
+        }
+        else {
+            /*与其他模块通信*/
+            JSONArray manyBusiness = getManyBusinessByBId(manyBId);
+            /*与其他模块通信*/
+            int index=0;
+            //如果小于4个
+            for(Evalware com:comList)
             {
-                JSONObject aCom = new JSONObject();
-                aCom.put("ewId",com.getEwId());
-                aCom.put("ewCommentatorId",com.getEwCommentator());//评论者Id
+                if(com!=null)
+                {
+                    JSONObject aCom = new JSONObject();
+                    aCom.put("ewId",com.getEwId());
+                    aCom.put("ewCommentatorId",com.getEwCommentator());//评论者Id
 
-                JSONObject business = manyBusiness.getJSONObject(index);
-                aCom.put("ewCommentatorName",business.getString("vWeiXinName"));//代理商昵称
-                aCom.put("ewCommentatorIcon",business.getString("vWeiXinIcon"));//评论者头像
+                    JSONObject business = manyBusiness.getJSONObject(index);
+                    aCom.put("ewCommentatorName",business.getString("vWeiXinName"));//代理商昵称
+                    aCom.put("ewCommentatorIcon",business.getString("vWeiXinIcon"));//评论者头像
 
-                aCom.put("ewCotent",com.getEwCotent());
-                commentList.add(aCom);
-                index++;
+                    aCom.put("ewCotent",com.getEwCotent());
+                    commentList.add(aCom);
+                    index++;
+                }
             }
+
+            comment.put("commentList",commentList);//多个评论
+            wareBrief.put("comment",comment);
         }
 
-        comment.put("commentList",commentList);//多个评论
-
-        wareBrief.put("comment",comment);
 
         //店铺信息
         JSONObject storeInfo=new JSONObject();

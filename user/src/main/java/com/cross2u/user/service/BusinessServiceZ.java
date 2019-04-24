@@ -583,9 +583,14 @@ public class BusinessServiceZ {
                 "where sId=? ";
         Record record= Db.findFirst(sql,new BigInteger(sId));
         jsonObject.put("sName",record.get("sName"));
-        String sPhoto=record.get("sPhoto");
-        String[] photos=sPhoto.split(",");
-        jsonObject.put("sPhoto",photos);
+        if (record.get("sPhoto")==null){
+            jsonObject.put("sPhoto","https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1553583074485&di=157acbbe9222ca5be09ecf2b88cc6ed2&imgtype=0&src=http%3A%2F%2F5b0988e595225.cdn.sohucs.com%2Fimages%2F20180118%2Fa0163c6be9d247918669229bed6c7280.png");
+        }else {
+            String sPhoto=record.get("sPhoto");
+            String[] photos=sPhoto.split(",");
+            jsonObject.put("sPhoto",photos);
+        }
+
         jsonObject.put("sDescribe",record.get("sDescribe"));
         jsonObject.put("sScore",record.get("sScore"));
         jsonObject.put("mmName",record.get("mmName"));

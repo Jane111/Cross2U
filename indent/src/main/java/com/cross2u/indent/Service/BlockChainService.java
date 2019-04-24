@@ -1,24 +1,13 @@
 package com.cross2u.indent.Service;
 
-import com.cross2u.indent.util.Indent_sol_Indent;
+import com.cross2u.indent.Blockchain.Indent;
 import com.cross2u.indent.util.IpfsFile;
-import com.cross2u.user.util.Constant;
-import org.apache.http.Consts;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.cross2u.indent.util.Constant;
 import org.springframework.stereotype.Service;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.methods.request.Transaction;
-import org.web3j.protocol.core.methods.response.EthAccounts;
-import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
-import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
-import org.web3j.protocol.core.methods.response.EthSendTransaction;
-
-import java.math.BigInteger;
+import org.web3j.protocol.http.HttpService;
 
 @Service
 public class BlockChainService {
@@ -28,8 +17,8 @@ public class BlockChainService {
 
         Credentials credentials = WalletUtils.loadCredentials(Constant.PASSWORD, Constant.PATH);
         String address = Constant.ADDRESS;
-        Indent_sol_Indent indent = Indent_sol_Indent.load(Constant.ADDRESS, web3j, credentials, Constant.GAS_PRICE,
-                Constant.GAS_LIMIT);
+        Indent indent = Indent.load(Constant.ADDRESS, web3j, credentials, Constant.GAS_PRICE,
+                Constant.GAS);
         String ipfs_hash = indent.getContractAddress();
         System.out.println("ipfshash"+ipfs_hash);
         String data = IpfsFile.get(ipfs_hash);
@@ -38,14 +27,14 @@ public class BlockChainService {
     }
 
     // set data to ipfs and get a hash, the save the hash to blockchain
-    public Boolean setData(Web3j web3j, String data) throws Exception {
+    public String setData(String _mid, String _wId,String _indentNum,String _time) throws Exception {
+        Web3j web3j = Web3j.build(new HttpService());  // defaults to http://localhost:8545/ http://10.169.42.25:9090/
+
         Credentials credentials = WalletUtils.loadCredentials(Constant.PASSWORD,  Constant.PATH);
         String address = Constant.ADDRESS;
-        Indent_sol_Indent indent = Indent_sol_Indent.load(Constant.ADDRESS, web3j, credentials, Constant.GAS_PRICE,
-                Constant.GAS_LIMIT);
-        String ipfs_hash = IpfsFile.add(data);
-        //indent.setData(ipfs_hash, Constant.GAS_VALUE).send();
-        return true;
+        Indent contract = Indent.deploy(web3j,credentials, Constant.GAS_PRICE, Constant.GAS,_mid,_indentNum,_indentNum,_time).send();  // constructor params
+
+        return contract.getDeployedAddress(Constant.NETWORKID);
     }
 
 }
