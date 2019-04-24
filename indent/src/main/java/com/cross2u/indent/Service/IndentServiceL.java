@@ -454,6 +454,8 @@ import java.util.List;
         indentDetail.put("outCreateTime",sdf.format(outIndent.getOutCreateTime()));//下单时间
         indentDetail.put("outNumber",outIndent.getOutNumber());//订单编号
         indentDetail.put("outName",outIndent.getOutCName());//买家昵称
+        indentDetail.put("outExpress",outIndent.getOutExpress());
+        indentDetail.put("outExpressCompany",outIndent.getOutExpressCompany());
         indentDetail.put("outCPhone",outIndent.getOutCPhone());//买家联系方式
         indentDetail.put("outCAddress",outIndent.getOutCAddress());//买家地址
         indentDetail.put("outCInfo",outIndent.getOutCInfo().split(","));//买家个人信息照片--身份证正反面 ‘,’隔开 可能为null
@@ -482,36 +484,62 @@ import java.util.List;
 
         Returngoods returngoods = Returngoods.dao.findFirst("select * from returngoods " +
                 "where rgOOId=?",outIndent.getOutId());
-        indentDetail.put("rgId",returngoods.getRgId());//退货ID
-        indentDetail.put("rgrReasons",returngoods.getRgReasons());//退货详细原因
+        if (returngoods==null){//没有退货
+            indentDetail.put("rgId",0);//退货ID
+            indentDetail.put("rgrReasons","");//退货详细原因
 
-        Returngoodreasons returngoodreasons = Returngoodreasons.dao.findById(returngoods.getRgType());
-        indentDetail.put("rgReasons",returngoodreasons.getRgrReasons());//退货原因，由类型去找
-        indentDetail.put("rcCatalog",Returncatalog.dao.findById(returngoodreasons.getRgrRCId()).getRcCatalog());//退货catelog，退货或退款
+            indentDetail.put("rgReasons","");//退货原因，由类型去找
+            indentDetail.put("rcCatalog","");//退货catelog，退货或退款
 
-        indentDetail.put("rgImg1",returngoods.getRgImg1());//退货凭证，最多三张,可能为null
-        indentDetail.put("rgImg2",returngoods.getRgImg2());//退货凭证，最多三张,可能为null
-        indentDetail.put("rgImg3",returngoods.getRgImg3());//退货凭证，最多三张,可能为null
-        indentDetail.put("copCreate",sdf.format(returngoods.getRgCreateTime()));//申请时间
+            indentDetail.put("rgImg1","");//退货凭证，最多三张,可能为null
+            indentDetail.put("rgImg2","");//退货凭证，最多三张,可能为null
+            indentDetail.put("rgImg3","");//退货凭证，最多三张,可能为null
+            indentDetail.put("copCreate","");//申请时间
 
-        if(moreDetail)
-        {
-            /*与其他模块通信*/
-            JSONObject returngoodmould = getReturngoodmouldFromOther(returngoods.getRgRGMId());
-            indentDetail.put("rgmName",returngoodmould.getString("rgmName"));//M收货人姓名
-            indentDetail.put("rgmPhone",returngoodmould.getString("rgmPhone"));//M收货人联系方式
-            indentDetail.put("rgmAddress",returngoodmould.getString("rgmAddress"));//M收货地址
+            indentDetail.put("rgmName","");
+            indentDetail.put("rgmPhone","");//M收货人联系方式
+            indentDetail.put("rgmAddress","");//M收货地址
             /*与其他模块通信*/
 
-            indentDetail.put("rgiTrackNumber",returngoods.getRgiTrackNumber());//C上传的物流单号 可能为null
-            indentDetail.put("rgiTrackCompany",returngoods.getrgTrackCompany());//物流快递公司
-            indentDetail.put("rgiImg",returngoods.getRgImg());//快递凭证
-            indentDetail.put("rgiTrakTime",sdf.format(returngoods.getRgiTrakTime()));//c登记物流单号的时间
-            indentDetail.put("rgModify",sdf.format(returngoods.getRgModifyTime()));//returngoods表修改的时间
-            indentDetail.put("rgState",returngoods.getRgState());//returngoods表中rgState
-
-
+            indentDetail.put("rgiTrackNumber","");//C上传的物流单号 可能为null
+            indentDetail.put("rgiTrackCompany","");//物流快递公司
+            indentDetail.put("rgiImg","");//快递凭证
+            indentDetail.put("rgiTrakTime","");//c登记物流单号的时间
+            indentDetail.put("rgModify","");//returngoods表修改的时间
+            indentDetail.put("rgState","");//returngoods表中rgState
         }
+        else {
+            indentDetail.put("rgId",returngoods.getRgId());//退货ID
+            indentDetail.put("rgrReasons",returngoods.getRgReasons());//退货详细原因
+            Returngoodreasons returngoodreasons = Returngoodreasons.dao.findById(returngoods.getRgType());
+            indentDetail.put("rgReasons",returngoodreasons.getRgrReasons());//退货原因，由类型去找
+            indentDetail.put("rcCatalog",Returncatalog.dao.findById(returngoodreasons.getRgrRCId()).getRcCatalog());//退货catelog，退货或退款
+
+            indentDetail.put("rgImg1",returngoods.getRgImg1());//退货凭证，最多三张,可能为null
+            indentDetail.put("rgImg2",returngoods.getRgImg2());//退货凭证，最多三张,可能为null
+            indentDetail.put("rgImg3",returngoods.getRgImg3());//退货凭证，最多三张,可能为null
+            indentDetail.put("copCreate",sdf.format(returngoods.getRgCreateTime()));//申请时间
+
+            if(moreDetail)
+            {
+                /*与其他模块通信*/
+                JSONObject returngoodmould = getReturngoodmouldFromOther(returngoods.getRgRGMId());
+                indentDetail.put("rgmName",returngoodmould.getString("rgmName"));//M收货人姓名
+                indentDetail.put("rgmPhone",returngoodmould.getString("rgmPhone"));//M收货人联系方式
+                indentDetail.put("rgmAddress",returngoodmould.getString("rgmAddress"));//M收货地址
+                /*与其他模块通信*/
+
+                indentDetail.put("rgiTrackNumber",returngoods.getRgiTrackNumber());//C上传的物流单号 可能为null
+                indentDetail.put("rgiTrackCompany",returngoods.getrgTrackCompany());//物流快递公司
+                indentDetail.put("rgiImg",returngoods.getRgImg());//快递凭证
+                indentDetail.put("rgiTrakTime",sdf.format(returngoods.getRgiTrakTime()));//c登记物流单号的时间
+                indentDetail.put("rgModify",sdf.format(returngoods.getRgModifyTime()));//returngoods表修改的时间
+                indentDetail.put("rgState",returngoods.getRgState());//returngoods表中rgState
+
+            }
+        }
+
+
         return indentDetail;
     }
     //11.M-C售后订单操作之M拒绝-->发通知B，12.M-C售后订单操作之M同意-->发通知B

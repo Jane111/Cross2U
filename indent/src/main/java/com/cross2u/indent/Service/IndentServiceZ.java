@@ -43,15 +43,18 @@ public class IndentServiceZ {
     @Autowired
     RestTemplate restTemplate;
 
-    public JSONArray showCIndentList(String bId, String outStatus) {
+    public JSONArray showCIndentList(String bId, String outStatus,Integer pageIndex,Integer pageSize) {
         JSONArray array=new JSONArray();
         String sql="SELECT outId,outPlatform,outStore,outStatus,outPrice,outUnit,outAmount," +
                 "pId,wTitle,wMainImage,sId,sName,outCName,outCreateTime,outModifyTime " +
                 " from ((outindent INNER JOIN  product on outindent.outPIdentifier = product.pIdentifier) INNER JOIN ware on wId=pWare)INNER JOIN store on ware.wStore=store.sId " +
                 " WHERE outindent.outBusiness=? and outindent.outStatus ";
-        if (outStatus.equals("1")) sql=sql+" in (1,2) ORDER BY outCreateTime DESC ";
-        else if(outStatus.equals("3"))sql=sql+"= 3 ORDER BY outCreateTime DESC ";
-        else if(outStatus.equals("4"))sql=sql+"= 4 ORDER BY outCreateTime DESC ";
+        if (outStatus.equals("1")) sql=sql+" in (1,2) ";
+        else if(outStatus.equals("3"))sql=sql+"= 3 ";
+        else if(outStatus.equals("4"))sql=sql+"= 4 ";
+
+        sql=sql+" limit "+pageSize+" offset "+(pageIndex-1)*pageSize+" ";//服务端分页
+
         List<Record> outindents= Db.find(sql,bId);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         for (Record outindent: outindents){
@@ -109,8 +112,8 @@ public class IndentServiceZ {
         return object;
     }
 
-    public JSONArray showCRturnIndent(String bId, String outStatus){
-        JSONArray outindents=showCIndentList(bId,outStatus);
+    public JSONArray showCRturnIndent(String bId, String outStatus,Integer pageIndex,Integer pageSize){
+        JSONArray outindents=showCIndentList(bId,outStatus,pageIndex,pageSize);
         for (int i=0;i<outindents.size();i++){
             JSONObject outindent=outindents.getJSONObject(i);
             System.out.println(outindent.getBigInteger("outId"));
@@ -665,7 +668,7 @@ public class IndentServiceZ {
     }
 
     //创建外拉订单
-    @Scheduled(cron = "0 0/10 * * * ?")
+    @Scheduled(cron = "0 0/30 * * * ?")
     public void createOutIndent(){
         String sql="SELECT * " +
                 "from indent " +
@@ -794,6 +797,23 @@ public class IndentServiceZ {
         return indent.update();
     }
 
+    //根据outId找订单
+    public Outindent getOutIndentById(String outId) {
+        return Outindent.dao.findById(outId);
+    }
+    //根据sid找mid
+    public String getMMNameBySId(BigInteger outSId) {
+        String sql="SELECT mmName from mainmanufacturer WHERE mmStore=?";
+        Record record=Db.findFirst(sql,outSId);
+        return record.get("mmName");
+    }
+    //根据商品编号找商品信息
+    public Record getWareByWIdentifier(String wId) {
+        String sql="SELECT wTitle,wMainImage from ware where wIdentifier=?";
+        Record ware=Db.findFirst(sql,wId);
+        return ware;
+    }
+
     /*public void createContract(String _mId, String _wId, String _indentNum, String _time) throws Exception {
         // 创建一个 web3j 的连接
         Web3j web3j = Web3j.build(new HttpService("http://10.169.102.247:8989/"));//http://10.169.102.247:8989/
@@ -851,5 +871,7 @@ public class IndentServiceZ {
                 "0x<address>|<ensName>", web3j,credentials,GAS_PRICE, BigInteger.valueOf(200000));
         return contract;
     }*/
+
+
 
 }

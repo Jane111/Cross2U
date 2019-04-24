@@ -2,19 +2,37 @@ package com.cross2u.indent.Controller;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.cross2u.indent.Blockchain.blockchain;
 import com.cross2u.indent.Service.IndentServiceZ;
 import com.cross2u.indent.model.Drawbackinfo;
+import com.cross2u.indent.model.Outindent;
 import com.cross2u.indent.util.BaseResponse;
 import com.cross2u.indent.util.Constant;
 import com.cross2u.indent.util.ResultCodeEnum;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import com.jfinal.plugin.activerecord.Record;
+import jnr.ffi.annotations.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.View;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @CrossOrigin
 @RestController
@@ -31,18 +49,18 @@ public class IndentController {
         BaseResponse baseResponse = new BaseResponse();
         String bid = request.getParameter("bId");
         String outStatus = request.getParameter("outStatus");//订单状态
-        String pageIndex= request.getParameter("pageIndex");
-        String pageSize=request.getParameter("pageSize");
+        Integer pageIndex= Integer.valueOf(request.getParameter("pageIndex"));
+        Integer pageSize= Integer.valueOf(request.getParameter("pageSize"));
         JSONArray outindents = null;
 
         switch (outStatus) {
             case "1"://1：未发货
             case "2"://2：已发货
             case "3":
-                outindents = service.showCIndentList(bid, outStatus);//3：已完成
+                outindents = service.showCIndentList(bid, outStatus,pageIndex,pageSize);//3：已完成
                 break;
             case "4":
-                outindents = service.showCRturnIndent(bid, outStatus);//售后
+                outindents = service.showCRturnIndent(bid, outStatus,pageIndex,pageSize);//售后
                 break;
             default:
                 baseResponse.setResult(ResultCodeEnum.FIND_FAILURE);//查询失败
@@ -323,7 +341,7 @@ public class IndentController {
      * @param request
      * @return
      */
-    @RequestMapping()
+    @RequestMapping("/indent/cancelMIndent")
     @ResponseBody
     public BaseResponse cancelMIndent(HttpServletRequest request){
         String inId=request.getParameter("inId");
@@ -335,5 +353,112 @@ public class IndentController {
         }
         return response;
     }
+
+    //生成二维码
+    @RequestMapping("/indent/getQrcode")
+    public BaseResponse getQrcode(HttpServletRequest request,HttpServletResponse resp) throws Exception {
+        String outId=request.getParameter("outId");
+        String outExpress=request.getParameter("outExpress");
+        Outindent outindent=service.getOutIndentById(outId);
+
+        String mId=service.getMMNameBySId(outindent.getOutSId());//品牌商名称
+        String wId=outindent.getOutWIdentifier();//商品编号
+        String indentNum=outExpress;//快递单号
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
+        Date date=new Date();
+        String time=sdf.format(date);//发货时间
+
+        ServletOutputStream stream = null;
+        //BufferedInputStream bis = null;//导出文件
+        try {
+            stream = resp.getOutputStream();
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            //编码
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+            //边框距
+            hints.put(EncodeHintType.MARGIN, 0);
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+
+            String contractAddr= blockchain.getContractAddr( mId,wId,indentNum,time);//获取合约地址
+            String fileName=UUID.randomUUID().toString().substring(1,10);
+            BitMatrix bm = qrCodeWriter.encode(contractAddr, BarcodeFormat.QR_CODE, 400, 400, hints);
+            Path path=new java.io.File("C:/Users/lenovo/Desktop/cross2u/"+fileName+".png").toPath();
+            MatrixToImageWriter.writeToStream(bm, "png", stream);
+
+
+            /**导出文件
+             * File file =new File("C:/Users/lenovo/Desktop/cross2u/"+fileName+".png");
+            resp.setHeader("content-type", "application/octet-stream");
+            resp.setContentType("application/octet-stream");
+            resp.setHeader("Content-Disposition", "attachment; filename=" + fileName+".png");
+            byte[] buff = new byte[1024];
+            OutputStream os = null;
+            os = resp.getOutputStream();
+            bis = new BufferedInputStream(new FileInputStream(file));
+            int i = bis.read(buff);
+
+            while (i != -1) {
+                os.write(buff, 0, buff.length);
+                os.flush();
+                i = bis.read(buff);
+            }**/
+
+        } catch (Exception e) {
+            e.getStackTrace();
+        } finally {
+            if (stream != null) {
+                stream.flush();
+                stream.close();
+            }
+            /*if (bis != null) {
+                try {
+                    bis.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }*/
+        }
+        response.setResult(ResultCodeEnum.FIND_FAILURE);
+        return response;
+    }
+
+
+    @RequestMapping("/indent/getContractInfo")
+    public BaseResponse getContractInfo(HttpServletRequest request)throws Exception{
+        BaseResponse response=new BaseResponse();
+        String contractAddr=request.getParameter("contractAddr");
+        if(!contractAddr.contains("0x")){//不是符合要求的地址
+            response.setResult(ResultCodeEnum.NO_THIS_ADDR);//无法根据该合约地址
+            return response;
+        }
+        String result=blockchain.getContractInfo(contractAddr);
+        if (result==null){
+            response.setResult(ResultCodeEnum.NO_THIS_ADDR);//无法根据该合约地址
+            return response;
+        }
+        String [] resultS=result.split("#");//String result=mId+"#"+wId+"#"+indentNum+"#"+time;
+        if (resultS.length!=4){
+            response.setResult(ResultCodeEnum.FIND_FAILURE);
+            return response;
+        }
+        String mId=resultS[0];
+        String wId=resultS[1];
+        Record ware=service.getWareByWIdentifier(wId);
+        String indentNum=resultS[2];
+        String time=resultS[3];
+        JSONObject jsonObject=new JSONObject();
+        jsonObject.put("mName",mId);//品牌商名称
+        jsonObject.put("wIdentifier",wId);//商品编号
+        jsonObject.put("wTitle",ware.get("wTitle"));
+        jsonObject.put("wMainImage",ware.get("wMainImage"));
+        jsonObject.put("expressNum",indentNum);//物流单号
+        jsonObject.put("time",time);//发货时间
+        response.setData(jsonObject);
+        response.setResult(ResultCodeEnum.SUCCESS);
+        return response;
+    }
+
+
+
 
 }

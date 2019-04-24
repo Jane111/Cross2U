@@ -147,7 +147,7 @@ public class AdminServiceZ {
 
     private BigInteger getSIdByMId(String mId){
         String sql="select sId from store where sMmId=?";
-        String sId=Db.query(sql).toString();
+        String sId=Db.queryStr(sql,mId);
         return new BigInteger(sId);
     }
 

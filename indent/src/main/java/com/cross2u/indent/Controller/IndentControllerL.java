@@ -2,6 +2,7 @@ package com.cross2u.indent.Controller;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.cross2u.indent.model.Indent;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.IAtom;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -388,6 +389,7 @@ public class IndentControllerL {
         if(result)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
+
         }
         else
         {

@@ -159,7 +159,6 @@
     <orderEntry type="library" name="Maven: org.apache.commons:commons-compress:1.18" level="project" />
     <orderEntry type="library" name="Maven: com.github.virtuald:curvesapi:1.05" level="project" />
     <orderEntry type="library" name="Maven: org.json:json:20160810" level="project" />
-    <orderEntry type="library" name="Maven: org.apache.mahout:mahout:0.11.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.mahout:mahout-examples:0.11.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.mahout:mahout-hdfs:0.11.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.hadoop:hadoop-client:2.4.1" level="project" />
@@ -202,7 +201,7 @@
     <orderEntry type="module-library">
       <library name="Maven: jdk.tools:jdk.tools:1.7">
         <CLASSES>
-          <root url="jar://C:/Program Files/Java/jdk1.8.0_144/lib/tools.jar!/" />
+          <root url="jar://F:/Java/jdk1.8.0_73/lib/tools.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

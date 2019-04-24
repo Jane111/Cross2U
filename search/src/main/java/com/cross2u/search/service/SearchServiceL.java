@@ -77,7 +77,7 @@ public class SearchServiceL {
             showWare.put("wMainImage",jsonObject.getString("wmainimage"));
             //货币单位的转换
             Float money = MoneyUtil.transferMoney(jsonObject.getFloat("wstartprice"),jsonObject.getString("wpriceunit"));
-            showWare.put("wPrice",jsonObject.getString("money"));
+            showWare.put("wPrice",money);
             wareList.add(showWare);
         }
         return wareList;

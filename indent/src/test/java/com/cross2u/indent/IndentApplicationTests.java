@@ -2,8 +2,7 @@ package com.cross2u.indent;
 
 import com.cross2u.indent.Service.IndentServiceL;
 import com.cross2u.indent.Service.IndentServiceZ;
-import com.cross2u.indent.util.Indent_sol_Indent;
-import com.cross2u.user.util.Constant;
+import com.cross2u.indent.Blockchain.Indent;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,18 +21,13 @@ import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
-import org.web3j.protocol.core.methods.response.Web3ClientVersion;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Contract;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,12 +37,13 @@ import static com.jfinal.plugin.activerecord.Db.query;
 @SpringBootTest
 public class IndentApplicationTests {
 
-	@Autowired
+    @Autowired
     IndentServiceZ is;
 
-	@Autowired
+    @Autowired
     IndentServiceL IS;
-	/*@Test
+
+/*@Test
 	public void contextLoads() {
 		try {
 			is.createContract("1","2","111","2019-3-18");
@@ -70,36 +65,38 @@ public class IndentApplicationTests {
     BigInteger GAS = Contract.GAS_LIMIT;
     BigInteger GAS_PRICE = Contract.GAS_PRICE;
 
-	@Test
+    @Test
     public void test() throws Exception {
-		Web3j web3j = Web3j.build(new HttpService());  // defaults to http://localhost:8545/ http://10.169.42.25:9090/
-        Credentials credentials = WalletUtils.loadCredentials("123456", "E:/IDEAworkspace/private-geth/keystore/UTC--2019-03-23T01-43-06.760528400Z--6edf076703ec6dd2dd1e14b416b93ebe1320ee4e");
+        Web3j web3j = Web3j.build(new HttpService());  // defaults to http://localhost:8545/
+        Credentials credentials = WalletUtils.loadCredentials("123456", "E:\\IDEAworkspace\\private-geth\\keystore\\UTC--2019-03-23T01-43-06.760528400Z--6edf076703ec6dd2dd1e14b416b93ebe1320ee4e");
 
         String address = "0x6edf076703ec6dd2dd1e14b416b93ebe1320ee4e";
 
         EthGetBalance ethGetBalance = web3j.ethGetBalance(address, DefaultBlockParameterName.LATEST).send();
 
         if(ethGetBalance!=null){
-        // 打印账户余额
+            // 打印账户余额
             System.out.println(ethGetBalance.getBalance());
-        // 将单位转为以太，方便查看
+            // 将单位转为以太，方便查看
             System.out.println(Convert.fromWei(ethGetBalance.getBalance().toString(), Convert.Unit.ETHER));
         }
 
         //部署智能合约
-        Indent_sol_Indent contract = Indent_sol_Indent.deploy(web3j,credentials, GAS_PRICE, GAS,"11","22","33","2019-3-22").send();  // constructor params
+        Indent contract = Indent.deploy(web3j,credentials, GAS_PRICE, GAS,"11","22","33","2019-3-22").send();  // constructor params
+        String contractAddress=contract.getContractAddress();
 
         //Indent_sol_Indent test=Indent_sol_Indent.load(contract.getContractAddress(),web3j,credentials, GAS_PRICE, GAS);
 
         //Transaction transaction=contract.
 
-        System.out.println("address"+contract.getContractAddress()+"     hash:"+contract.hashCode()+
-                "  contract.getIndentNum()"+contract.getIndentNum()+" valid"+contract.isValid());
+        System.out.println("deploy addr"+contract.getTransactionReceipt()+"\n address"+contract.getContractAddress()+"\n hash:"+contract.hashCode()+
+                "\n contract.getIndentNum()"+contract.getIndentNum()+"\nvalid"+contract.isValid());
         System.out.println(contract.toString());
         //调用智能合约
-        System.out.println(contract.getIndentNum().send());
-        //System.out.println(test.toString());
-        //System.out.println(test.getIndentNum().send());
+        Transaction transaction = Transaction.createEthCallTransaction(
+                "0x6edf076703ec6dd2dd1e14b416b93ebe1320ee4e","0xbc2a97fe18cd01a713eef360c008a895f118823f",
+               "刘静是猪");
+        System.out.println("tranc: "+transaction.getData());
 
     }
 
@@ -108,7 +105,7 @@ public class IndentApplicationTests {
         Web3j web3j = Web3j.build(new HttpService());  // defaults to http://localhost:8545/ http://10.169.42.25:9090/
         Credentials credentials = WalletUtils.loadCredentials("123456", "E:/IDEAworkspace/private-geth/keystore/UTC--2019-03-22T09-07-59.250376800Z--618a0456af5142c9c97797825d2a5f5b2a8a67ae");
         String contractAddress="0xDB90D99FBCA5e81a36307131D87aC48753A61C0e";
-        Indent_sol_Indent contract = Indent_sol_Indent.load(contractAddress, web3j, credentials, GAS_PRICE, GAS);
+        Indent contract = Indent.load(contractAddress, web3j, credentials, GAS_PRICE, GAS);
         if (contract.isValid()){
             String wId = contract.getwId().send();
             String owner=contract.getOwner().send();
@@ -220,7 +217,10 @@ public class IndentApplicationTests {
         return result;*/
         return null;
     }
-
+    @Test
+    public void indentTsest()
+    {
+    }
 
 
 

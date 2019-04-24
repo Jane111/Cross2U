@@ -24,7 +24,8 @@ public enum ResultCodeEnum
 	UPDATE_FAILURE("20002","修改失败"),
     DELETE_FAILURE("20003","删除失败"),
 	FIND_FAILURE("20004","查询失败"),
-	UNAVAILABLE("20005","UNAVAILABLE");
+	UNAVAILABLE("20005","UNAVAILABLE"),
+	NO_THIS_ADDR("20006","没有该订单信息");
 
 	private String code;
     private String desc;

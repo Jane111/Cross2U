@@ -414,6 +414,10 @@ public class StoreServiceZ {
     public String [] showSPhoto(String sId) {
         Store store=Store.dao.findById(sId);
         String sPhotos=store.getSPhoto();
+        System.out.println("sphoto"+sPhotos);
+        if (sPhotos==null||sPhotos.equals("")){
+            return null;
+        }
         String []photo=sPhotos.split(",");
         return photo;
     }

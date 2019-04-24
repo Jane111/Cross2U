@@ -25,6 +25,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Maven: com.google.zxing:core:3.2.0" level="project" />
+    <orderEntry type="library" name="Maven: com.google.zxing:javase:3.2.0" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.boot:spring-boot-starter-web:2.1.2.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.boot:spring-boot-starter:2.1.2.RELEASE" level="project" />
     <orderEntry type="library" name="Maven: org.springframework.boot:spring-boot-starter-logging:2.1.2.RELEASE" level="project" />
@@ -188,5 +190,7 @@
     <orderEntry type="library" name="Maven: com.github.multiformats:java-multibase:v1.0.0" level="project" />
     <orderEntry type="library" name="Maven: com.github.multiformats:java-multihash:v1.1.0" level="project" />
     <orderEntry type="library" name="Maven: com.github.ipld:java-cid:v1.1.0" level="project" />
+    <orderEntry type="library" name="Maven: com.google.zxing:core:3.2.0" level="project" />
+    <orderEntry type="library" name="Maven: com.google.zxing:javase:3.2.0" level="project" />
   </component>
 </module>
