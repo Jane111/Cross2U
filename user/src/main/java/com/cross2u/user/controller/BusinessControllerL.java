@@ -91,17 +91,74 @@ public class BusinessControllerL {
     /*
     * 面向前端的controller
     * */
-    //1、小程序用户授权
-    @RequestMapping("/authorize")
-    public JsonResult authorize(
+
+    //1、小程序用户授权-cross2u
+    @RequestMapping("/authorize1")
+    public JsonResult authorize1(
             @RequestParam(value="code",required = false) String code)
 //            @RequestParam("vWeiXinIcon") String vWeiXinIcon,
 //            @RequestParam("vWeiXinName") String vWeiXinName
     {
         // 配置请求参数
         Map<String, String> param = new HashMap<>();
-        param.put("appid", Constant.APPID);
-        param.put("secret", Constant.APPSECRET);
+        param.put("appid", Constant.APPID1);
+        param.put("secret", Constant.APPSECRET1);
+        param.put("js_code", code);
+        param.put("grant_type", Constant.GRANTTYPE);
+        // 发送请求
+        System.out.println("code="+code);
+        String wxResult = HttpClientUtil.doGet(Constant.LOGINURL, param);
+        System.out.println(wxResult);
+        JSONObject jsonObject = JSONObject.parseObject(wxResult);
+        // 获取参数返回的
+        String session_key = jsonObject.get("session_key").toString();
+        String open_id = jsonObject.get("openid").toString();
+        // 封装返回小程序
+        Map<String, String> result = new HashMap<>();
+        result.put("session_key", session_key);
+        result.put("open_id", open_id);
+        // 根据返回的user实体类，判断用户是否是新用户，是的话，将用户信息存到数据库
+        Visitor vs = bs.selectByOpenId(open_id);
+        if(vs == null){
+
+            Visitor insert_visitor = new Visitor();
+//            insert_visitor.setVWeiXinName(vWeiXinName);
+//            insert_visitor.setVWeiXinIcon(vWeiXinIcon);
+            insert_visitor.setVOpenId(open_id);
+
+            // 添加到数据库
+            Boolean flag = bs.insertVisitor(insert_visitor);
+            if(!flag)
+            {
+                jr.setResult(ResultCodeEnum.ADD_ERROR);
+            }
+        }
+        else{
+            Business business = Business.dao.findFirst("select bId from business where bOpenId=?",open_id);
+            if(business==null)//游客身份
+            {
+                result.put("bId","");
+            }
+            else//business身份
+            {
+                result.put("bId", business.getBId()+"");
+            }
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        jr.setData(result);
+        return jr;
+    }
+    //1、小程序用户授权-cross2u
+    @RequestMapping("/authorize2")
+    public JsonResult authorize2(
+            @RequestParam(value="code",required = false) String code)
+//            @RequestParam("vWeiXinIcon") String vWeiXinIcon,
+//            @RequestParam("vWeiXinName") String vWeiXinName
+    {
+        // 配置请求参数
+        Map<String, String> param = new HashMap<>();
+        param.put("appid", Constant.APPID2);
+        param.put("secret", Constant.APPSECRET2);
         param.put("js_code", code);
         param.put("grant_type", Constant.GRANTTYPE);
         // 发送请求
@@ -223,10 +280,24 @@ public class BusinessControllerL {
             @RequestParam("bsrContent") String bsrContent
     )
     {
-        Businesssearchrecord searchrecord = new Businesssearchrecord();
-        searchrecord.setBsrBusiness(bsrBusiness);
-        searchrecord.setBsrContent(bsrContent);
-        boolean result = searchrecord.save();
+        List<Businesssearchrecord> recordList = Businesssearchrecord.dao.find("select * from searchrecord " +
+                "where bsrBusiness=?",bsrBusiness);
+        boolean flag = false;//该搜索记录在数据库中是没有的
+        boolean result = false;
+        for(Businesssearchrecord br:recordList)
+        {
+            if(br.getBsrContent().equals(bsrContent))
+            {
+                flag = true;
+            }
+        }
+        if(!flag)
+        {
+            Businesssearchrecord searchrecord = new Businesssearchrecord();
+            searchrecord.setBsrBusiness(bsrBusiness);
+            searchrecord.setBsrContent(bsrContent);
+            result = searchrecord.save();
+        }
         if(result)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
