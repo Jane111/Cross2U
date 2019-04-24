@@ -6,6 +6,7 @@ import com.cross2u.user.model.Business;
 import com.cross2u.user.model.Mainmanufacturer;
 import com.cross2u.user.service.AdminServiceZ;
 import com.cross2u.user.util.BaseResponse;
+import com.cross2u.user.util.MailUtil;
 import com.cross2u.user.util.ResultCodeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
