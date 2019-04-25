@@ -50,12 +50,12 @@ public class WebSocketAUtil {
         try {
             if (to.equals("a*")) {
                 System.out.println("我是B/M");
-                clientlist.get(from).getBasicRemote().sendText("欢迎您访问cross2u，有什么可以帮助您的~");
+                clientlist.get(from).getBasicRemote().sendText("欢迎您访问易壳，有什么可以帮助您的~");
             }
             else if(to.charAt(0)=='b'&to.charAt(1)=='m')
             {
                 System.out.println("我是A的客服");
-                clientlist.get(from).getBasicRemote().sendText("欢迎您访问cross2u,祝您工作愉快~");
+                clientlist.get(from).getBasicRemote().sendText("欢迎您访问易壳,祝您工作愉快~");
             }
         } catch (IOException e) {
             e.printStackTrace();
