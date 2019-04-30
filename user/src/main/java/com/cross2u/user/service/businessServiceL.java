@@ -27,6 +27,7 @@ public class businessServiceL {
         JSONObject bDetail = new JSONObject();
         Business business = Business.dao.findFirst("select bRank,bPhone,bOpenId,bName,bMainBusiness,bWeiXinName,bWeiXinIcon " +
                 "from business where bId=?",bId);
+        System.out.println("bId="+bId);
         bDetail.put("bRank",business.getBRank());
         bDetail.put("bName",business.getBName());
         bDetail.put("bMainBusiness",business.getBMainBusiness());

@@ -119,7 +119,14 @@ public class WareServiceL {
         for(Productformat pf:pfList)
         {
 //            JSONObject format=new JSONObject();
-            String format = Format.dao.findById(pf.getPfFormat()).getFName()+":"+Formatoption.dao.findById(pf.getPfFormatOption()).getFoName();
+            String format="";
+            if (pf.getPfFormatOption()==null||pf.getPfFormatOption().equals("")){
+                format = Format.dao.findById(pf.getPfFormat()).getFName()+":"+pf.getPfDefineOption();
+            }
+            else {
+                format= Format.dao.findById(pf.getPfFormat()).getFName()+":"+Formatoption.dao.findById(pf.getPfFormatOption()).getFoName();
+            }
+
             formatList+=format+" ";
             //            format.put("fName",Format.dao.findById(pf.getPfFormat()).getFName());//得到规格名
 //            format.put("foName", Formatoption.dao.findById(pf.getPfFormatOption()).getFoName());//得到规格对应的选项名

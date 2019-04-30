@@ -101,7 +101,7 @@ public abstract class BaseBusiness<M extends BaseBusiness<M>> extends Model<M> i
     }
 
     public void setBWeiXinIcon(String bWeiXinIcon) {
-        set("bWeiXinName", bWeiXinIcon);
+        set("bWeiXinIcon", bWeiXinIcon);
     }
 
 	public String getBWeiXinIcon() {

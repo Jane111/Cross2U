@@ -85,6 +85,7 @@ public class BusinessController {
             business.setBName(bName);
             business.setBPhone(bPhone);
             business.setBEmail(bEmail);
+            business=businessService.saveBusiness(business);
         }
         else {
             business.setBOpenId(bOpenId);
@@ -100,6 +101,7 @@ public class BusinessController {
         if (visitor!=null){
             String bWeiXinIcon=visitor.getString("bWeiXinIcon");
             String bWeiXinName=visitor.getString("bWeiXinName");
+            System.out.println("weixinname"+bWeiXinName+"webxinIcon"+bWeiXinIcon);
             business.setBWeiXinIcon(bWeiXinIcon);
             business.setBWeiXinName(bWeiXinName);
         }

@@ -23,15 +23,14 @@ import java.util.concurrent.TimeUnit;
 public class blockchain {
 
     public static Web3j web3j = Web3j.build(new HttpService());  // defaults to http://localhost:8545/
-
     public static final BigInteger GAS = Contract.GAS_LIMIT;
     public static final BigInteger GAS_PRICE = Contract.GAS_PRICE;
-    public static final String accountAddr="0x6edf076703ec6dd2dd1e14b416b93ebe1320ee4e";
+    public static final String accountAddr="0x2022c5953c3dde8ea1e0366976d8334ef3b7b5b2";
     public static final String accountPassword="123456";
-    public static final String accountPath="E:/IDEAworkspace/private-geth/keystore/UTC--2019-03-23T01-43-06.760528400Z--6edf076703ec6dd2dd1e14b416b93ebe1320ee4e";
+    public static final String accountPath="E:/IDEAworkspace/private-geth/keystore/UTC--2019-04-29T21-31-28.875499400Z--2022c5953c3dde8ea1e0366976d8334ef3b7b5b2";
 
     public static void main(String []args) throws Exception {
-        String addr=getContractAddr("小米旗舰店","11111","803751954438662589","2019-2-3");
+        String addr=getContractAddr("1","11111","20190308045620200001","2019-4-30");
         //String result=getContractInfo(addr);
         System.out.println(addr);
 

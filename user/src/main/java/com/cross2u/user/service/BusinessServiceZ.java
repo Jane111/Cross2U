@@ -96,7 +96,7 @@ public class BusinessServiceZ {
         business.setBRank(1);//等级 一级初始等级
         business.setBScore(0);//信誉分数
         business.setBOtherStatus1(1);//店铺设置在用
-        business.save();
+        business.update();
         return business.getBId();
     }
     public boolean addBusinessStep23(Business business) {
@@ -257,7 +257,7 @@ public class BusinessServiceZ {
 
     public JSONArray showCopStore(String bId, String copState) {
         JSONArray array=new JSONArray();
-        String sql="SELECT copId,sId,sName,sScore,mmLogo,copState" +
+        String sql="SELECT copId,sId,sName,sScore,mmLogo,copState,copModifyTime " +
                 " from (cooperation INNER JOIN store on store.sId=cooperation.copSId) INNER JOIN mainmanufacturer on mainmanufacturer.mmStore=store.sId " +
                 " WHERE cooperation.copBId=? and cooperation.copState=? ";
         if(copState.equals("2")){sql=sql+" or cooperation.copState=3 or cooperation.copState=4";}
@@ -270,6 +270,7 @@ public class BusinessServiceZ {
             object.put("sScore",store.getInt("sScore"));
             object.put("mmLogo",store.get("mmLogo"));
             object.put("copState",store.get("copState"));
+            object.put("copModifyTime",store.get("copModifyTime"));
             array.add(object);
         }
         return array;
@@ -633,6 +634,11 @@ public class BusinessServiceZ {
     public Business getBusinessByOpneId(String bOpenId) {
         String sql="select * from business where bOpenId=? and bOtherStore1 is null";
         return Business.dao.findFirst(sql,bOpenId);
+    }
+
+    public Business saveBusiness(Business business) {
+        business.save();
+        return business;
     }
 }
 
