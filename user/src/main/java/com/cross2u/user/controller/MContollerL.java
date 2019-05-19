@@ -30,7 +30,7 @@ public class MContollerL {
     public JsonResult findMMLogoDetail(
             @PathVariable("mmId") BigInteger mmId)
     {
-        Mainmanufacturer result = ms.selectMMLogoDetail(mmId);
+        JSONObject result = ms.selectMMLogoDetail(mmId);
         if(result!=null)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
@@ -59,6 +59,7 @@ public class MContollerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
 

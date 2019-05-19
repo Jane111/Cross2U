@@ -5,6 +5,6 @@ public class Constant {
 	//小程序相关信息
 	public static final String LOGINURL="https://api.weixin.qq.com/sns/jscode2session";
 	public static final String APPID="wx3c90b45c83bd8a1e";  //邮件的端口
-	public static final String APPSECRET="020acbca530664df4a8bc81acf56304b";//官方发送邮箱号
+	public static final String APPSECRET="4d76dc5a3c1f20a359d4e556a30b9843";//官方发送邮箱号
 	public static final String GRANTTYPE="authorization_code";//不是真实密码是激活码，用于登录邮箱
 }

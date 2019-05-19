@@ -41,6 +41,22 @@ public abstract class BaseCategory<M extends BaseCategory<M>> extends Model<M> i
 		return get("ctEnName");
 	}
 
+	public void setCtName(String ctName) {
+		set("ctName", ctName);
+	}
+
+	public String getCtName() {
+		return get("ctName");
+	}
+
+    public void setCtImg(String ctImg) {
+        set("ctImg", ctImg);
+    }
+
+    public String getCtImg() {
+        return get("ctImg");
+    }
+
 	public void setCtCreateTime(java.util.Date ctCreateTime) {
 		set("ctCreateTime", ctCreateTime);
 	}

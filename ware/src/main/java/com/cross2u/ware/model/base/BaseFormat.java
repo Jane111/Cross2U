@@ -33,6 +33,14 @@ public abstract class BaseFormat<M extends BaseFormat<M>> extends Model<M> imple
 		return get("fEnName");
 	}
 
+	public void setFName(String fName) {
+		set("fName", fName);
+	}
+
+	public String getFName() {
+		return get("fName");
+	}
+
 	public void setFCreateTime(java.util.Date fCreateTime) {
 		set("fCreateTime", fCreateTime);
 	}

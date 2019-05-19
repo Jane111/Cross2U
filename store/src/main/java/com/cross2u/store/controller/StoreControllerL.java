@@ -43,10 +43,26 @@ public class StoreControllerL {
     }
     //2、得到店铺的基本信息
     @RequestMapping("/findStoreDetail/{sId}")
-    public BaseResponse findStore(
-            @PathVariable("sId") BigInteger sId)
+    public BaseResponse findStoreDetail(@PathVariable("sId") BigInteger sId)
     {
         JSONObject result = storeServiceL.selectStoreDetail(sId);
+        if(result!=null)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
+    @RequestMapping("/findStoreDetailCoop")
+    public BaseResponse findStoreDetailCoop(
+            @RequestParam("sId") BigInteger sId,
+            @RequestParam("bId") BigInteger bId)
+    {
+        JSONObject result = storeServiceL.selectStoreDetailCoop(sId,bId);
         if(result!=null)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
@@ -91,6 +107,7 @@ public class StoreControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
+        jr.setData(result);
         return jr;
     }
     //17.M增加退货地址模板
@@ -116,6 +133,7 @@ public class StoreControllerL {
         {
             jr.setResult(ResultCodeEnum.ADD_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //18.M删除退货地址模板
@@ -133,6 +151,7 @@ public class StoreControllerL {
         {
             jr.setResult(ResultCodeEnum.DELETE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //19.M修改退货地址模板
@@ -158,6 +177,7 @@ public class StoreControllerL {
         {
             jr.setResult(ResultCodeEnum.DELETE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
 
@@ -175,6 +195,7 @@ public class StoreControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
+        jr.setData(result);
         return jr;
     }
     //2、显示子账号详情
@@ -190,6 +211,7 @@ public class StoreControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
+        jr.setData(result);
         return jr;
     }
     //3、编辑子账号，6、停用/启用子账号
@@ -225,6 +247,7 @@ public class StoreControllerL {
         {
             jr.setResult(ResultCodeEnum.UPDATE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //5、新建子账号
@@ -258,6 +281,7 @@ public class StoreControllerL {
         {
             jr.setResult(ResultCodeEnum.ADD_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
 
@@ -276,6 +300,7 @@ public class StoreControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
+        jr.setData(result);
         return jr;
     }
     //修改设置情况
@@ -301,6 +326,7 @@ public class StoreControllerL {
         {
             jr.setResult(ResultCodeEnum.UPDATE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
     //修改交易资金担保的设置
@@ -322,6 +348,7 @@ public class StoreControllerL {
         {
             jr.setResult(ResultCodeEnum.UPDATE_ERROR);
         }
+        jr.setData(null);
         return jr;
     }
 }

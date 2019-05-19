@@ -26,6 +26,29 @@ public class businessServiceL {
         bDetail.put("vWeiXinIcon",business.getBWeiXinIcon());
         return bDetail;
     }
+    //2、一次得到多个B的头像和昵称
+    public JSONArray selectManyBusinessByBId(String bId)
+    {
+        JSONArray manyBusiness =  new JSONArray();
+        String[] bList = bId.split(",");
+        for(String b:bList)
+        {
+            JSONObject business = new JSONObject();
+            Business aBusiness = Business.dao.findFirst("select bWeiXinName,bWeiXinIcon " +
+                    "from business where bId=?",new BigInteger(b));
+            business.put("vWeiXinName",aBusiness.getBWeiXinName());
+            business.put("vWeiXinIcon",aBusiness.getBWeiXinIcon());
+            manyBusiness.add(business);
+        }
+        return manyBusiness;
+    }
+    //3、某用户是否收藏某商品
+    public Collect selectBIsCollectW(BigInteger bId,BigInteger wId)
+    {
+        return Collect.dao.findFirst("select * from collect where cOwner=? AND cWare=?",bId,wId);
+    }
+
+
     /*
     * sevice
     * */
@@ -60,7 +83,8 @@ public class businessServiceL {
     //16、显示用户搜索记录
     public List<Businesssearchrecord> selectSearchRecord(BigInteger bsrBusiness)
     {
-        return Businesssearchrecord.dao.find("select bsrContent from Businesssearchrecord limit 10");
+        return Businesssearchrecord.dao.find("select bsrContent " +
+                "from businesssearchrecord where bsrBusiness=? limit 10",bsrBusiness);
     }
     //todo 搜索词的提示和添加搜索记录
 

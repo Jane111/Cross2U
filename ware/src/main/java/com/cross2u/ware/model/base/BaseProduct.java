@@ -49,11 +49,11 @@ public abstract class BaseProduct<M extends BaseProduct<M>> extends Model<M> imp
 		return get("pMoneyUnit");
 	}
 
-	public void setPStorage(java.math.BigInteger pStorage) {
+	public void setPStorage(Integer pStorage) {
 		set("pStorage", pStorage);
 	}
 
-	public java.math.BigInteger getPStorage() {
+	public Integer getPStorage() {
 		return get("pStorage");
 	}
 

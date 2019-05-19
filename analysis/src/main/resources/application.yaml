@@ -13,7 +13,7 @@ eureka:
 
 
 jfinal:
-                         debug: true
-                         jdbcUrl: jdbc:mysql://47.104.5.214:3306/wuhvote?characterEncoding=utf8&serverTimezone=UTC
-                         dbUser: wuhvote
-                         dbPwd: wuhvote...2018
+  debug: true
+  jdbcUrl: jdbc:mysql://localhost:3306/cross2u?characterEncoding=utf8&serverTimezone=UTC
+  dbUser: root
+  dbPwd: password
