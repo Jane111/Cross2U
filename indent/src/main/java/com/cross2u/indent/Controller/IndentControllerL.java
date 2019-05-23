@@ -60,6 +60,12 @@ public class IndentControllerL {
 
         indent.setInLeftNum(inProductNum);//订单单品分销的剩余量一开始默认为购买单品的数量
         indent.setInStatus(0);//创建时默认为未支付状态
+
+         /*动态维护用户-商品表，购买 5,因为原来浏览过，所以这里是update*/
+        Db.update("UPDATE ratings SET rating=5 WHERE bId=? AND wId=?",inBusiness,inWare);
+        /*动态维护用户-商品表，购买 5,因为原来浏览过，所以这里是update*/
+
+
         BigInteger result = indentServiceL.insertIndent(indent);
         if(result!=null)
         {
@@ -171,11 +177,54 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
-        jr.setData(null);
+        jr.setData(result);
         return jr;
     }
-
-
+    //2、所有订单列表筛选
+    @RequestMapping("/selectOrders")
+    public BaseResponse selectOrders(
+            @RequestParam("sId") BigInteger sId,//店铺Id
+            @RequestParam("requestFlag") Integer requestFlag,
+            @RequestParam(value = "wName",required = false) String wName,
+            @RequestParam(value = "inStartTime",required = false) String inStartTime,
+            @RequestParam(value = "inEndTime",required = false) String inEndTime,
+            @RequestParam(value = "bName",required = false) String bName,
+            @RequestParam(value = "inId",required = false) String inId
+            )
+    {
+        String sql = "";
+        if(!wName.equals(""))//商品名称
+        {
+            sql+="AND wTitle like '%"+wName+"%' ";
+        }
+        if(!bName.equals(""))//借卖方名称
+        {
+            sql+="AND bName like '%"+bName+"%' ";
+        }
+        if(!inId.equals(""))//订单id
+        {
+            sql+="AND inNum like '%"+inId+"%' ";
+        }
+        if(!inStartTime.equals(""))//开始时间
+        {
+            sql+="AND inCreateTime > '"+inStartTime+"' ";
+        }
+        if(!inEndTime.equals(""))//结束时间
+        {
+            sql+="AND inCreateTime < '"+inEndTime+"' ";
+        }
+        JSONArray result = indentServiceL.pickIndent(sId,requestFlag,sql);
+        if(!result.isEmpty())
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
     //（四）订单管理 8、评价订单
     @RequestMapping("/evaluateOrder")
     public BaseResponse evaluateOrder(
@@ -198,10 +247,13 @@ public class IndentControllerL {
         return jr;
     }
     //11.M-B售后退款详情界面
-    @RequestMapping("/showDrawbackDetail")
-    public BaseResponse showDrawbackDetail(@RequestParam("inId") BigInteger inId)
+    @RequestMapping("/showIndentDetail")
+    public BaseResponse showDrawbackDetail(
+            @RequestParam("inId") BigInteger inId,
+            @RequestParam("isDrawback") Integer isDrawback
+            )
     {
-        JSONObject result = indentServiceL.selectDrawbackDetail(inId);
+        JSONObject result = indentServiceL.selectIndentDetail(inId,isDrawback);
         if(!result.isEmpty())
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
@@ -210,7 +262,7 @@ public class IndentControllerL {
         {
             jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
-        jr.setData(null);
+        jr.setData(result);
         return jr;
     }
     //12.供货商操作退款
@@ -239,6 +291,7 @@ public class IndentControllerL {
         }
         //operation为拒绝退款，修改订单退款请求状态
         Drawbackinfo drawbackinfo = new Drawbackinfo();
+        drawbackinfo.setDiId(diId);
         drawbackinfo.setDiStatus(operation);
         boolean result = indentServiceL.updateDrawbackInfo(drawbackinfo);
         if(result&succeed)
@@ -260,6 +313,51 @@ public class IndentControllerL {
             @RequestParam(value = "requestFlag",required = false) Integer requestFlag)
     {
         JSONArray result = indentServiceL.selectOutIndent(sId,requestFlag);
+        if(!result.isEmpty())
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
+        }
+        jr.setData(result);
+        return jr;
+    }
+    //筛选下游买家的订单
+    @RequestMapping("/pickOutOrders")
+    public BaseResponse pickOutOrders(
+            @RequestParam("sId") BigInteger sId,
+            @RequestParam(value = "requestFlag",required = false) Integer requestFlag,
+            @RequestParam(value = "wName",required = false) String wName,
+            @RequestParam(value = "outStartTime",required = false) String outStartTime,
+            @RequestParam(value = "outEndTime",required = false) String outEndTime,
+            @RequestParam(value = "bName",required = false) String bName,
+            @RequestParam(value = "outId") String outId
+    )
+    {
+        String sql = "";
+        if(!wName.equals(""))//商品名称
+        {
+            sql+="AND wTitle like '%"+wName+"%' ";
+        }
+        if(!bName.equals(""))//借卖方名称
+        {
+            sql+="AND bName like '%"+bName+"%' ";
+        }
+        if(!outId.equals(""))//订单id
+        {
+            sql+="AND outId like '%"+outId+"%' ";
+        }
+        if(!outStartTime.equals(""))//开始时间
+        {
+            sql+="AND outCreateTime > '"+outStartTime+"' ";
+        }
+        if(!outEndTime.equals(""))//结束时间
+        {
+            sql+="AND outCreateTime < '"+outEndTime+"' ";
+        }
+        JSONArray result = indentServiceL.pickOutIndent(sId,requestFlag,sql);
         if(!result.isEmpty())
         {
             jr.setResult(ResultCodeEnum.SUCCESS);

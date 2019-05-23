@@ -1,6 +1,6 @@
-package com.cross2u.user.util;
+package com.cross2u.search.util;
 
-import com.cross2u.user.model._MappingKit;
+import com.cross2u.search.model._MappingKit;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.activerecord.dialect.MysqlDialect;
 import com.jfinal.plugin.druid.DruidPlugin;
@@ -19,7 +19,7 @@ public class JfinalOrmConfig {
     @Bean
     public boolean createDatabaseConnectionPool() {
         DruidPlugin druidPlugin = new DruidPlugin(jdbcUrl, dbUser, dbPwd);
-        ActiveRecordPlugin arp = new ActiveRecordPlugin(druidPlugin);
+        ActiveRecordPlugin arp = new ActiveRecordPlugin("User",druidPlugin);
         arp.setDialect(new MysqlDialect());
         arp.setShowSql(debug);
         _MappingKit.mapping(arp);

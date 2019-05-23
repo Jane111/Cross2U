@@ -21,7 +21,7 @@ public class ElasticSearchConfig {
         try {
 //            TransportAddress transportAddress = new InetSocketTransportAddress(InetAddress.getByName("127.0.0.1"),
 //                    Integer.valueOf(9300));
-            TransportAddress transportAddress = new InetSocketTransportAddress(InetAddress.getByName("127.0.0.1"),
+            TransportAddress transportAddress = new InetSocketTransportAddress(InetAddress.getByName("120.79.79.141"),
                     Integer.valueOf(9300));
             // 配置信息
             Settings esSetting = Settings.builder()

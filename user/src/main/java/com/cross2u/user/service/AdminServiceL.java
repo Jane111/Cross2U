@@ -15,7 +15,7 @@ public class AdminServiceL {
     //Admin通过Id得到账号
     public Administrator selectAdminById(BigInteger aId)
     {
-        return Administrator.dao.findFirst("select aAccount from Administrator where aId=",aId);
+        return Administrator.dao.findById(aId);
     }
 
     /*

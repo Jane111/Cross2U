@@ -565,6 +565,35 @@ public class StoreControllerL {
         jr.setData(result);
         return jr;
     }
+    //b-61、举报店铺
+    @RequestMapping("/addAbnormalM")
+    public BaseResponse addAbnormalM(
+            @RequestParam("amiReporter") BigInteger amiReporter,
+            @RequestParam("amiSId") BigInteger amiSId,
+            @RequestParam("amiType") BigInteger amiType,
+            @RequestParam("amiReasons") String amiReasons,
+            @RequestParam("amiImg") String amiImg
+    )
+    {
+        Abnormalminfo abNormalM = new Abnormalminfo();
+        abNormalM.setAmiReporter(amiReporter);//举报者Id
+        abNormalM.setAmiSId(amiSId);//举报店铺Id
+        abNormalM.setAmiType(amiType);//举报类型
+        abNormalM.setAmiReasons(amiReasons);//举报原因
+        abNormalM.setAmiImg(amiImg);//举报凭证
+        boolean result = abNormalM.save();
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.ADD_ERROR);
+        }
+        jr.setData(null);
+        return jr;
+    }
+
 
 
 }

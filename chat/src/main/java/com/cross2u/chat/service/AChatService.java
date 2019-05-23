@@ -67,37 +67,23 @@ public class AChatService {
         return aIdList;
     }
     //存储对话消息
-    public void saveBADialogue(BigInteger bId, BigInteger aId, String msg, BigInteger from)
+    public void saveBADialogue(BigInteger bId, BigInteger aId, String msg, Integer from)
     {
         Abchart abchart = new Abchart();
         abchart.setAbchAdministrator(aId);
         abchart.setAbchBusiness(bId);
         abchart.setAbchContent(msg);
-        if(bId==from)//说话者为b
-        {
-            abchart.setAbchSpeaker(1);
-        }
-        else//说话者为A
-        {
-            abchart.setAbchSpeaker(2);
-        }
+        abchart.setAbchSpeaker(from);//1-b,2-a
         abchart.save();
     }
     //存储对话消息
-    public void saveMADialogue(BigInteger mId, BigInteger aId, String msg, BigInteger from)
+    public void saveMADialogue(BigInteger mId, BigInteger aId, String msg, Integer from)
     {
         Amchart amchart = new Amchart();
         amchart.setAmchManu(mId);
         amchart.setAmchAdministrator(aId);
         amchart.setAmchContent(msg);
-        if(mId==from)//说话者为m
-        {
-            amchart.setAmchSpeaker(1);
-        }
-        else//说话者为A
-        {
-            amchart.setAmchSpeaker(2);
-        }
+        amchart.setAmchSpeaker(from);//1-m,2-a
         amchart.save();
     }
     //搜索a的KeyWord
@@ -107,7 +93,7 @@ public class AChatService {
         TransportClient client = ElasticSearchConfig.client();
         List<String> mKeyList = new ArrayList<String>();
 
-        QueryBuilder qb1 = QueryBuilders.matchQuery("akText", searchContent);
+        QueryBuilder qb1 = QueryBuilders.matchQuery("aktext", searchContent);
 
         QueryBuilder builder = QueryBuilders.boolQuery()
                 .must(qb1);

@@ -1,8 +1,10 @@
 package com.cross2u.user;
 
 
+import com.cross2u.user.model.Administrator;
 import com.cross2u.user.service.businessServiceL;
 import com.cross2u.user.util.HttpClientUtil;
+import com.jfinal.plugin.activerecord.Db;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,17 +21,6 @@ public class UserApplicationTests {
 	businessServiceL bs;
 	@Test
 	public void contextLoads() {
-//		Visitor  vs=bs.selectByOpenId("12");
-//		if(vs==null){
-//			System.out.println("null");
-//		}
-//		else
-//		{
-//			String firt=vs.getVWeiXinIcon();
-//			String second=vs.getVWeiXinName();
-//			String last = vs.getVOpenId();
-//
-//		}
 
 //        JSONArray ja = bs.selectFirstClass();
 //        JSONObject FI = ja.getJSONObject(0);
@@ -46,7 +37,10 @@ public class UserApplicationTests {
 //		System.out.println(str);
 //		System.out.println(1%10000);
 //		System.out.println(String.format("%04d", 345%10000));
-	}
+//		Db.update("INSERT INTO ratings(bId,wId,rating) VALUES (1,4,8)");
+		Administrator a = Administrator.dao.findById(2);
+        System.out.println(a);
+    }
 
 }
 

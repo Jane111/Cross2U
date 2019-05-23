@@ -79,7 +79,7 @@ public class WebSocketAUtil {
             str2 = str[1];// 客户的标识,b+bId/m+mId
         }
 
-        if (msg.charAt(0) == 'a')// 客户发来转a人工的请求，输入a
+        if (msg.equals("a"))// 客户发来转a人工的请求，输入a
         {
             //进行实际化 从数据库获取a所有的客服账号
             List<String> accounts = acs.getAChatAccount();
@@ -102,7 +102,7 @@ public class WebSocketAUtil {
                     while (iter.hasNext()) {
                         String key = iter.next();
                         String val = serviceMap.get(key);
-                        if (val.equals("a_"+account))
+                        if (val.equals("a"+account))
                             count++;
                     }
                     //第一个在线的客服
@@ -125,7 +125,7 @@ public class WebSocketAUtil {
 
             if(isFlag)//有客服
             {
-                serviceMap.put(from,"a"+smallAccount);// 同时在serviceMap里面存入a_aId
+                serviceMap.put(from,"a"+smallAccount);// 同时在serviceMap里面存入a+aId
                 // 给chat页面返回数据
                 clientlist.get(from).getBasicRemote().sendText("在线客服为您服务，请问有什么可以帮助您的~");
                 clientlist.get("a"+smallAccount).getBasicRemote().sendText(from);//向客服发送聊天人的信息b1/m1
@@ -147,12 +147,12 @@ public class WebSocketAUtil {
                     if(str2.charAt(0)=='b')/*a客服给b发消息,内容的最后加上-b+bId*/
                     {
                         clientlist.get(str2).getBasicRemote().sendText(str1);//给客户发消息
-                        acs.saveBADialogue(new BigInteger(str2.substring(1)),new BigInteger(from.substring(1)),str1,new BigInteger(from.substring(1)));
+                        acs.saveBADialogue(new BigInteger(str2.substring(1)),new BigInteger(from.substring(1)),str1,2);
                     }
                     if(str2.charAt(0)=='m')/*a客服给m发消息,内容的最后加上-m+mId*/
                     {
                         clientlist.get(str2).getBasicRemote().sendText(str1);//给客户发消息
-                        acs.saveMADialogue(new BigInteger(str2.substring(1)),new BigInteger(from.substring(1)),str1,new BigInteger(from.substring(1)));
+                        acs.saveMADialogue(new BigInteger(str2.substring(1)),new BigInteger(from.substring(1)),str1,2);
                     }
 
                 }
@@ -170,12 +170,12 @@ public class WebSocketAUtil {
                 if(from.charAt(0)=='b')/*b给a客服发消息*/
                 {
                     clientlist.get(to).getBasicRemote().sendText(str1);//给客户发消息
-                    acs.saveBADialogue(new BigInteger(from.substring(1)),new BigInteger(to.substring(1)),msg,new BigInteger(from.substring(1)));
+                    acs.saveBADialogue(new BigInteger(from.substring(1)),new BigInteger(to.substring(1)),msg,1);
                 }
                 if(from.charAt(0)=='m')/*m给a客服发消息*/
                 {
                     clientlist.get(to).getBasicRemote().sendText(str1);//给客户发消息
-                    acs.saveMADialogue(new BigInteger(from.substring(1)),new BigInteger(to.substring(1)),msg,new BigInteger(from.substring(1)));
+                    acs.saveMADialogue(new BigInteger(from.substring(1)),new BigInteger(to.substring(1)),msg,1);
                 }
             }
         }

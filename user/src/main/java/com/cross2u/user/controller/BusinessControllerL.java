@@ -154,6 +154,10 @@ public class BusinessControllerL {
             @RequestParam("brWare") BigInteger brWare)
     {
         Browserecord browserecord = new Browserecord().set("brOwner",brOwner).set("brWare",brWare);
+
+        /*动态维护用户-商品表，浏览为3,因为之后的收藏、加入购物车、购买都是在浏览的记录上完成，所以这里是insert*/
+        Db.update("INSERT INTO ratings(bId,wId,rating) VALUES (?,?,3)",brOwner,brWare);
+
         boolean result = bs.insertBrowseRecord(browserecord);
         if(result)
         {
@@ -178,6 +182,10 @@ public class BusinessControllerL {
         collect.setCOwner(cOwner);
         collect.setCWare(cWare);
         boolean result = bs.insertCollectWare(collect);
+
+        /*动态维护用户-商品表，收藏 4,因为原来浏览过，所以这里是update*/
+        Db.update("UPDATE ratings SET rating=4 WHERE bId=? AND wId=?",cOwner,cWare);
+
         if(result)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);

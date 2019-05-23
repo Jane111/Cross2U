@@ -39,40 +39,40 @@ public class AdminControllerL {
         jr.setData(result);
         return jr;
     }
-    //todo 24、显示举报评论---未审核
-    @RequestMapping("/showBadCommentUnchecked")
-    public JsonResult showBadCommentUnchecked(
-            @RequestParam("aId") BigInteger aId)
-    {
-        Administrator result = as.selectAdminById(aId);
-        if(result!=null)
-        {
-            jr.setResult(ResultCodeEnum.SUCCESS);
-        }
-        else
-        {
-            jr.setResult(ResultCodeEnum.FIND_ERROR);
-        }
-        jr.setData(result);
-        return jr;
-    }
-    //todo 25、审核举报评论
-    @RequestMapping("/checkedBadComment")
-    public JsonResult checkedBadComment(
-            @RequestParam("aId") BigInteger aId)
-    {
-        Administrator result = as.selectAdminById(aId);
-        if(result!=null)
-        {
-            jr.setResult(ResultCodeEnum.SUCCESS);
-        }
-        else
-        {
-            jr.setResult(ResultCodeEnum.FIND_ERROR);
-        }
-        jr.setData(result);
-        return jr;
-    }
+//    //24、显示举报评论---未审核
+//    @RequestMapping("/showBadCommentUnchecked")
+//    public JsonResult showBadCommentUnchecked(
+//            @RequestParam("aId") BigInteger aId)
+//    {
+//        Administrator result = as.selectAdminById(aId);
+//        if(result!=null)
+//        {
+//            jr.setResult(ResultCodeEnum.SUCCESS);
+//        }
+//        else
+//        {
+//            jr.setResult(ResultCodeEnum.FIND_ERROR);
+//        }
+//        jr.setData(result);
+//        return jr;
+//    }
+//    //25、审核举报评论
+//    @RequestMapping("/checkedBadComment")
+//    public JsonResult checkedBadComment(
+//            @RequestParam("aId") BigInteger aId)
+//    {
+//        Administrator result = as.selectAdminById(aId);
+//        if(result!=null)
+//        {
+//            jr.setResult(ResultCodeEnum.SUCCESS);
+//        }
+//        else
+//        {
+//            jr.setResult(ResultCodeEnum.FIND_ERROR);
+//        }
+//        jr.setData(result);
+//        return jr;
+//    }
     //41、显示普通管理员
     @RequestMapping("/showUsualAdmin")
     public JsonResult showUsualAdmin()

@@ -25,6 +25,10 @@ public class IndentApplicationTests {
     IndentServiceL IS;
 	@Test
 	public void contextLoads() {
+		//如果订单编号不为空，首先按照订单编号搜索，like
+//		List<Record> orderList = Db.find("");
+		//如果订单编号为空，按照商品名称/代理商姓名搜索
+        List<Record> orderList = Db.find("select *");
 
 	}
 

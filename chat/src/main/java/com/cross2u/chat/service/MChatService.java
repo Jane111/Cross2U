@@ -60,7 +60,7 @@ public class MChatService {
         List<String> mIdList = new ArrayList<>();
         //在manu表中得到客服(mManageMessage==1)账号mId
         List<Record> mList = Db.find("select mId from manufacturer " +
-                "where wStore=? and mManageMessage=?",sId,1);
+                "where mStore=? and mManageMessage=?",sId,1);
         for(Record record:mList)
         {
             mIdList.add(record.getStr("mId"));
@@ -69,20 +69,13 @@ public class MChatService {
     }
 
     // 存储会话消息
-    public void saveBMDialogue(BigInteger bId, BigInteger mId, String msg, BigInteger from)
+    public void saveBMDialogue(BigInteger bId, BigInteger mId, String msg, Integer from)
     {
         Mbchat mbchat = new Mbchat();
         mbchat.setMbchBusiness(bId);
         mbchat.setMbchManu(mId);
         mbchat.setMbchContent(msg);
-        if(bId==from)//说话者为b
-        {
-            mbchat.setMbchSpeaker(2);
-        }
-        else//说话者为M
-        {
-            mbchat.setMbchSpeaker(1);
-        }
+        mbchat.setMbchSpeaker(from);
         mbchat.save();
     }
 

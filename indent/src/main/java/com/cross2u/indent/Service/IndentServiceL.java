@@ -11,7 +11,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 
     @Service
@@ -119,15 +118,13 @@ import java.util.List;
             indent.put("inTotalProduct",in.getInProductNum());//订单单品总数
             indent.put("iwLeftNum",in.getInLeftNum());//订单剩余总数
             indent.put("inTotalMoney",in.getInTotalMoney());//付款总价
-//            Ware ware = Ware.dao.findFirst("select wTitle from ware where wId=?",in.getInWare());
             JSONObject ware = getWareFromOther(in.getInWare());
 
-            indent.put("wTitle",ware.getString("wTitle"));//商品名称
-//            Product product = Product.dao.findById(in.getInProduct());
+            indent.put("wTitle",ware.getString("wtitle"));//商品名称
 
             JSONObject product = getProductFromOther(in.getInProduct());
             indent.put("pImage",product.getString("pImage"));//单品图片
-            indent.put("format",product.getJSONObject("format"));//调用封装函数，对单品对应的规格进行封装
+            indent.put("format",product.getString("format"));//调用封装函数，对单品对应的规格进行封装
             indent.put("pMoney",product.getFloat("pMoney"));//单品单价
             indent.put("pMoneyUnit",product.getInteger("pMoneyUnit"));//商品单价单位 1-人民币 2-美元
 
@@ -145,7 +142,7 @@ import java.util.List;
             indent.put("inMtoB",in.getInMtoB());//M对B的评价
             if(requestFlag==4)
             {
-                Drawbackinfo drawbackinfo = Drawbackinfo.dao.findFirst("select diId,diType,diNUmber,diMoney,diAId" +
+                Drawbackinfo drawbackinfo = Drawbackinfo.dao.findFirst("select diId,diType,diNUmber,diMoney,diAId " +
                         "from drawbackinfo where diInId=?",in.getInId());
                 indent.put("diId",drawbackinfo.getDiId()); //退款申请id
                 indent.put("drReasons",drawbackinfo.getDiReasons()); //申请类型
@@ -160,13 +157,68 @@ import java.util.List;
         return orderList;
 
     }
+    //2、筛选订单
+    public JSONArray pickIndent(BigInteger sId,Integer requestFlag,String sql)
+    {
+        JSONArray orderList = new JSONArray();
+        List<Record> indentList = Db.find("select * from indent,ware,business " +
+                "WHERE indent.inWare = ware.wId AND indent.inBusiness=business.bId AND inStore=? AND inStatus=? "+sql,sId,requestFlag);
+        for(Record in:indentList)
+        {
+            JSONObject indent = new JSONObject();
+            indent.put("inId",in.getBigInteger("inId"));//订单id
+            indent.put("inNum",in.getStr("inNum"));//订单编号
+            indent.put("inCreateTime",in.getDate("inCreateTime"));//下单时间
+            indent.put("inPayTime",in.getDate("inPayTime"));//下单时间
+            indent.put("inTotalProduct",in.getInt("inProductNum"));//订单单品总数
+            indent.put("iwLeftNum",in.getInt("inLeftNum"));//订单剩余总数
+            indent.put("inTotalMoney",in.getFloat("inTotalMoney"));//付款总价
+            JSONObject ware = getWareFromOther(in.getBigInteger("inWare"));
+
+            indent.put("wTitle",ware.getString("wtitle"));//商品名称
+
+            JSONObject product = getProductFromOther(in.getBigInteger("inProduct"));
+            indent.put("pImage",product.getString("pImage"));//单品图片
+            indent.put("format",product.getString("format"));//调用封装函数，对单品对应的规格进行封装
+            indent.put("pMoney",product.getFloat("pMoney"));//单品单价
+            indent.put("pMoneyUnit",product.getInteger("pMoneyUnit"));//商品单价单位 1-人民币 2-美元
+
+            indent.put("bId",in.getBigInteger("inBusiness"));//代理商id
+
+            /*与其他模块通信*/
+            JSONObject business = getBusinessDetail(in.getBigInteger("inBusiness"));
+            indent.put("bName",business.getString("vWeiXinName"));//代理商昵称
+            indent.put("bRank",business.getInteger("bRank"));//代理商等级
+            /*与其他模块通信*/
+
+            //2-待评价中特有的字段
+            indent.put("inBtoM",in.getInt("inBtoM"));//b的评价
+            //3-已完成订单中特有的字段
+            indent.put("inMtoB",in.getInt("inMtoB"));//M对B的评价
+            if(requestFlag==4)
+            {
+                Drawbackinfo drawbackinfo = Drawbackinfo.dao.findFirst("select diId,diType,diNUmber,diMoney,diAId " +
+                        "from drawbackinfo where diInId=?",in.getBigInteger("inId"));
+                indent.put("diId",drawbackinfo.getDiId()); //退款申请id
+                indent.put("drReasons",drawbackinfo.getDiReasons()); //申请类型
+                indent.put("diNUmber",drawbackinfo.getDiNUmber()); //退款件数
+                indent.put("diMoney",drawbackinfo.getDiMoney()); //退款金额
+                indent.put("diStatus",drawbackinfo.getDiStatus()); //申请退款状态
+            }
+            //5-已关闭订单列表--等页面出来检查特有字段
+            indent.put("inStatus",in.getInt("inStatus"));//
+            orderList.add(indent);
+        }
+        return orderList;
+
+    }
     //（四）订单管理 8、评价订单
 //    public boolean updateIndent(Indent indent)
 //    {
 //        return indent.update();
 //    }
     //11.M-B售后退款详情界面
-    public JSONObject selectDrawbackDetail(BigInteger inId)
+    public JSONObject selectIndentDetail(BigInteger inId,Integer isDrawback)
     {
         JSONObject detail = new JSONObject();
         Indent in = Indent.dao.findById(inId);
@@ -180,12 +232,12 @@ import java.util.List;
 
         JSONObject ware = getWareFromOther(in.getInWare());
 
-        detail.put("wTitle",ware.getString("wTitle"));//商品名称
+        detail.put("wTitle",ware.getString("wtitle"));//商品名称
 //            Product product = Product.dao.findById(in.getInProduct());
 
         JSONObject product = getProductFromOther(in.getInProduct());
         detail.put("pImage",product.getString("pImage"));//单品图片
-        detail.put("format",product.getJSONObject("format"));//调用封装函数，对单品对应的规格进行封装
+        detail.put("format",product.getString("format"));//调用封装函数，对单品对应的规格进行封装
         detail.put("pMoney",product.getFloat("pMoney"));//单品单价
         detail.put("pMoneyUnit",product.getInteger("pMoneyUnit"));//商品单价单位 1-人民币 2-美元
 
@@ -195,23 +247,27 @@ import java.util.List;
         JSONObject business = getBusinessDetail(in.getInBusiness());
         detail.put("bName",business.getString("vWeiXinName"));//代理商昵称
         detail.put("bRank",business.getInteger("bRank"));//代理商等级
+        detail.put("bPhone",business.getString("bPhone"));//代理商电话号码
         /*与其他模块通信*/
 
-        Drawbackinfo drawbackinfo = Drawbackinfo.dao.findFirst("select * from drawbackinfo where diInId=?",in.getInId());
-        detail.put("diId",drawbackinfo.getDiId()); //退款申请id
-        detail.put("drReasons",drawbackinfo.getDiReasons()); //申请类型
-        detail.put("diNUmber",drawbackinfo.getDiNUmber()); //退款件数
-        detail.put("diMoney",drawbackinfo.getDiMoney()); //退款金额
-        detail.put("diStatus",drawbackinfo.getDiStatus()); //申请退款状态
-        detail.put("diImg1",drawbackinfo.getDiImg1()); //退款凭证1
-        detail.put("diImg2",drawbackinfo.getDiImg2()); //退款凭证2
-        detail.put("diImg3",drawbackinfo.getDiImg3()); //退款凭证3
-//        detail.put("aAccount",Administrator.dao.findFirst("select aAccount from Administrator where aId=" +
-//                "?",drawbackinfo.getDiAId()).getAAccount()); //管理员账号
-        /*与其他模块通信*/
-        JSONObject admin = getAdminDetail(drawbackinfo.getDiAId());
-        detail.put("aAccount",admin.getInteger("aAccount"));//管理员账号
-        /*与其他模块通信*/
+        if(isDrawback==1)
+        {
+            Drawbackinfo drawbackinfo = Drawbackinfo.dao.findFirst("select * from drawbackinfo where diInId=?",in.getInId());
+            detail.put("diId",drawbackinfo.getDiId()); //退款申请id
+            detail.put("drReasons",drawbackinfo.getDiReasons()); //申请类型
+            detail.put("diNUmber",drawbackinfo.getDiNUmber()); //退款件数
+            detail.put("diMoney",drawbackinfo.getDiMoney()); //退款金额
+            detail.put("diStatus",drawbackinfo.getDiStatus()); //申请退款状态
+            detail.put("diImg1",drawbackinfo.getDiImg1()); //退款凭证1
+            detail.put("diImg2",drawbackinfo.getDiImg2()); //退款凭证2
+            detail.put("diImg3",drawbackinfo.getDiImg3()); //退款凭证3
+
+             /*与其他模块通信*/
+            JSONObject admin = getAdminDetail(drawbackinfo.getDiAId());
+            detail.put("aAccount",admin.getInteger("aAccount"));//管理员账号
+            /*与其他模块通信*/
+        }
+
 
         return  detail;
     }
@@ -239,10 +295,9 @@ import java.util.List;
         for(Outindent outindent:outIndentList)
         {
             JSONObject outorder = new JSONObject();
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
-            //todo 外拉订单的创建
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
             outorder.put("outId",outindent.getOutId());//订单id
-            outorder.put("outPlatform",outindent.getOutId());//来源平台
+//            outorder.put("outPlatform",outindent.getOutId());//来源平台
             outorder.put("outCreateTime",sdf.format(outindent.getOutCreateTime()));//下单时间
             outorder.put("outNumber",outindent.getOutNumber());//订单编号
             outorder.put("outName",outindent.getOutCName());//买家昵称
@@ -251,35 +306,16 @@ import java.util.List;
             outorder.put("outCInfo",outindent.getOutCInfo().split(","));//买家个人信息照片--身份证正反面 ‘,’隔开 可能为null
             outorder.put("outStatus",outindent.getOutStatus());//状态 1：未发货，2：已发货=待收货，3：已完成，4：售后
 
-//            Business business = Business.dao.findFirst("select bName from business where bId=?",outindent.getOutBusiness());
-//            outorder.put("bName",business.getBName());//零售商姓名
-
             /*与其他模块通信*/
             JSONObject business = getBusinessDetail(outindent.getOutBusiness());
             outorder.put("bName",business.getString("bName"));//零售商姓名
             /*与其他模块通信*/
 
-//            List<Outorderware> outProductList = Outorderware.dao.find("select * from Outorderware where oowOutId=?",outindent.getOutId());
-//            JSONArray productList = new JSONArray();
-//            for(Outorderware outProduct:outProductList)
-//            {
-//                JSONObject productDetail = new JSONObject();
-//                Product myProduct = Product.dao.findFirst("select * from product where pIdentifier=?",outProduct.getOowPIdentifier());
-//                productDetail.put("pId",myProduct.getPId());//单品id
-//                productDetail.put("pImage",myProduct.getPImage());//单品的图片
-//                productDetail.put("oowPIdentifier",myProduct.getPIdentifier());//单品编号
-//                productDetail.put("oowNumber",myProduct.getPStorage());//单品个数
-//                productDetail.put("format",getFormatForProduct(myProduct.getPId()));//单品的规格
-//                productList.add(productDetail);
-//            }
-
             /*与其他模块通信*/
             JSONObject ware = getWareFromOther(outindent.getOutWIdentifier());
-            outorder.put("wId",ware.getBigInteger("wId"));//商品id
-            outorder.put("wMainImage",ware.getString("wMainImage"));//商品图片
-            outorder.put("wName",ware.getString("wTitle"));//商品名称
-//            Product myProduct = Product.dao.findFirst("select * from product " +
-//                    "where pIdentifier=?",outindent.getOutPIdentifier());
+            outorder.put("wId",ware.getBigInteger("wid"));//商品id
+            outorder.put("wMainImage",ware.getString("wmainImage"));//商品图片
+            outorder.put("wName",ware.getString("wtitle"));//商品名称
             JSONObject myProduct = getProductFromOther(outindent.getOutPIdentifier());//单品编号
             outorder.put("OutPIdentifier",outindent.getOutPIdentifier());//单品编号
             outorder.put("pId",myProduct.getBigInteger("pId"));//单品id
@@ -288,22 +324,111 @@ import java.util.List;
             /*与其他模块通信*/
 
             //已经发货订单特有字段
-            outorder.put("outExpress",outindent.getOutExpress());//快递单号
-            outorder.put("outExpressCompany",outindent.getOutExpressCompany());//快递公司
+            if(requestFlag>=2)
+            {
+                outorder.put("outExpress",outindent.getOutExpress());//快递单号
+                outorder.put("outExpressCompany",outindent.getOutExpressCompany());//快递公司
+            }
+            
+            //已经收货订单特有字段
+            if(requestFlag>=3)
+            {
+                outorder.put("outModifyTime",sdf.format(outindent.getOutModifyTime()));//收货时间
+            }
+
+            //售后订单特有状态
+            if(requestFlag==4)
+            {
+                Returngoods returngoods = Returngoods.dao.findFirst("select * from returngoods " +
+                        "where rgOOId=?",outindent.getOutId());
+                outorder.put("rcCatalog",Returncatalog.dao.findById(Returngoodreasons.dao.findById
+                        (returngoods.getRgType()).getRgrRCId()).getRcCatalog());//退货catelog，退货或退款
+                outorder.put("rgId",returngoods.getRgId());//退货Id
+                outorder.put("rgState",returngoods.getRgState());//退货状态
+                Returngoodreasons returngoodreasons = Returngoodreasons.dao.findById(returngoods.getRgType());
+                outorder.put("rgReasons",returngoodreasons.getRgrReasons());//退货原因，由类型去找
+                outorder.put("rgReasons",returngoodreasons.getRgrReasons());//退货原因，由类型去找
+                outorder.put("copCreate",sdf.format(returngoods.getRgCreateTime()));//申请时间
+            }
+
+            outOrderList.add(outorder);
+        }
+        return outOrderList;
+    }
+
+    //筛选下游买家的订单
+    public JSONArray pickOutIndent(BigInteger sId, Integer requestFlag,String sql)
+    {
+        JSONArray outOrderList = new JSONArray();
+        List<Record> outIndentList;
+        if(requestFlag==null)
+        {
+            outIndentList = Db.find("select * FROM outindent,ware,business " +
+                    "where outindent.outWIdentifier = ware.wIdentifier AND outindent.outBusiness=business.bId AND outSId=? "+sql,sId);
+        }else
+        {
+            outIndentList = Db.find("select * FROM outindent,ware,business " +
+                    "where outindent.outWIdentifier = ware.wIdentifier AND outindent.outBusiness=business.bId AND outSId=? AND outStatus=? "+sql,sId,requestFlag);
+        }
+
+        for(Record outindent:outIndentList)
+        {
+            JSONObject outorder = new JSONObject();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
+            outorder.put("outId",outindent.getBigInteger("outId"));//订单id
+//            outorder.put("outPlatform",outindent.getOutId());//来源平台
+            outorder.put("outCreateTime",sdf.format(outindent.getDate("outCreateTime")));//下单时间
+            outorder.put("outNumber",outindent.getStr("outNumber"));//订单编号
+            outorder.put("outName",outindent.getStr(""));//买家昵称
+            outorder.put("outCPhone",outindent.getStr("outCPhone"));//买家联系方式
+            outorder.put("outCAddress",outindent.getStr("outCAddress"));//买家地址
+            outorder.put("outCInfo",outindent.getStr("outCInfo").split(","));//买家个人信息照片--身份证正反面 ‘,’隔开 可能为null
+            outorder.put("outStatus",outindent.getInt("outStatus"));//状态 1：未发货，2：已发货=待收货，3：已完成，4：售后
+
+            /*与其他模块通信*/
+            JSONObject business = getBusinessDetail(outindent.getBigInteger("outBusiness"));
+            outorder.put("bName",business.getString("bName"));//零售商姓名
+             /*与其他模块通信*/
+
+            /*与其他模块通信*/
+            JSONObject ware = getWareFromOther(outindent.getStr("outWIdentifier"));
+            outorder.put("wId",ware.getBigInteger("wid"));//商品id
+            outorder.put("wMainImage",ware.getString("wmainImage"));//商品图片
+            outorder.put("wName",ware.getString("wtitle"));//商品名称
+            JSONObject myProduct = getProductFromOther(outindent.getStr("outPIdentifier"));//单品编号
+            outorder.put("OutPIdentifier",outindent.getStr("outPIdentifier"));//单品编号
+            outorder.put("pId",myProduct.getBigInteger("pId"));//单品id
+            outorder.put("pAtr",myProduct.getString("format"));//单品规格
+            outorder.put("outAmount",outindent.getInt("outAmount"));//单品个数
+            /*与其他模块通信*/
+
+            //已经发货订单特有字段
+            if(requestFlag>=2)
+            {
+                outorder.put("outExpress",outindent.getStr("outExpress"));//快递单号
+                outorder.put("outExpressCompany",outindent.getStr("outExpressCompany"));//快递公司
+            }
 
             //已经收货订单特有字段
-            outorder.put("outModifyTime",sdf.format(outindent.getOutModifyTime()));//快递公司
-            //售后订单特有状态
-            Returngoods returngoods = Returngoods.dao.findFirst("select * from returngoods " +
-                    "where rgOOId=?",outindent.getOutId());
-            outorder.put("rcCatalog",Returncatalog.dao.findById(Returngoodreasons.dao.findById
-                    (returngoods.getRgType()).getRgrRCId()).getRcCatalog());//退货catelog，退货或退款
-            outorder.put("rgId",returngoods.getRgId());//退货Id
-            outorder.put("rgState",returngoods.getRgState());//退货状态
-            Returngoodreasons returngoodreasons = Returngoodreasons.dao.findById(returngoods.getRgType());
-            outorder.put("rgReasons",returngoodreasons.getRgrReasons());//退货原因，由类型去找
+            if(requestFlag>=3)
+            {
+                outorder.put("outModifyTime",sdf.format(outindent.getDate("outModifyTime")));//收货时间
+            }
 
-            outorder.put("copCreate",sdf.format(returngoods.getRgCreateTime()));//申请时间
+            //售后订单特有状态
+            if(requestFlag==4)
+            {
+                Returngoods returngoods = Returngoods.dao.findFirst("select * from returngoods " +
+                        "where rgOOId=?",outindent.getBigInteger("outId"));
+                outorder.put("rcCatalog",Returncatalog.dao.findById(Returngoodreasons.dao.findById
+                        (returngoods.getRgType()).getRgrRCId()).getRcCatalog());//退货catelog，退货或退款
+                outorder.put("rgId",returngoods.getRgId());//退货Id
+                outorder.put("rgState",returngoods.getRgState());//退货状态
+                Returngoodreasons returngoodreasons = Returngoodreasons.dao.findById(returngoods.getRgType());
+                outorder.put("rgReasons",returngoodreasons.getRgrReasons());//退货原因，由类型去找
+                outorder.put("rgReasons",returngoodreasons.getRgrReasons());//退货原因，由类型去找
+                outorder.put("copCreate",sdf.format(returngoods.getRgCreateTime()));//申请时间
+            }
 
             outOrderList.add(outorder);
         }
@@ -324,7 +449,7 @@ import java.util.List;
                 "where outId=?",outId);
         indentDetail.put("outId",outIndent.getOutId());//订单id
         indentDetail.put("outPlatform",outIndent.getOutId());//来源平台
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         indentDetail.put("outCreateTime",sdf.format(outIndent.getOutCreateTime()));//下单时间
         indentDetail.put("outNumber",outIndent.getOutNumber());//订单编号
         indentDetail.put("outName",outIndent.getOutCName());//买家昵称
@@ -343,9 +468,9 @@ import java.util.List;
 
         /*与其他模块通信*/
         JSONObject ware = getWareFromOther(outIndent.getOutWIdentifier());
-        indentDetail.put("wId",ware.getBigInteger("wId"));//商品id
-        indentDetail.put("wMainImage",ware.getString("wMainImage"));//商品图片
-        indentDetail.put("wName",ware.getString("wTitle"));//商品名称
+        indentDetail.put("wId",ware.getBigInteger("wid"));//商品id
+        indentDetail.put("wMainImage",ware.getString("wmainImage"));//商品图片
+        indentDetail.put("wName",ware.getString("wtitle"));//商品名称
 //            Product myProduct = Product.dao.findFirst("select * from product " +
 //                    "where pIdentifier=?",outindent.getOutPIdentifier());
         JSONObject myProduct = getProductFromOther(outIndent.getOutPIdentifier());//单品编号
@@ -371,7 +496,7 @@ import java.util.List;
         if(moreDetail)
         {
             /*与其他模块通信*/
-            JSONObject returngoodmould = getReturngoodmouldFromOther(returngoods.getRgMId());
+            JSONObject returngoodmould = getReturngoodmouldFromOther(returngoods.getRgRGMId());
             indentDetail.put("rgmName",returngoodmould.getString("rgmName"));//M收货人姓名
             indentDetail.put("rgmPhone",returngoodmould.getString("rgmPhone"));//M收货人联系方式
             indentDetail.put("rgmAddress",returngoodmould.getString("rgmAddress"));//M收货地址
@@ -420,7 +545,7 @@ import java.util.List;
 
             indentDetail.put("inProductNum",indent.getInProductNum());//购买量（不考虑退款 退款部分在支出部分）
             indentDetail.put("inTotalMoney",indent.getInTotalMoney());//金额
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
             indentDetail.put("inPayTime",sdf.format(indent.getInPayTime()));//付款时间
             Indent.add(indentDetail);
         }
@@ -463,6 +588,5 @@ import java.util.List;
         billDetail.put("DrawbackInfo",DrawbackInfo);
         return billDetail;
     }
-
 
 }

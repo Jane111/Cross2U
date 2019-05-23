@@ -1,7 +1,5 @@
 package com.cross2u.search.service;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.cross2u.search.util.MoneyUtil;
 import org.elasticsearch.action.get.GetResponse;

@@ -25,11 +25,12 @@ public class businessServiceL {
     public JSONObject selectBusinessDetailByBId(BigInteger bId)
     {
         JSONObject bDetail = new JSONObject();
-        Business business = Business.dao.findFirst("select bRank,bOpenId,bName,bMainBusiness,bWeiXinName,bWeiXinIcon " +
+        Business business = Business.dao.findFirst("select bRank,bPhone,bOpenId,bName,bMainBusiness,bWeiXinName,bWeiXinIcon " +
                 "from business where bId=?",bId);
         bDetail.put("bRank",business.getBRank());
         bDetail.put("bName",business.getBName());
         bDetail.put("bMainBusiness",business.getBMainBusiness());
+        bDetail.put("bPhone",business.getBPhone());
         bDetail.put("vWeiXinName",business.getBWeiXinName());
         bDetail.put("vWeiXinIcon",business.getBWeiXinIcon());
         return bDetail;

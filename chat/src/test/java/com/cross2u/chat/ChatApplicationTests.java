@@ -1,5 +1,6 @@
 package com.cross2u.chat;
 
+import com.cross2u.chat.service.AChatService;
 import com.cross2u.chat.service.MChatService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,14 +16,16 @@ import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.ToAnalysis;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ChatApplicationTests {
 
     @Autowired
 	MChatService mChatService;
+	@Autowired
+	AChatService aChatService;
 	@Test
 	public void contextLoads() throws Exception{
-		mChatService.searchMKeyWordCache(new StringBuffer("快递"),"1");
+		aChatService.searchAKeyWordCache("平台");
 	}
 
 }
