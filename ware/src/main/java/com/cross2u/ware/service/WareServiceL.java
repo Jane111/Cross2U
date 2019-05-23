@@ -298,7 +298,7 @@ public class WareServiceL {
         if (!w.getWPriceUnit().toString().equals("1"))//不是rmb单位 进行汇率转换
         {
             rmbStartPrice=MoneyUtil.transferMoney(w.getWStartPrice(),w.getWPriceUnit().toString());
-            rmbHighPrice=MoneyUtil.transferMoney(w.getWStartPrice(),w.getWHighPrice().toString());
+            rmbHighPrice=MoneyUtil.transferMoney(w.getWHighPrice(),w.getWPriceUnit().toString());
         }
         baseInfo.put("rmbStartPrice",rmbStartPrice);
         baseInfo.put("rmbHighPrice",rmbHighPrice);
@@ -488,30 +488,37 @@ public class WareServiceL {
             manyBId+=rePart.getBerSpeaker()+",";
         }
 
-        /*与其他模块通信*/
-        JSONArray manyBusiness = getManyBusinessByBId(manyBId);
-        /*与其他模块通信*/
-
-        int index=0;
-        for(Bevalreply rePart:rePartList)
+        if(!manyBId.equals(""))
         {
-            JSONObject aReply = new JSONObject();
+            /*与其他模块通信*/
+            JSONArray manyBusiness = getManyBusinessByBId(manyBId);
+        /*与其他模块通信*/
 
-            aReply.put("berSpeakerId",rePart.getBerSpeaker());//评论者id
-            //
-            JSONObject business = manyBusiness.getJSONObject(index);
-            aReply.put("ewCommentatorName",business.getString("vWeiXinName"));//代理商昵称
-            aReply.put("ewCommentatorIcon",business.getString("vWeiXinIcon"));//评论者头像
+            int index=0;
+            for(Bevalreply rePart:rePartList)
+            {
+                JSONObject aReply = new JSONObject();
 
-            aReply.put("berCotent",rePart.getBerCotent());//回复文字内容
-            //时间的形式格式化
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            aReply.put("berCreate",sdf.format(rePart.getBerCreateTime()));//创建时间
+                aReply.put("berSpeakerId",rePart.getBerSpeaker());//评论者id
+                //
+                JSONObject business = manyBusiness.getJSONObject(index);
+                aReply.put("ewCommentatorName",business.getString("vWeiXinName"));//代理商昵称
+                aReply.put("ewCommentatorIcon",business.getString("vWeiXinIcon"));//评论者头像
 
-            replyList.add(aReply);
-            index++;
+                aReply.put("berCotent",rePart.getBerCotent());//回复文字内容
+                //时间的形式格式化
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                aReply.put("berCreate",sdf.format(rePart.getBerCreateTime()));//创建时间
+
+                replyList.add(aReply);
+                index++;
+            }
+            commentDetail.put("replyList",replyList);
+        }else
+        {
+            commentDetail.put("replyList",null);
         }
-        commentDetail.put("replyList",replyList);
+
         return commentDetail;
     }
     //12、回复商品评价
