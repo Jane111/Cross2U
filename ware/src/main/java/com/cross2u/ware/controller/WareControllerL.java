@@ -23,6 +23,8 @@ public class WareControllerL {
     WareServiceL ws;
     @Autowired
     BaseResponse jr;
+    @Autowired
+    CommentUtil commentUtil;
 
     /*
    *面向其他模块的controller
@@ -216,11 +218,20 @@ public class WareControllerL {
                     stock.setSkNumber(sNumber[index]);
                     stock.setSkSum(sSum[index]);
                     stock.setSkSumUnit(sSumUnit[index]);
+                    /*动态维护用户-商品表，加入购物车4,因为原来浏览过，所以这里是update*/
+                    //得到单品对应的商品Id
+                    BigInteger wId = Product.dao.findById(sPId[index]).getPWare();
+                    Db.update("UPDATE ratings SET rating=4 WHERE bId=? AND wId=?",sBid,wId);
+                    /*动态维护用户-商品表，加入购物车4,因为原来浏览过，所以这里是update*/
                     result = ws.insertStock(stock) & result;
                 }
                 return result;
             }
         });
+
+
+
+
         if(succeed)
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
@@ -531,24 +542,55 @@ public class WareControllerL {
         jr.setData(result);
         return jr;
     }
-    //......搜索
-    @RequestMapping("/searchWare")
-    public BaseResponse searchWare(
-            @RequestParam("searchContent") String searchContent
+    //b-60、举报商品
+    @RequestMapping("/addAbnormalWare")
+    public BaseResponse addAbnormalWare(
+            @RequestParam("agiReporter") BigInteger agiReporter,
+            @RequestParam("agiWId") BigInteger agiWId,
+            @RequestParam("agiType") BigInteger agiType,
+            @RequestParam("agiReasons") String agiReasons,
+            @RequestParam("agiImg") String agiImg
     )
     {
-        List<Ware> result = Ware.dao.find("select * from ware where wtitle like '%"+searchContent+"%'");
+        Abnormalgoodsinfo abnormalgoodsinfo = new Abnormalgoodsinfo();
+        abnormalgoodsinfo.setAgiReporter(agiReporter);//举报者id
+        abnormalgoodsinfo.setAgiWId(agiWId);//举报的商品id
+        abnormalgoodsinfo.setAgiType(agiType);//举报类型-外键
+        abnormalgoodsinfo.setAgiReasons(agiReasons);//举报原因-用户填写
+        abnormalgoodsinfo.setAgiImg(agiImg);//举报凭证
+        boolean result = abnormalgoodsinfo.save();
+        if(result)
+        {
+            jr.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else
+        {
+            jr.setResult(ResultCodeEnum.ADD_ERROR);
+        }
+        jr.setData(null);
+        return jr;
+    }
+    //b-63、得到商品评论的Tag
+    @RequestMapping("/getCommentTags")
+    public BaseResponse getCommentTags(
+            @RequestParam("wId") BigInteger wId
+    )
+    {
+
+        JSONObject result = commentUtil.getCommentTag(wId);
         if(!result.isEmpty())
         {
             jr.setResult(ResultCodeEnum.SUCCESS);
         }
         else
         {
-            jr.setResult(ResultCodeEnum.UPDATE_ERROR);
+            jr.setResult(ResultCodeEnum.FIND_ERROR);
         }
         jr.setData(result);
         return jr;
     }
+
+
 
 
 }
