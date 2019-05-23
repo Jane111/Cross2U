@@ -22,9 +22,9 @@ public class CommentUtil {
     AipNlp client = new AipNlp(APP_ID, API_KEY, SECRET_KEY);
     HashMap<String, Object> options = null;
 
-    public JSONArray getCommentTag(BigInteger wId)
+    public JSONObject getCommentTag(BigInteger wId)
     {
-        JSONArray showTags = new JSONArray();
+        JSONObject showTags = new JSONObject();
         List<Evalware> commentList = Evalware.dao.find("select ewCotent,ewImg,ewImg2,ewImg3 " +
                 "from evalware where ewWId=?",wId);
         String commentString = "";
@@ -39,21 +39,22 @@ public class CommentUtil {
         }
         //有图评论的个数
         JSONObject Img = new JSONObject();
-        Img.put("img",hasImg);
-        showTags.add(Img);
+        showTags.put("img",hasImg);
         // 获取购物评论情感属性
         org.json.JSONObject response = client.commentTag(commentString, ESimnetType.BUSINESS, options);
         System.out.println(response.toString());
         org.json.JSONArray items = response.getJSONArray("items");
+        JSONArray comList = new JSONArray();
         for(int i=0;i<items.length();i++)
         {
             org.json.JSONObject itemJsonObject = items.getJSONObject(i);
             JSONObject aTag =  new JSONObject();
             aTag.put("tag",itemJsonObject.getString("prop")+itemJsonObject.getString("adj"));
             aTag.put("sentiment",itemJsonObject.getInt("sentiment"));
-            showTags.add(aTag);
+            comList.add(aTag);
 
         }
+        showTags.put("list",comList);
         System.out.println(showTags.toString());
         return showTags;
     }
