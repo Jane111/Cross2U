@@ -17,6 +17,14 @@ public abstract class BasePublicinfo<M extends BasePublicinfo<M>> extends Model<
 		return get("piId");
 	}
 
+	public void setPiType(Integer piType) {
+		set("piType", piType);
+	}
+
+	public Integer getPiType() {
+		return get("piType");
+	}
+
 	public void setPiTitle(String piTitle) {
 		set("piTitle", piTitle);
 	}
