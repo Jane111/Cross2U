@@ -8,16 +8,14 @@ import com.cross2u.store.util.Constant;
 import com.cross2u.store.util.ResultCodeEnum;
 import com.jfinal.plugin.activerecord.Record;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigInteger;
 import java.util.List;
 
+@CrossOrigin//解决跨域问题
 @RestController
 public class StoreController {
     @Autowired
@@ -192,11 +190,7 @@ public class StoreController {
     {
         String sId=request.getParameter("sId");
         String wfdName=request.getParameter("wfdName");
-        String wfdSort=request.getParameter("wfdSort");
-        if (wfdSort==null||wfdSort.equals(""))
-        {
-            wfdSort="0";
-        }
+        String wfdSort=service.getWFDSort(sId);
         BigInteger wfdId=service.dispatchAddFDispatchs(sId,wfdName,wfdSort);
         if(wfdId!=null){
             response.setData(wfdId);
@@ -216,15 +210,16 @@ public class StoreController {
         String wfdId=request.getParameter("wfdId");
         String wsdName=request.getParameter("wsdName");
         String wsdImg=request.getParameter("wsdImg");
-        String wsdSort=request.getParameter("wsdSort");
-        if (wsdSort==null||wsdSort.equals(""))
-        {
-            wsdSort="0";
-        }
+        String wsdSort=service.getWSDSort(wfdId);
+
         BigInteger wsdId=service.dispatchAddSDispatchs(sId,wfdId,wsdName,wsdImg,new Integer(wsdSort));
+
         if(wsdId!=null)
         {
             response.setData(wsdId);
+            if (wsdSort.equals("1")){//如果是第一个子类
+                service.setFirstWSDWare(wfdId,wsdId);
+            }
             response.setResult(ResultCodeEnum.SUCCESS);
         }
         else {
@@ -348,7 +343,8 @@ public class StoreController {
     {
         String sId=request.getParameter("sId");
         String bRank=request.getParameter("bRank");
-        JSONArray array=service.showApproved(sId,bRank);
+        String status=request.getParameter("status");
+        JSONArray array=service.showApproved(sId,bRank,status);
         if (array!=null){
             response.setData(array);
             response.setResult(ResultCodeEnum.SUCCESS);
@@ -404,9 +400,117 @@ public class StoreController {
     public BaseResponse applyCoop(HttpServletRequest request){
         String bId=request.getParameter("bId");
         String sId=request.getParameter("sId");
-        
-        if (service.applyCoop(bId,sId))
-        {
+
+        if (service.hasRight(bId,sId)){
+            response.setResult(ResultCodeEnum.DO_NOT_HAVE_RIGHT);
+        }
+        else {
+            if (service.applyCoop(bId,sId))
+            {
+                response.setResult(ResultCodeEnum.SUCCESS);
+            }
+            else {
+                response.setResult(ResultCodeEnum.ADD_FAILURE);
+            }
+        }
+
+        return response;
+    }
+
+    /**
+     * 显示店铺宣传图
+     */
+    @RequestMapping("/store/showSPhoto")
+    @ResponseBody
+    public BaseResponse showSPhoto(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        String [] array=service.showSPhoto(sId);
+        if (array!=null){
+            response.setData(array);
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return response;
+    }
+
+    /**
+     * 上传店铺宣传图
+     */
+    @RequestMapping("/store/updateSPhoto")
+    @ResponseBody
+    public BaseResponse updateSPhoto(HttpServletRequest request){
+        String sId=request.getParameter("sId");
+        String sPhoto=request.getParameter("sPhoto");
+        if (service.updateSPhoto(sId,sPhoto)){
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.UPDATE_FAILURE);//20005修改失败
+        }
+        return response;
+    }
+
+    /**
+     * 显示关键词设置情况
+     */
+
+    @RequestMapping("/store/showManuKeyWorld")
+    @ResponseBody
+    public BaseResponse showManuKeyWorld(HttpServletRequest request){
+        response=new BaseResponse();
+        String sId=request.getParameter("sId");
+        List<Manukeyword> array=service.showManuKeyWorld(sId);
+        if (array!=null){
+            response.setData(array);
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return response;
+    }
+
+
+    @RequestMapping("/store/updateManuKeyWorld")
+    public BaseResponse updateManuKeyWorld(
+            @RequestParam("mkId") BigInteger mkId,
+            @RequestParam("mkText") String mkText,
+            @RequestParam("mkReply") String mkReply){
+
+        if(service.updateManuKeyWorld(mkId,mkText,mkReply)){
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.UPDATE_FAILURE);
+        }
+        return response;
+    }
+
+    @RequestMapping("/store/deleteManuKeyWorld")
+    public BaseResponse deleteManuKeyWorld(
+            @RequestParam("mkId") BigInteger mkId){
+        if (service.deleteManuKeyWorld(mkId)){
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.DELETE_FAILURE);
+        }
+        return  response;
+    }
+
+
+    @RequestMapping("/store/addManuKeyWorld")
+    public BaseResponse addManuKeyWorld(
+            @RequestParam("sId") Long sId,
+            @RequestParam("mkText") String mkText,
+            @RequestParam("mkReply") String mkReply
+    ){
+        response=new BaseResponse();
+        BigInteger mkId=service.addManuKeyWorld(sId,mkText,mkReply);
+        if (!(mkId==null||mkId.equals(""))){
+            response.setData(mkId);
             response.setResult(ResultCodeEnum.SUCCESS);
         }
         else {
@@ -415,5 +519,22 @@ public class StoreController {
         return response;
     }
 
+    /**
+     * 显示A的关键词
+     */
 
+    @RequestMapping("/store/getAKW")
+    public BaseResponse getAKW(HttpServletRequest request,HttpServletResponse responce){
+        responce.setHeader("Access-Control-Allow-Origin","*");
+
+        JSONArray array=service.getAKW();
+        if (array!=null){
+            response.setData(array);
+            response.setResult(ResultCodeEnum.SUCCESS);
+        }
+        else {
+            response.setResult(ResultCodeEnum.FIND_FAILURE);
+        }
+        return response;
+    }
 }

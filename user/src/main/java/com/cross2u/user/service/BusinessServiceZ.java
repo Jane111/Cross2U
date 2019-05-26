@@ -7,6 +7,7 @@ import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
@@ -109,6 +110,7 @@ public class BusinessServiceZ {
         String collectSql="SELECT SUM(cOwner) as collectNumber FROM `collect` WHERE cStore=? and cWare is NULL;";
         Integer collect=Db.queryInt(collectSql,sId);
         jsonObject.put("collectNumber",collect);
+
         String bId=getBIdByOpenId(openId);
         if (bId!=null){
             System.out.println("bID"+bId);
@@ -417,17 +419,17 @@ public class BusinessServiceZ {
     }*/
 
     public boolean isArthorise(String openId){//是否授权
-        String checkSql="select * from visitor where vOpenId like '"+openId+"'";
+        String checkSql="select vWeiXinIcon from visitor where vOpenId like '"+openId+"'";
         Visitor check=Visitor.dao.findFirst(checkSql);
         System.out.println(check);
-        if (check.getVWeiXinIcon()==null){
+        if (check.get("vWeiXinIcon")==null){
             return false;//未授权
         }
         return true;
     }
     public JSONObject getVisitorByOpenId(String openId)
     {
-        String sql="select vWeiXinIcon,vWeiXinName from visitor where vOpenId like '"+openId+"'";
+        String sql="select vWeiXinIcon,vWeiXinName  from visitor where vOpenId like '"+openId+"'";
         Visitor visitor=Visitor.dao.findFirst(sql);
         if (visitor.getVWeiXinIcon()==null||visitor.getVWeiXinIcon().equals("")) {
             return null;
@@ -447,14 +449,12 @@ public class BusinessServiceZ {
         BigInteger bId=updateR.getBId();
         updatBRank(updateR);
         String sql="select bWeiXinIcon,bWeiXinName,bScore,bRank from business where bId=?";
-        Business business=Business.dao.findFirst(sql,bId);
-        JSONObject bu=new JSONObject();
+        Business record=Business.dao.findFirst(sql,bId);
         JSONObject object=new JSONObject();
-        bu.put("bWeiXinIcon",business.getBWeiXinIcon());
-        bu.put("bWeiXinName",business.getBWeiXinName());
-        bu.put("bScore",business.getBScore());
-        bu.put("bRank",business.getBRank());
-        object.put("business",bu);
+        object.put("bWeiXinIcon",record.getBWeiXinIcon());
+        object.put("bWeiXinName",record.getBWeiXinName());
+        object.put("bScore",record.getBScore());
+        object.put("bRank",record.getBRank());
         object.put("collectStore",getCollectStore(bId));
         object.put("collectWare",getCollectWare(bId));
         object.put("browseWare",getBrowseWare(bId));
@@ -499,19 +499,27 @@ public class BusinessServiceZ {
      */
 
     private Integer getCollectStore(BigInteger bId){
-        String sql="select count(cId) as count from collect where cOwner=? and cStore is not null";
+        String sql="select count(cId) as count " +
+                "from collect INNER JOIN store on cStore=sId " +
+                "where cOwner=? and cStore is not null";
         return Db.queryInt(sql,bId);
     }
     private Integer getCollectWare(BigInteger bId){
-        String sql="select count(cId) as count from collect where cOwner=? and cWare is not null";
+        String sql="select count(cId) as count  " +
+                "from collect INNER JOIN ware on cWare=wId " +
+                "where cOwner=? and cWare is not null";
         return Db.queryInt(sql,bId);
     }
     private Integer getBrowseWare(BigInteger bId){
-        String sql="select count(brId) as count from browserecord where brOwner=? ";
+        String sql="select count(brId) as count " +
+                "from browserecord INNER JOIN ware on browserecord.brWare=ware.wId " +
+                "where brOwner=? and browserecord.brIsDelete=0 ";
         return Db.queryInt(sql,bId);
     }
     private Integer getCooperation(BigInteger bId){
-        String sql="select count(copBId) as count from cooperation where copBId=? ";
+        String sql="select count(copBId) as count " +
+                "from cooperation INNER JOIN store on sId=copSId " +
+                "where copBId=?  ";
         return Db.queryInt(sql,bId);
     }
     public Business findById(String bId) {
@@ -529,6 +537,60 @@ public class BusinessServiceZ {
     public boolean cancelCop(String copId) {
         String sql="update cooperation set copState=4 where copId=?";
         return Db.update(sql,copId)==1;
+    }
+
+    public JSONObject MshowStoreDetail(String sId) {
+        JSONObject jsonObject=new JSONObject();
+        String sql="select sName,sPhoto,sDescribe,sScore,mmName,mmLogo " +
+                "from store INNER JOIN mainmanufacturer on store.sId=mainmanufacturer.mmStore " +
+                "where sId=? ";
+        Record record= Db.findFirst(sql,new BigInteger(sId));
+        jsonObject.put("sName",record.get("sName"));
+        String sPhoto=record.get("sPhoto");
+        String[] photos=sPhoto.split(",");
+        jsonObject.put("sPhoto",photos);
+        jsonObject.put("sDescribe",record.get("sDescribe"));
+        jsonObject.put("sScore",record.get("sScore"));
+        jsonObject.put("mmName",record.get("mmName"));
+        jsonObject.put("mmLogo",record.get("mmLogo"));
+        jsonObject.put("copBId",record.get("copBId"));
+
+        String countSql="SELECT count(copBId) as copNumber  " +
+                " FROM cooperation " +
+                " WHERE copSId=?";
+        Integer count=Db.queryInt(countSql,sId);
+        jsonObject.put("copNumber",count);
+        /**
+         * 收藏人数 collectNumber
+         * 是否收藏 isCollect
+         * 是否代理 isCooperation
+         * 前四个商品 sWares
+         */
+        String collectSql="SELECT SUM(cOwner) as collectNumber FROM `collect` WHERE cStore=? and cWare is NULL;";
+        Integer collect=Db.queryInt(collectSql,sId);
+        jsonObject.put("collectNumber",collect);
+
+        System.out.println(jsonObject);
+        return jsonObject;
+    }
+
+
+    @Scheduled(cron = "59 59 23 * * ?")
+    //每天23:59:59更新B的等级
+    public void updateBRank(){
+        List<Business> list=Business.dao.find("select * from business");
+        for (Business business:list){
+            Integer score=business.getBScore();
+            Integer rank=score/100+1;
+            business.setBRank(rank);
+            business.update();
+        }
+    }
+
+
+    public Business getBusinessByOpneId(String bOpenId) {
+        String sql="select * from business where bOpenId=? and bOtherStore1 is null";
+        return Business.dao.findFirst(sql,bOpenId);
     }
 }
 

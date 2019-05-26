@@ -27,16 +27,19 @@ public class ManageController {
     ManageServiceZ service;
     /**
      * 看系统通知
-     */
-//    @RequestMapping("/manage/showPublicInfo")
-//    @ResponseBody
-//    public BaseResponse showPublicInfo(HttpServletRequest request){
-//
-//        List<Publicinfo> publicinfos=service.showPublicInfo();
-//        baseResponse.setData(publicinfos);
-//        baseResponse.setResult(ResultCodeEnum.SUCCESS);
-//        return baseResponse;
-//    }
+
+    @RequestMapping("/manage/showPublicInfo")
+    @ResponseBody
+    public BaseResponse showPublicInfo(HttpServletRequest request){
+
+        List<Publicinfo> publicinfos=service.showPublicInfo();
+        baseResponse.setData(publicinfos);
+        baseResponse.setResult(ResultCodeEnum.SUCCESS);
+        return baseResponse;
+    }*/
+
+
+
 
     /**
      * 显示统计信息
@@ -49,6 +52,7 @@ public class ManageController {
     @RequestMapping("/manage/showCount")
     @ResponseBody
     public BaseResponse showCount(HttpServletRequest request){
+        BaseResponse baseResponse=new BaseResponse();
         JSONObject jsonObject=new JSONObject();
         Integer countManu=service.countM();//待审核M的申请注册
         Integer countBus=service.countB();//待审核B的申请注册

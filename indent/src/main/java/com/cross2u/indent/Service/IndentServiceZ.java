@@ -4,23 +4,38 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.cross2u.indent.model.Drawbackinfo;
 import com.cross2u.indent.model.Indent;
+import com.cross2u.indent.model.Outindent;
 import com.cross2u.indent.model.Returngoods;
 import com.cross2u.indent.util.Constant;
+import com.cross2u.indent.util.CreateCInfo;
 import com.cross2u.indent.util.TimeUtil;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import jnr.ffi.annotations.In;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.web3j.crypto.CipherException;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.WalletUtils;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.utils.Convert;
 
 import javax.management.ObjectName;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
+import static org.web3j.tx.ManagedTransaction.GAS_PRICE;
 
 @Service
 public class IndentServiceZ {
@@ -38,7 +53,7 @@ public class IndentServiceZ {
         else if(outStatus.equals("3"))sql=sql+"= 3 ORDER BY outCreateTime DESC ";
         else if(outStatus.equals("4"))sql=sql+"= 4 ORDER BY outCreateTime DESC ";
         List<Record> outindents= Db.find(sql,bId);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         for (Record outindent: outindents){
             JSONObject object=new JSONObject();
             object.put("outId",outindent.get("outId"));
@@ -129,7 +144,7 @@ public class IndentServiceZ {
                 " from ((outindent INNER JOIN  product on outindent.outPIdentifier = product.pIdentifier) INNER JOIN ware on wId=pWare)INNER JOIN store on ware.wStore=store.sId " +
                 " WHERE outindent.outStatus=? and outId=? ORDER BY outCreateTime DESC ";
         Record record= Db.findFirst(sql,outStatus,outId);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         String outCreateTime=sdf.format(record.getDate("outCreateTime"));
         String outModifyTime=sdf.format(record.getDate("outModifyTime"));
         JSONObject object=new JSONObject();
@@ -193,7 +208,7 @@ public class IndentServiceZ {
             object.put("rgmAddress","");
             object.put("rgmPhone","");
         }
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         if (record.getDate("rgiTrakTime")!=null){
             Date rgiTrakTime=record.getDate("rgiTrakTime");
             String rgiTrakTimeStr=sdf.format(rgiTrakTime);
@@ -216,7 +231,7 @@ public class IndentServiceZ {
                 " FROM ((indent INNER JOIN product ON inProduct=pId )INNER JOIN ware ON pWare=wId)INNER JOIN store ON wStore=sId " +
                 " WHERE indent.inBusiness=? and indent.inStatus=? ";
         List<Record> mIndentsO=Db.find(sql,bId,inStatus);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         for (Record mIndent :mIndentsO){
             JSONObject object=new JSONObject();
             object.put("inId",mIndent.get("inId"));
@@ -256,7 +271,7 @@ public class IndentServiceZ {
         else sql=sql+"and indent.inStatus in (3,5,6,7,9)";//已完成 3已完成订单 5B关闭 6M关闭 7商品异常 9M待评价
 
         List<Record> mIndentsO=Db.find(sql,bId);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         for (Record mIndent :mIndentsO){
             JSONObject object=new JSONObject();
             object.put("inId",mIndent.get("inId"));
@@ -296,7 +311,7 @@ public class IndentServiceZ {
                 " FROM ((indent INNER JOIN product ON inProduct=pId )INNER JOIN ware ON pWare=wId)INNER JOIN store ON wStore=sId " +
                 " WHERE indent.inBusiness=? and indent.inStatus=?";
         List<Record> mIndents1=Db.find(sql,bId,inStatus);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         for (Record mIndent :mIndents1){
             JSONObject object=new JSONObject();
             object.put("inId",mIndent.get("inId"));object.put("inNum",mIndent.get("inNum"));
@@ -345,7 +360,7 @@ public class IndentServiceZ {
         Record baserecord=Db.findFirst(basesql,inId);
         JSONArray pAtr=getProductAtr(baserecord.get("pId").toString());
         JSONObject object=new JSONObject();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         object.put("inId",baserecord.get("inId"));object.put("inNum",baserecord.get("inNum"));
         object.put("inStore",baserecord.get("inStore"));object.put("sName",baserecord.get("sName"));
         object.put("inWare",baserecord.get("inWare"));object.put("wTitle",baserecord.get("wTitle"));
@@ -389,7 +404,7 @@ public class IndentServiceZ {
                 " FROM ((indent INNER JOIN product ON inProduct=pId )INNER JOIN ware ON pWare=wId)INNER JOIN store ON wStore=sId " +
                 " WHERE inId=?";
         Record baserecord=Db.findFirst(basesql,inId);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd  HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
         String inCreateTime=sdf.format(baserecord.get("inCreateTime"));
         String inModifyTime=sdf.format(baserecord.get("inModifyTime"));
 
@@ -474,7 +489,7 @@ public class IndentServiceZ {
         int date=Db.queryInt(dateSql,inId);//包退换的天数
         System.out.println("包退换的天数：" + date);
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             Indent indent=Indent.dao.findById(inId);
             String payStr=sdf.format(indent.getInPayTime());
             String nowStr=sdf.format(new Date()); System.out.println("nowStr"+nowStr);
@@ -562,7 +577,7 @@ public class IndentServiceZ {
         Indent indent=Indent.dao.findById(inId);
         Date payTime=indent.getInPayTime();//付款时间
         Ware ware=Ware.dao.findById(indent.getInWare());
-        String payTimeStr= TimeUtil.toOnlyDateString(payTime);//yyyy-mm-dd
+        String payTimeStr= TimeUtil.toOnlyDateString(payTime);//yyyy-MM-dd
         Integer promiseDay=ware.getWReplaceDays();//包退天数
         Date lastDay=new Date(TimeUtil.dateAddNDay(payTimeStr,promiseDay));
         if (!payTime.before(lastDay))//在包退日期之后
@@ -571,4 +586,263 @@ public class IndentServiceZ {
         }
         return false;//在包退
     }*/
+
+    //定时任务 每周24点 检测是否有满足待评价订单
+    /**
+     * 秒 分 时 日 月 周几
+    */
+    @Scheduled(cron = "59 59 23 * * ?")
+    public void updateIndentMtoB(){//5天默认好评
+        String sql="SELECT inId,inMtoB " +
+                "from indent " +
+                "WHERE DATE_SUB(CURDATE(), INTERVAL 5 DAY) >= date(inCreateTime) and inMtoB is NULL and inStatus=9 and inBtoM is not null";
+        List<Indent> indents= Indent.dao.find(sql);
+        for (Indent indent:indents){
+            indent.setInMtoB(5);
+            indent.setInStatus(3);//已完成
+            indent.update();
+        }
+    }
+
+    //默认对B评价
+    @Scheduled(cron = "59 59 23 * * ?")
+    public void updateIndentBtoM(){//默认好评
+        String sql="SELECT inId,inBtoM " +
+                "from indent " +
+                "WHERE DATE_SUB(CURDATE(), INTERVAL 7 DAY) >= date(inCreateTime) and inBtoM is NULL and inStatus =2";
+        List<Indent> indents= Indent.dao.find(sql);
+        for (Indent indent:indents){
+            indent.setInBtoM(5);//默认好评
+            indent.setInStatus(9);//M待评价
+            indent.update();
+        }
+    }
+
+    //清除24小时内不付款的订单
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void clearWaitPayIndent(){
+        String sql="SELECT * FROM indent where inStatus=0 and inPayTime is NULL and DATE_SUB(CURDATE(), INTERVAL 1 DAY) >= date(inCreateTime) ";
+        List<Indent> list=Indent.dao.find(sql);
+        for (Indent indent:list){
+            indent.delete();//删除
+        }
+    }
+
+    //清除违禁商品3-23
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void clearUnnormalWare(){
+        String sql="select * from sensi";
+        List<Record> list=Db.find(sql);
+        List<Record> wares=Db.find("select wId,wName,wStore from ware");
+        String updateSql="update ware set wStatus=4 where wId=?";
+        String storeSql="select sScore from store where sId=?";
+        String updateStoreSql="update store set sScore=? where sId =?";
+
+        for (Record sensi:list){
+            String sensiv=sensi.getStr("senText");
+            for (Record ware:wares){
+                String name=ware.getStr("wName");
+                if (name.contains(sensiv)){
+                    Db.update(updateSql,ware.getBigInteger("wId"));
+                    updateIndentStatus(ware.getBigInteger("wId"));
+                    Integer sScore=Db.queryInt(storeSql,ware.getBigInteger("wStore"));
+                    sScore=sScore-10;//扣十分
+                    if (sScore<0){
+                        sScore=0;
+                    }
+                    Db.update(updateStoreSql,sScore,ware.getBigInteger("wStore"));
+                }
+            }
+        }
+    }
+
+    private void updateIndentStatus(BigInteger wId) {//有违规商品更新indent订单状态 3-23
+        String updateProductSql="select inId from indent where inWare=?";
+        List<Indent> list=Indent.dao.find(updateProductSql,wId);
+        for (Indent indent:list){
+            indent.setInStatus(7);
+        }
+    }
+
+    //创建外拉订单
+    @Scheduled(cron = "0 0/10 * * * ?")
+    public void createOutIndent(){
+        String sql="SELECT * " +
+                "from indent " +
+                "WHERE inStatus=1";
+        List<Indent> indents=Indent.dao.find(sql);
+        String getProductSql="select * from product where pId=?";
+        for (Indent indent:indents){
+            Outindent outindent=new Outindent();
+            Integer inLeftNum=indent.getInLeftNum();
+            BigInteger inId=indent.getInId();//订单id
+            BigInteger pId=indent.getInProduct();//单品id
+            BigInteger wId=indent.getInWare();//商品id
+            BigInteger sId=indent.getInStore();//店铺id
+            BigInteger bId=indent.getInBusiness();//借卖方id
+
+            //确定订单编号
+            String str = "out";
+            Calendar c = Calendar.getInstance();
+            str += c.get(Calendar.YEAR);//四位
+            str += String.format("%02d", c.get(Calendar.MONTH));//两位
+            str += String.format("%02d", c.get(Calendar.DATE));//两位
+            str += String.format("%02d", c.get(Calendar.HOUR));//两位
+            str += String.format("%02d", c.get(Calendar.MINUTE));//两位
+            str += String.format("%02d", c.get(Calendar.SECOND));//两位
+            str += String.format("%02d", c.get(Calendar.SECOND));//两位
+            str += String.format("%04d", inId.mod(new BigInteger("10000")));//bId最后四位
+            String outNumber=str;
+            outindent.setOutNumber(outNumber);//订单编号
+
+            //bId
+            outindent.setOutBusiness(bId);
+            //sId
+            outindent.setOutSId(sId);
+            //ware的identifier
+            String wareSql="select * from ware where wId=?";
+            Record ware=Db.findFirst(wareSql,wId);
+            String wIdentifier=ware.getStr("wIdentifier");
+            outindent.setOutWIdentifier(wIdentifier);
+
+            //C购买数量
+            Integer outAmount=(int)(Math.random()*inLeftNum);
+            outindent.setOutAmount(outAmount);
+
+            //订单money 单品identifier 价格单位
+            Record product=Db.findFirst(getProductSql,pId);
+            Float pMoney=product.getFloat("pMoney");
+            String outPIdentifier=product.getStr("pIdentifier");
+            outindent.setOutPrice(pMoney*1.2f);
+            outindent.setOutPIdentifier(outPIdentifier);
+            Integer outUnit=Integer.parseInt(String.valueOf(Math.round(Math.random())+1));//随机生成1或2的数 四舍五入取整
+            outindent.setOutUnit(outUnit);
+
+            //平台id
+            Integer outPlatform=Integer.parseInt(String.valueOf(Math.round(Math.random())*2+1));//随机生成1或2的数 四舍五入取整
+            outindent.setOutPlatform(outPlatform);
+
+            //平台的店铺名称
+            String outStore=getStringRandom(4)+"的店";
+            outindent.setOutStore(outStore);
+
+            //发货人的信息
+            JSONObject outCInfo= CreateCInfo.getAddress();
+            String outCPhone=outCInfo.getString("tel");
+            String outCName=outCInfo.getString("name");
+            String outCAddress=outCInfo.getString("road");
+            String cLi="https://cross2u-1258618180.cos.ap-chengdu.myqcloud.com/cInfo/b_license_before.jpg,https://cross2u-1258618180.cos.ap-chengdu.myqcloud.com/cInfo/b_license_down.jpg";
+            outindent.setOutCPhone(outCPhone);
+            outindent.setOutCName(outCName);
+            outindent.setOutCAddress(outCAddress);
+            outindent.setOutCInfo(cLi);
+
+            outindent.setOutStatus(1);//未发货的订单
+
+            outindent.save();
+        }
+    }
+
+    //自动生成名字（中文）
+    public static String getRandomJianHan(int len) {
+        String ret = "";
+        for (int i = 0; i < len; i++) {
+            String str = null;
+            int hightPos, lowPos; // 定义高低位
+            Random random = new Random();
+            hightPos = (176 + Math.abs(random.nextInt(39))); // 获取高位值
+            lowPos = (161 + Math.abs(random.nextInt(93))); // 获取低位值
+            byte[] b = new byte[2];
+            b[0] = (new Integer(hightPos).byteValue());
+            b[1] = (new Integer(lowPos).byteValue());
+            try {
+                str = new String(b, "GBK"); // 转成中文
+            } catch (UnsupportedEncodingException ex) {
+                ex.printStackTrace();
+            }
+            ret += str;
+        }
+        return ret;
+    }
+
+    //生成随机用户名，数字和字母组成,
+    public String getStringRandom(int length) {
+
+        String val = "";
+        Random random = new Random();
+
+        //参数length，表示生成几位随机数
+        for(int i = 0; i < length; i++) {
+
+            String charOrNum = random.nextInt(2) % 2 == 0 ? "char" : "num";
+            //输出字母还是数字
+            if( "char".equalsIgnoreCase(charOrNum) ) {
+                //输出是大写字母还是小写字母
+                int temp = random.nextInt(2) % 2 == 0 ? 65 : 97;
+                val += (char)(random.nextInt(26) + temp);
+            } else if( "num".equalsIgnoreCase(charOrNum) ) {
+                val += String.valueOf(random.nextInt(10));
+            }
+        }
+        return val;
+    }
+
+    /*public void createContract(String _mId, String _wId, String _indentNum, String _time) throws Exception {
+        // 创建一个 web3j 的连接
+        Web3j web3j = Web3j.build(new HttpService("http://10.169.102.247:8989/"));//http://10.169.102.247:8989/
+
+        // 部署的时候需要用到该账户的 gas，务必保证该账户余额充足
+        Credentials credentials = WalletUtils.loadCredentials(
+                "",
+                "E:/AtomWorkSpace/testzy/data1/keystore/UTC--2019-03-18T06-38-13.471704100Z--d95dabd97705df625d00d808fa2b427bdf81b5f4");
+
+        // 部署合约
+        Smart5_6_sol_Indent compute_sol_compute
+                = Smart5_6_sol_Indent.deploy(web3j, credentials, BigInteger.valueOf(1), BigInteger.valueOf(200000)).send();
+
+        String transactionReceipt = compute_sol_compute.CreateIndent(_mId, _wId,_indentNum,_time).send();
+
+        System.out.println("transactionReceipt"+transactionReceipt);
+
+        // 部署完成后打印合约地址
+        //System.out.println(compute_sol_compute.getContractAddress());//0x287bb6e3223ed016ff5ccefe68c894f2b06bb8f2
+    }
+
+    public void setBlock(String _mId, String _wId, String _indentNum, String _time){
+
+
+    }
+
+    public void getContractInfo(String address) throws Exception {
+        Web3j web3j = Web3j.build(new HttpService("http://10.169.102.247:8989/"));
+        //String address = "0xa6fd2ebac389773f5bd34d0738bc5fdbd1bea01b";
+
+        EthGetBalance ethGetBalance = web3j.ethGetBalance(address, DefaultBlockParameterName.LATEST).send();
+
+        if (ethGetBalance != null) {
+        // 打印账户余额
+            System.out.println(ethGetBalance.getBalance());
+        // 将单位转为以太，方便查看
+            System.out.println(Convert.fromWei(ethGetBalance.getBalance().toString(), Convert.Unit.ETHER));
+        }
+    }
+
+    public void createBlockChainAddr() throws Exception {
+        Web3j web3j = Web3j.build(new HttpService("http://localhost:8989/"));  // defaults to http://localhost:8545/
+        Credentials credentials = WalletUtils.loadCredentials("123",
+                "E:/AtomWorkSpace/testzy/data1/keystore/UTC--2019-03-18T06-50-32.630015500Z--96eed7fc306f562c7b44bfc02376d9fc8eda8bfb");
+        Smart5_6_sol_Indent contract = Smart5_6_sol_Indent.deploy(web3j,credentials, GAS_PRICE, BigInteger.valueOf(200000)).send();
+
+
+    }
+
+    public Smart5_6_sol_Indent getBlockChainAddr(String addr)throws Exception{
+        Web3j web3j = Web3j.build(new HttpService("http://localhost:8989/"));  // defaults to http://localhost:8545/
+        Credentials credentials = WalletUtils.loadCredentials("123",
+                "E:/AtomWorkSpace/testzy/data1/keystore/UTC--2019-03-18T06-50-32.630015500Z--96eed7fc306f562c7b44bfc02376d9fc8eda8bfb");
+        Smart5_6_sol_Indent contract = Smart5_6_sol_Indent.load(
+                "0x<address>|<ensName>", web3j,credentials,GAS_PRICE, BigInteger.valueOf(200000));
+        return contract;
+    }*/
+
 }

@@ -15,10 +15,10 @@ public class StoreApplicationTests {
 	@Autowired
 	StoreServiceZ service;
 
+
 	@Test
 	public void test() {
-		JSONArray array=service.dispatchShowDispatchs("1");
-		System.out.println(array);
+		service.operateCooperation("11","3");
 	}
 
 }

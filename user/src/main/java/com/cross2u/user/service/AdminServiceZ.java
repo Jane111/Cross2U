@@ -63,9 +63,15 @@ public class AdminServiceZ {
             object.put("mmCompany",mainmanufacturer.getMmCompany());
             object.put("mmOwner",mainmanufacturer.getMmOwner());
             object.put("mmIdNumber",mainmanufacturer.getMmIdNumber());
-            String mainMajorId=mainmanufacturer.getMmMajorBusiness().toString();
-            String mainMajor=getMainBusiness(new BigInteger(mainMajorId));
-            object.put("mmMajorBusiness",mainMajor);
+            if(mainmanufacturer.getMmMajorBusiness()!=null&&!mainmanufacturer.getMmMajorBusiness().equals("")){
+                String mainMajorId=mainmanufacturer.getMmMajorBusiness().toString();
+                String mainMajor=getMainBusiness(new BigInteger(mainMajorId));
+                object.put("mmMajorBusiness",mainMajor);
+            }
+            else {
+                object.put("mmMajorBusiness","未选");
+            }
+
             object.put("mmCompanyPlace",mainmanufacturer.getMmCompanyPlace());
             if (!mmStatus.equals("2")){
                 String aOperateTime=getMMAOperateTime(mainmanufacturer.getMmId());
@@ -134,8 +140,17 @@ public class AdminServiceZ {
         Mainmanufacturer mainmanufacturer=Mainmanufacturer.dao.findById(mmId);
         mainmanufacturer.setMmStatus(1);//1-在用
         mainmanufacturer.setMmAOpeateTime(now);
-        return mainmanufacturer.update();
+        BigInteger sId=getSIdByMId(mmId);
+        String sql="UPDATE `manufacturer` set mStatus=1 where mStore=1";
+        return mainmanufacturer.update()&&Db.update(sql)>=1;
     }
+
+    private BigInteger getSIdByMId(String mId){
+        String sql="select sId from store where sMmId=?";
+        String sId=Db.query(sql).toString();
+        return new BigInteger(sId);
+    }
+
 
     //退回M的申请
     public boolean UpdateMText(String mmId, String mmFialReasonSelect, String mmFailReasonText) {
@@ -405,7 +420,7 @@ public class AdminServiceZ {
         Integer degree=new Integer(degreeStr);
         Integer score=degree*100;
         if (!degreeStr.equals("0")){
-            sql=sql+" where sScore>="+(score-100)+" and sScore<="+score;
+            sql=sql+" where bScore>="+(score-100)+" and bScore<="+score;
         }
         List<Business> list=Business.dao.find(sql);
         JSONArray array=new JSONArray();
@@ -473,5 +488,15 @@ public class AdminServiceZ {
         }
         System.out.println(array);
         return array;
+    }
+
+    public Mainmanufacturer getMainManufactureById(String mmId) {
+        Mainmanufacturer mainmanufacturer=Mainmanufacturer.dao.findById(mmId);
+        return mainmanufacturer;
+    }
+
+    public Business getBusinessById(String bId) {
+        Business business=Business.dao.findById(bId);
+        return business;
     }
 }

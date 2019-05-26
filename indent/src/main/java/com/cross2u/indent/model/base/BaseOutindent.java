@@ -2,6 +2,7 @@ package com.cross2u.indent.model.base;
 
 import com.jfinal.plugin.activerecord.IBean;
 import com.jfinal.plugin.activerecord.Model;
+import jnr.ffi.annotations.In;
 
 import java.math.BigInteger;
 
@@ -67,7 +68,7 @@ public abstract class BaseOutindent<M extends BaseOutindent<M>> extends Model<M>
 		return get("outAmount");
 	}
 
-	public void setOutPice(Float outPrice) {
+	public void setOutPrice(Float outPrice) {
 		set("outPrice", outPrice);
 	}
 
@@ -75,11 +76,11 @@ public abstract class BaseOutindent<M extends BaseOutindent<M>> extends Model<M>
 		return get("outPrice");
 	}
 
-	public void setOutUnit(String outUnit) {
+	public void setOutUnit(Integer outUnit) {
 		set("outUnit", outUnit);
 	}
 
-	public String getOutUnit() {
+	public Integer getOutUnit() {
 		return get("outUnit");
 	}
 

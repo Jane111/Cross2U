@@ -23,8 +23,11 @@ public enum ResultCodeEnum
 	ADD_PRODUCT_FAILURE("20010","单品添加失败"),
 	ADD_WARE_FAILURE("20011","商品添加失败"),
 	WARE_CLASS_FAILURE("20012","商品分类失败"),
+	DISPATCH_IS_IN("20013","已经加入该分类中"),
 	HAS_ING_INDENT("20005","存在正在执行的订单"),
-	FIND_FAILURE("20004","查询失败");
+	FIND_FAILURE("20004","查询失败"),
+	HAS_SENSI("200014","存在敏感词"),
+	S_NOT_BELONG_F("200015","该子类不属于该父类");
     private String code;
     private String desc;
 

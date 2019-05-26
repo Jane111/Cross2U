@@ -48,6 +48,7 @@ public class ManageControllerL {
     @RequestMapping("/showKeyWord")
     public BaseResponse showKeyWord()
     {
+        BaseResponse jr=new BaseResponse();
         JSONArray result = ms.selectKeyWord();
         if(!result.isEmpty())
         {
@@ -138,6 +139,7 @@ public class ManageControllerL {
     @RequestMapping("/showAutoReply")
     public BaseResponse showAutoReply()
     {
+        BaseResponse jr=new BaseResponse();
         List<Adminreply> result = Adminreply.dao.find("select * from adminreply");
         if(!result.isEmpty())
         {

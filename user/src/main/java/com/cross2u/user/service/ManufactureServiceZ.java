@@ -19,9 +19,8 @@ public class ManufactureServiceZ {
     @Autowired
     RestTemplate restTemplate;
     //注册第一步
-    public BigInteger first(String mmName,String mmEmail, String mmPhone, String mmPassword) {
+    public BigInteger first(String mmEmail, String mmPhone, String mmPassword) {
         Mainmanufacturer mainmanufacturer=new Mainmanufacturer();
-        mainmanufacturer.setMmName(mmName);//昵称
         mainmanufacturer.setMmEmail(mmEmail);
         mainmanufacturer.setMmPhone(mmPhone);
         mainmanufacturer.setMmPassword(mmPassword);
@@ -41,25 +40,34 @@ public class ManufactureServiceZ {
         return Mainmanufacturer.dao.findById(mmId);
     }
 
-    public boolean third(String mmId, String sName, String mmLogo, String mmMajorBusiness, String mmFixedNum) {
+    public boolean third(String mmId, String sName, String mmLogo, String mmMajorBusiness, String mmFixedNum,String mmName) {
         Mainmanufacturer mainmanufacturer=Mainmanufacturer.dao.findById(new BigInteger(mmId));
         mainmanufacturer.setMmLogo(mmLogo);
+        mainmanufacturer.setMmName(mmName);
+        System.out.println("mmName"+mmName);
         BigInteger sId=saveStore(mainmanufacturer.getMmId(),sName,mmLogo);
         if (sId!=null){
             mainmanufacturer.setMmStore(sId);//更新对应的店铺id
         }
         mainmanufacturer.setMmFixedNum(mmFixedNum);
         mainmanufacturer.setMmMajorBusiness(new Long(mmMajorBusiness));
-        return sId!=null&&mainmanufacturer.update();
+        mainmanufacturer.update();
+
+        String sql="Insert into manufacturer set mStore=? , mStatus=0, mRank=0, mPhone=?,mName=?,mPassword=?," +
+                "mManageWare=1,mManageIndent=1,mManageMessage=1,mManageClient=1";//0是禁用
+        Db.update(sql,sId,mainmanufacturer.getMmPhone(),mainmanufacturer.getMmName(),mainmanufacturer.getMmPassword());
+        return sId!=null;
     }
 
     public BigInteger saveStore(BigInteger mmId,String sName,String mmLogo){
-        String sql="insert into store set sStatus=0,sScore=0,sDirectMoney=1,sReduceInventory=0,sMmId=?,sName=? ,sAgentDegree=1";
-        if(Db.update(sql,mmId,sName,mmLogo)==1)
+        String sql="insert into store set sStatus=0,sScore=0,sDirectMoney=1,sReduceInventory=0,sMmId=?,sName=? ,sAgentDegree=1 ";
+        if(Db.update(sql,mmId,sName)==1)
         {
             String selectSql="select sId from store where sMmId=?";
-            BigInteger id=new BigInteger(Db.query(selectSql,mmId).toString());
-            return id;
+            String sIdStr=Db.queryStr(selectSql,mmId);
+            System.out.println("sIdStr"+sIdStr);
+            BigInteger sId=new BigInteger(sIdStr);
+            return sId;
         }
         return null;
     }
@@ -121,13 +129,61 @@ public class ManufactureServiceZ {
     }
 
     public boolean havePhone(String mmPhone) {
-        String sql="select * from mainmanufacturer where mmPhone =? ";
+        String sql="select * from mainmanufacturer where mmPhone = ? ";
         return Mainmanufacturer.dao.find(sql,mmPhone).size()>=1;
     }
 
     public boolean haveEmail(String mmEmail) {
         String sql="select * from mainmanufacturer where mmEmail =? ";
         return Mainmanufacturer.dao.find(sql,mmEmail).size()>=1;
+    }
+
+    public Integer isForbiden(String mPhone){
+        String selectSql="select * from manufacturer where mPhone=?";
+        Record m=Db.findFirst(selectSql,mPhone);
+        if (m==null) return 0;//不存在
+
+        if (m.get("mRank").equals("0")&&m.get("mStatus").equals("0")){//主账号且被禁用
+            return 1;
+        }
+        else if (m.get("mRank").equals("1")&&m.get("mStatus").equals("0")){//子账号且被禁用
+            return 2;
+        }
+        return 3;
+    }
+
+    public JSONObject loginIn(String mPhone, String mPassword) {
+        String selectSql="select * from manufacturer where mPhone=?";
+        Record m=Db.findFirst(selectSql,mPhone);
+        if (m==null) return null;//不存在
+
+        System.out.println("phone"+mPhone+"pass"+mPassword+"mPa"+m.get("mPassword"));
+        String mRank=m.get("mRank").toString();
+        if(m.get("mPassword").equals(mPassword))
+        {
+            String sql="SELECT mStatus,mName,mmLogo,sId,sStatus,sName,sScore,mManageWare,mManageIndent,mManageMessage,mManageClient " +
+                    "FROM (manufacturer INNER JOIN store on manufacturer.mStore=store.sId) INNER JOIN mainmanufacturer ON mmStore=mStore  " +
+                    "WHERE manufacturer.mId=? ";
+            Record record= Db.findFirst(sql,m.getBigInteger("mId"));
+            if (record==null) return null;
+            JSONObject object=new JSONObject();
+            object.put("mRank",mRank);//是否为主账号
+            object.put("mStatus",record.get("mStatus"));
+            object.put("mName",record.get("mName"));
+            object.put("mmLogo",record.get("mmLogo"));
+            object.put("sId",record.get("sId"));
+            object.put("sStatus",record.get("sStatus"));
+            object.put("sName",record.get("sName"));
+            object.put("sScore",record.get("sScore"));
+            Integer sRank=record.getInt("sScore")/100+1;
+            object.put("sRank",sRank);
+            object.put("mManageWare",record.get("mManageWare"));
+            object.put("mManageIndent",record.get("mManageIndent"));
+            object.put("mManageMessage",record.get("mManageMessage"));
+            object.put("mManageClient",record.get("mManageClient"));
+            return object;
+        }
+        return null;
     }
 }
 

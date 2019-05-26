@@ -7,7 +7,7 @@ public class MyDataSource {
     public static DruidPlugin druidPlugin;
 
     private static boolean debug = true;
-    private static String jdbcUrl = "jdbc:mysql://120.79.79.141:3306/cross2u?characterEncoding=utf8&serverTimezone=UTC";
+    private static String jdbcUrl = "jdbc:mysql://120.79.79.141:3306/cross2u?characterEncoding=utf8&serverTimezone=UTC&autoReconnect=true&failOverReadOnly=false";
     private static String dbUser = "root";
     private static String dbPwd = "123456";
 
